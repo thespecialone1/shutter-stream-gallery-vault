@@ -45,10 +45,12 @@ const Index = () => {
                 Create Gallery
               </Button>
             </Link>
-            <Button variant="outline" size="lg">
-              <Shield className="w-5 h-5 mr-2" />
-              View Sample Gallery
-            </Button>
+            <Link to="/gallery/demo">
+              <Button variant="outline" size="lg">
+                <Shield className="w-5 h-5 mr-2" />
+                View Sample Gallery
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
