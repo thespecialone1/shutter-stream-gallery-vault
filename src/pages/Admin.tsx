@@ -29,6 +29,9 @@ export default function Admin() {
   const [selectedGallery, setSelectedGallery] = useState<Gallery | null>(null);
   const [isCreateGalleryOpen, setIsCreateGalleryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [galleryPassword, setGalleryPassword] = useState('');
+  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -117,6 +120,35 @@ export default function Admin() {
       prev.map(g => g.id === updatedGallery.id ? updatedGallery : g)
     );
     setSelectedGallery(updatedGallery);
+  };
+
+  const handleGallerySelect = (gallery: Gallery) => {
+    setSelectedGallery(gallery);
+    setIsPasswordVerified(false);
+    setGalleryPassword('');
+    setShowPasswordDialog(true);
+  };
+
+  const verifyGalleryPassword = () => {
+    if (!selectedGallery) return;
+
+    const isValid = galleryPassword === selectedGallery.password_hash || 
+                   btoa(galleryPassword) === selectedGallery.password_hash;
+
+    if (isValid) {
+      setIsPasswordVerified(true);
+      setShowPasswordDialog(false);
+      toast({
+        title: "Access granted",
+        description: "You can now manage this gallery"
+      });
+    } else {
+      toast({
+        title: "Invalid password",
+        description: "Please enter the correct gallery password",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading) {
@@ -223,7 +255,7 @@ export default function Admin() {
                     <Button
                       variant={selectedGallery?.id === gallery.id ? "default" : "ghost"}
                       className="flex-1 justify-start"
-                      onClick={() => setSelectedGallery(gallery)}
+                      onClick={() => handleGallerySelect(gallery)}
                     >
                       <FolderOpen className="w-4 h-4 mr-2" />
                       <div className="flex-1 text-left truncate">
@@ -246,7 +278,7 @@ export default function Admin() {
 
           {/* Gallery Details */}
           <div className="lg:col-span-2">
-            {selectedGallery ? (
+            {selectedGallery && isPasswordVerified ? (
               <Tabs defaultValue="upload" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="upload">
@@ -314,6 +346,51 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* Password Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gallery Password Required</DialogTitle>
+            <DialogDescription>
+              Enter the password for "{selectedGallery?.name}" to access management features
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="galleryPassword">Password</Label>
+              <Input
+                id="galleryPassword"
+                type="password"
+                value={galleryPassword}
+                onChange={(e) => setGalleryPassword(e.target.value)}
+                placeholder="Enter gallery password"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    verifyGalleryPassword();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setShowPasswordDialog(false);
+                  setSelectedGallery(null);
+                  setGalleryPassword('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={verifyGalleryPassword}>
+                Access Gallery
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
