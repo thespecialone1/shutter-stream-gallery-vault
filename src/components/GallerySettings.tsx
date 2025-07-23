@@ -1,0 +1,147 @@
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Key, Eye, EyeOff } from 'lucide-react';
+
+interface Gallery {
+  id: string;
+  name: string;
+  password_hash: string;
+}
+
+interface GallerySettingsProps {
+  gallery: Gallery;
+  onGalleryUpdated: (gallery: Gallery) => void;
+}
+
+export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsProps) {
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
+
+  const handlePasswordUpdate = async () => {
+    if (!newPassword) {
+      toast({
+        title: "Error",
+        description: "Please enter a new password",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      // For new passwords, we'll store them as base64 encoded for consistency
+      const passwordHash = btoa(newPassword);
+      
+      const { data, error } = await supabase
+        .from('galleries')
+        .update({ password_hash: passwordHash })
+        .eq('id', gallery.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      onGalleryUpdated(data);
+      setNewPassword('');
+      toast({
+        title: "Password updated",
+        description: "Gallery password has been updated successfully"
+      });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update password",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="w-5 h-5" />
+            Gallery Password
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="current-password">Current Password Status</Label>
+            <div className="mt-2 p-3 bg-muted rounded-md">
+              <p className="text-sm text-muted-foreground">
+                Password is currently set and protecting this gallery
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="new-password">New Password</Label>
+            <div className="relative">
+              <Input
+                id="new-password"
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <Button
+            onClick={handlePasswordUpdate}
+            disabled={!newPassword || isUpdating}
+          >
+            {isUpdating ? 'Updating...' : 'Update Password'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Gallery Access</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label>Gallery URL</Label>
+              <div className="mt-2 p-3 bg-muted rounded-md">
+                <code className="text-sm">
+                  {window.location.origin}/gallery/{gallery.id}
+                </code>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Share this URL with clients to access the gallery
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
