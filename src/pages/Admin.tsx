@@ -21,6 +21,7 @@ interface Gallery {
   description: string;
   client_name: string;
   created_at: string;
+  password_hash: string;
 }
 
 export default function Admin() {

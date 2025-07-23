@@ -11,6 +11,9 @@ import { Key, Eye, EyeOff } from 'lucide-react';
 interface Gallery {
   id: string;
   name: string;
+  description: string;
+  client_name: string;
+  created_at: string;
   password_hash: string;
 }
 
