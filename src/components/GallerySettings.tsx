@@ -40,12 +40,16 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
 
     setIsUpdating(true);
     try {
-      // For new passwords, we'll store them as base64 encoded for consistency
-      const passwordHash = btoa(newPassword);
+      // Use secure SHA256 hashing with salt
+      const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password', {
+        password: newPassword
+      });
+
+      if (hashError) throw hashError;
       
       const { data, error } = await supabase
         .from('galleries')
-        .update({ password_hash: passwordHash })
+        .update({ password_hash: hashedPassword })
         .eq('id', gallery.id)
         .select()
         .single();

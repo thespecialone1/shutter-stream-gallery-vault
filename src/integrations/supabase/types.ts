@@ -99,13 +99,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "images_gallery_id_fkey"
-            columns: ["gallery_id"]
-            isOneToOne: false
-            referencedRelation: "gallery_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "images_section_id_fkey"
             columns: ["section_id"]
             isOneToOne: false
@@ -144,44 +137,11 @@ export type Database = {
             referencedRelation: "galleries"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "sections_gallery_id_fkey"
-            columns: ["gallery_id"]
-            isOneToOne: false
-            referencedRelation: "gallery_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
     }
     Views: {
-      gallery_public: {
-        Row: {
-          client_name: string | null
-          created_at: string | null
-          description: string | null
-          id: string | null
-          name: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          client_name?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          name?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          client_name?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string | null
-          name?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       hash_password: {

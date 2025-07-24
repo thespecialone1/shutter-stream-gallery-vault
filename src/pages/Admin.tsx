@@ -75,8 +75,12 @@ export default function Admin() {
     }
 
     try {
-      // Use base64 encoding for password consistency
-      const passwordHash = btoa(password);
+      // Use secure SHA256 hashing with salt
+      const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password', {
+        password: password
+      });
+
+      if (hashError) throw hashError;
       
       const { data, error } = await supabase
         .from('galleries')
@@ -84,7 +88,7 @@ export default function Admin() {
           name,
           description,
           client_name: clientName,
-          password_hash: passwordHash
+          password_hash: hashedPassword
         })
         .select()
         .single();
@@ -129,23 +133,36 @@ export default function Admin() {
     setShowPasswordDialog(true);
   };
 
-  const verifyGalleryPassword = () => {
-    if (!selectedGallery) return;
+  const verifyGalleryPassword = async () => {
+    if (!selectedGallery || !galleryPassword) return;
 
-    const isValid = galleryPassword === selectedGallery.password_hash || 
-                   btoa(galleryPassword) === selectedGallery.password_hash;
-
-    if (isValid) {
-      setIsPasswordVerified(true);
-      setShowPasswordDialog(false);
-      toast({
-        title: "Access granted",
-        description: "You can now manage this gallery"
+    try {
+      const { data, error } = await supabase.rpc('verify_gallery_access', {
+        gallery_id: selectedGallery.id,
+        provided_password: galleryPassword
       });
-    } else {
+
+      if (error) throw error;
+
+      if ((data as any).success) {
+        setIsPasswordVerified(true);
+        setShowPasswordDialog(false);
+        toast({
+          title: "Access granted",
+          description: "You can now manage this gallery"
+        });
+      } else {
+        toast({
+          title: "Invalid password",
+          description: "Please enter the correct gallery password",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Password verification error:', error);
       toast({
-        title: "Invalid password",
-        description: "Please enter the correct gallery password",
+        title: "Error",
+        description: "Failed to verify password",
         variant: "destructive"
       });
     }

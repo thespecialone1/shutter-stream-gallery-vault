@@ -124,21 +124,14 @@ const Gallery = () => {
 
     setAuthLoading(true);
     try {
-      const { password_hash } = gallery;
-      let isValid = false;
+      const { data, error } = await supabase.rpc('verify_gallery_access', {
+        gallery_id: gallery.id,
+        provided_password: password
+      });
 
-      // Check if password matches directly (for demo gallery)
-      if (password === password_hash) {
-        isValid = true;
-      } else {
-        // Check if password matches when base64 encoded (for older galleries)
-        const encodedPassword = btoa(password);
-        if (encodedPassword === password_hash) {
-          isValid = true;
-        }
-      }
+      if (error) throw error;
 
-      if (isValid) {
+      if ((data as any).success) {
         setIsAuthenticated(true);
         await loadGalleryContent();
         toast({
