@@ -188,6 +188,10 @@ export type Database = {
         Args: { password: string }
         Returns: string
       }
+      verify_gallery_access: {
+        Args: { gallery_id: string; provided_password: string }
+        Returns: Json
+      }
       verify_password: {
         Args: { password: string; hash: string }
         Returns: boolean
