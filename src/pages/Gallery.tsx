@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Camera, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { FavoritesView } from "@/components/FavoritesView";
 
 type Gallery = {
   id: string;
@@ -42,6 +45,7 @@ const Gallery = () => {
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
+  const [favoriteImageIds, setFavoriteImageIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -114,9 +118,33 @@ const Gallery = () => {
       } else {
         setImages(imagesData || []);
       }
+
+      // Load favorites
+      const { data: favoritesData, error: favoritesError } = await supabase
+        .from('favorites')
+        .select('image_id')
+        .eq('gallery_id', id);
+
+      if (favoritesError) {
+        console.error("Error loading favorites:", favoritesError);
+      } else {
+        setFavoriteImageIds(new Set(favoritesData?.map(fav => fav.image_id) || []));
+      }
     } catch (error) {
       console.error("Error loading gallery content:", error);
     }
+  };
+
+  const handleFavoriteChange = (imageId: string, isFavorited: boolean) => {
+    setFavoriteImageIds(prev => {
+      const newSet = new Set(prev);
+      if (isFavorited) {
+        newSet.add(imageId);
+      } else {
+        newSet.delete(imageId);
+      }
+      return newSet;
+    });
   };
 
   const verifyPassword = async () => {
@@ -303,29 +331,50 @@ const Gallery = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {images.length === 0 ? (
-          <div className="text-center py-12">
-            <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No photos yet</h3>
-            <p className="text-muted-foreground">
-              Photos will appear here once they're uploaded to this gallery.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((image) => (
-              <div key={image.id} className="group relative">
-                <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-                  <img
-                    src={getImageUrl(image.thumbnail_path || image.full_path)}
-                    alt={image.filename}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                </div>
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+            <TabsTrigger value="all">All Images</TabsTrigger>
+            <TabsTrigger value="favorites">Favorites</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="all" className="mt-6">
+            {images.length === 0 ? (
+              <div className="text-center py-12">
+                <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No photos yet</h3>
+                <p className="text-muted-foreground">
+                  Photos will appear here once they're uploaded to this gallery.
+                </p>
               </div>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {images.map((image) => (
+                  <div key={image.id} className="group relative">
+                    <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                      <img
+                        src={getImageUrl(image.thumbnail_path || image.full_path)}
+                        alt={image.filename}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                    </div>
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FavoriteButton
+                        galleryId={gallery!.id}
+                        imageId={image.id}
+                        isFavorited={favoriteImageIds.has(image.id)}
+                        onFavoriteChange={handleFavoriteChange}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="favorites" className="mt-6">
+            <FavoritesView galleryId={gallery!.id} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
