@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          client_ip: unknown | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          client_ip?: unknown | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          client_ip?: unknown | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -58,6 +94,7 @@ export type Database = {
           id: string
           name: string
           password_hash: string
+          photographer_id: string | null
           updated_at: string
         }
         Insert: {
@@ -67,6 +104,7 @@ export type Database = {
           id?: string
           name: string
           password_hash: string
+          photographer_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -76,9 +114,102 @@ export type Database = {
           id?: string
           name?: string
           password_hash?: string
+          photographer_id?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      gallery_analytics: {
+        Row: {
+          action: string
+          client_ip: unknown | null
+          created_at: string
+          gallery_id: string
+          id: string
+          image_id: string | null
+          metadata: Json | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          client_ip?: unknown | null
+          created_at?: string
+          gallery_id: string
+          id?: string
+          image_id?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          client_ip?: unknown | null
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          image_id?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_analytics_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_analytics_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_variants: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_size: number
+          height: number | null
+          id: string
+          image_id: string
+          quality_setting: number | null
+          variant_type: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_size: number
+          height?: number | null
+          id?: string
+          image_id: string
+          quality_setting?: number | null
+          variant_type: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          height?: number | null
+          id?: string
+          image_id?: string
+          quality_setting?: number | null
+          variant_type?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_variants_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       images: {
         Row: {
@@ -143,6 +274,39 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sections: {
         Row: {
           created_at: string
@@ -175,14 +339,55 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       hash_password: {
         Args: { password: string }
         Returns: string
+      }
+      log_audit_action: {
+        Args: {
+          _action: string
+          _table_name: string
+          _record_id?: string
+          _metadata?: Json
+        }
+        Returns: undefined
       }
       verify_gallery_access: {
         Args: { gallery_id: string; provided_password: string }
@@ -194,7 +399,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "photographer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -321,6 +526,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "photographer"],
+    },
   },
 } as const
