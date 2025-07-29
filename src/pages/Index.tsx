@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Upload, Shield, Download } from "lucide-react";
+import { Camera, Upload, Shield, Download, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
@@ -17,10 +17,10 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Professional Photo Delivery</p>
               </div>
             </div>
-            <Link to="/admin">
+            <Link to="/auth">
               <Button>
-                <Upload className="w-4 h-4 mr-2" />
-                Admin Panel
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
               </Button>
             </Link>
           </div>
@@ -39,10 +39,10 @@ const Index = () => {
             Easy upload, organized sections, and bulk download capabilities.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/admin">
+            <Link to="/auth">
               <Button size="lg">
-                <Upload className="w-5 h-5 mr-2" />
-                Create Gallery
+                <LogIn className="w-5 h-5 mr-2" />
+                Photographer Sign In
               </Button>
             </Link>
             <Link to="/galleries">

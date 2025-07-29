@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,8 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { ManageGalleryContent } from '@/components/ManageGalleryContent';
 import { GallerySettings } from '@/components/GallerySettings';
 import { Link } from 'react-router-dom';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Gallery {
   id: string;
@@ -22,6 +24,7 @@ interface Gallery {
   client_name: string;
   created_at: string;
   password_hash: string;
+  photographer_id?: string;
 }
 
 export default function Admin() {
@@ -33,6 +36,7 @@ export default function Admin() {
   const [isPasswordVerified, setIsPasswordVerified] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     fetchGalleries();
@@ -43,6 +47,7 @@ export default function Admin() {
       const { data, error } = await supabase
         .from('galleries')
         .select('*')
+        .eq('photographer_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -88,7 +93,8 @@ export default function Admin() {
           name,
           description,
           client_name: clientName,
-          password_hash: hashedPassword
+          password_hash: hashedPassword,
+          photographer_id: user?.id
         })
         .select()
         .single();
@@ -182,11 +188,30 @@ export default function Admin() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Gallery Admin</h1>
-          <p className="text-muted-foreground">Manage your photo galleries</p>
+    <ProtectedRoute>
+      <div className="container mx-auto py-8 space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold">Gallery Admin</h1>
+              <p className="text-muted-foreground">Manage your photo galleries</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4">
+              <User className="w-4 h-4" />
+              {user?.email}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={signOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
         
         <div className="flex gap-2">
@@ -242,9 +267,8 @@ export default function Admin() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      {galleries.length === 0 ? (
+        {galleries.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
@@ -362,52 +386,53 @@ export default function Admin() {
             )}
           </div>
         </div>
-      )}
+        )}
 
-      {/* Password Dialog */}
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Gallery Password Required</DialogTitle>
-            <DialogDescription>
-              Enter the password for "{selectedGallery?.name}" to access management features
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="galleryPassword">Password</Label>
-              <Input
-                id="galleryPassword"
-                type="password"
-                value={galleryPassword}
-                onChange={(e) => setGalleryPassword(e.target.value)}
-                placeholder="Enter gallery password"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    verifyGalleryPassword();
-                  }
-                }}
-              />
+        {/* Password Dialog */}
+        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Gallery Password Required</DialogTitle>
+              <DialogDescription>
+                Enter the password for "{selectedGallery?.name}" to access management features
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="galleryPassword">Password</Label>
+                <Input
+                  id="galleryPassword"
+                  type="password"
+                  value={galleryPassword}
+                  onChange={(e) => setGalleryPassword(e.target.value)}
+                  placeholder="Enter gallery password"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      verifyGalleryPassword();
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowPasswordDialog(false);
+                    setSelectedGallery(null);
+                    setGalleryPassword('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={verifyGalleryPassword}>
+                  Access Gallery
+                </Button>
+              </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => {
-                  setShowPasswordDialog(false);
-                  setSelectedGallery(null);
-                  setGalleryPassword('');
-                }}
-              >
-                Cancel
-              </Button>
-              <Button onClick={verifyGalleryPassword}>
-                Access Gallery
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </ProtectedRoute>
   );
 }
