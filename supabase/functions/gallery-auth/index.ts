@@ -38,8 +38,10 @@ serve(async (req) => {
     const clientIp = clientIpRaw.split(',')[0].trim() // Take first IP and remove whitespace
     const userAgent = req.headers.get('user-agent') || 'unknown'
 
-    console.log(`Gallery auth attempt for gallery ${galleryId} from IP ${clientIp}`)
-
+    // Temporarily bypass rate limiting to test core auth
+    console.log(`Gallery auth attempt for gallery ${galleryId} from IP ${clientIp} - bypassing rate limit`)
+    
+    /*
     // Check rate limiting first
     const { data: rateLimitResult, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
       identifier: clientIp,
@@ -72,6 +74,7 @@ serve(async (req) => {
         }
       )
     }
+    */
 
     // Call the database function to verify password and create session
     const { data, error } = await supabase.rpc('create_gallery_session', {
