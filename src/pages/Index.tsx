@@ -40,14 +40,10 @@ const Index = () => {
             Create stunning, password-protected galleries for your clients. Where artistic vision meets professional delivery.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild className="text-lg px-8 py-6 transition-all duration-300 hover:scale-105"
-                    style={{ 
-                      background: 'var(--gradient-primary)',
-                      boxShadow: 'var(--shadow-elegant)'
-                    }}>
+            <Button size="lg" asChild className="text-lg px-8 py-6 bg-primary text-primary-foreground hover:bg-primary/90">
               <Link to="/auth">Begin Your Journey</Link>
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-6 transition-all duration-300 hover:scale-105 border-accent text-accent hover:bg-accent hover:text-accent-foreground">
+            <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-border text-foreground hover:bg-muted">
               Discover Features
             </Button>
           </div>
