@@ -32,6 +32,26 @@ serve(async (req) => {
 
     console.log(`Session validation for gallery ${galleryId} with action ${action}`)
 
+    // Additional security check - use the new secure validation function
+    const { data: secureValidation, error: secureError } = await supabase.rpc('is_valid_gallery_session', {
+      gallery_id: galleryId,
+      session_token: sessionToken
+    });
+
+    if (secureError) {
+      console.error('Secure validation error:', secureError);
+      // Continue with original validation as fallback
+    } else if (!secureValidation) {
+      console.log(`Secure validation failed for ${galleryId}`);
+      return new Response(
+        JSON.stringify({ success: false, message: 'Invalid session' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
     // Call the database function to validate session and log access
     const { data, error } = await supabase.rpc('validate_gallery_session', {
       gallery_id: galleryId,
