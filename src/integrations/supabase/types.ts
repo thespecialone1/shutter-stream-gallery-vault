@@ -482,10 +482,10 @@ export type Database = {
     Functions: {
       check_rate_limit: {
         Args: {
-          p_identifier: string
-          p_attempt_type: string
-          p_max_attempts?: number
-          p_window_minutes?: number
+          identifier: string
+          attempt_type: string
+          max_attempts?: number
+          window_minutes?: number
         }
         Returns: boolean
       }
