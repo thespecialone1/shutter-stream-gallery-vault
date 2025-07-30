@@ -38,43 +38,53 @@ serve(async (req) => {
     const clientIp = clientIpRaw.split(',')[0].trim() // Take first IP and remove whitespace
     const userAgent = req.headers.get('user-agent') || 'unknown'
 
-    // Temporarily bypass rate limiting to test core auth
-    console.log(`Gallery auth attempt for gallery ${galleryId} from IP ${clientIp} - bypassing rate limit`)
-    
-    /*
-    // Check rate limiting first
-    const { data: rateLimitResult, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
-      identifier: clientIp,
-      attempt_type: 'gallery_auth',
-      max_attempts: 5,
-      window_minutes: 15
-    })
+    console.log(`Gallery auth attempt for gallery ${galleryId} from IP ${clientIp}`)
 
-    if (rateLimitError) {
-      console.error('Rate limit check failed:', rateLimitError)
-      return new Response(
-        JSON.stringify({ success: false, message: 'Security check failed' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
+    // Check rate limiting first - simplified version
+    try {
+      const { data: existingAttempts } = await supabase
+        .from('auth_rate_limits')
+        .select('attempts, blocked_until')
+        .eq('identifier', clientIp)
+        .eq('attempt_type', 'gallery_auth')
+        .gte('window_start', new Date(Date.now() - 15 * 60 * 1000).toISOString())
+        .single()
 
-    if (!rateLimitResult) {
-      console.log(`Rate limit exceeded for ${clientIp}`)
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'Too many authentication attempts. Please try again later.' 
-        }),
-        { 
-          status: 429, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      if (existingAttempts?.blocked_until && new Date(existingAttempts.blocked_until) > new Date()) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: 'Too many authentication attempts. Please try again later.' 
+          }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+
+      if (existingAttempts?.attempts >= 5) {
+        // Block the IP
+        await supabase
+          .from('auth_rate_limits')
+          .update({ blocked_until: new Date(Date.now() + 60 * 60 * 1000).toISOString() })
+          .eq('identifier', clientIp)
+          .eq('attempt_type', 'gallery_auth')
+        
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: 'Too many authentication attempts. Please try again later.' 
+          }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+    } catch (error) {
+      console.log('Rate limit check error (continuing):', error)
     }
-    */
 
     // Call the database function to verify password and create session
     const { data, error } = await supabase.rpc('create_gallery_session', {
