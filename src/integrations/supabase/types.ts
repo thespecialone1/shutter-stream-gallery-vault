@@ -450,6 +450,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_gallery_session: {
         Args: {
           gallery_id: string
@@ -474,6 +478,10 @@ export type Database = {
         Args: { password: string }
         Returns: string
       }
+      is_valid_gallery_session: {
+        Args: { gallery_id: string; session_token: string }
+        Returns: boolean
+      }
       log_audit_action: {
         Args: {
           _action: string
@@ -490,6 +498,10 @@ export type Database = {
           action_type: string
           session_token?: string
         }
+        Returns: undefined
+      }
+      log_security_event: {
+        Args: { event_type: string; severity?: string; details?: Json }
         Returns: undefined
       }
       validate_gallery_session: {
