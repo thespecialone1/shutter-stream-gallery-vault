@@ -67,7 +67,6 @@ const Auth = () => {
         email: signUpData.email,
         password: signUpData.password,
         options: {
-          emailRedirectTo: redirectUrl,
           data: {
             full_name: signUpData.fullName,
             business_name: signUpData.businessName
@@ -92,7 +91,7 @@ const Auth = () => {
       } else {
         toast({
           title: "Account created!",
-          description: "Please check your email to verify your account.",
+          description: "You can now sign in with your new account.",
         });
       }
     } catch (error) {
