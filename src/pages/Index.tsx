@@ -33,13 +33,7 @@ const Index = () => {
             <Sparkles className="h-4 w-4" />
             Professional Photo Gallery Platform
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6" 
-              style={{ 
-                background: 'var(--gradient-artistic)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}>
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-foreground">
             Showcase Your Art
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
