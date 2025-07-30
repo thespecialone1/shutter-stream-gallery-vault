@@ -34,7 +34,7 @@ const Index = () => {
             Professional Photo Gallery Platform
           </div>
           <h1 className="text-5xl md:text-7xl font-bold mb-6 text-foreground">
-            Showcase Your Art
+            Beautiful Client Photo Galleries
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
             Create stunning, password-protected galleries for your clients. Where artistic vision meets professional delivery.
