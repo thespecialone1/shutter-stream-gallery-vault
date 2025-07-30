@@ -135,10 +135,10 @@ export default function Admin() {
   };
 
   const handleGallerySelect = (gallery: Gallery) => {
+    // Since the admin owns the gallery, bypass password verification
     setSelectedGallery(gallery);
-    setIsPasswordVerified(false);
-    setGalleryPassword('');
-    setShowPasswordDialog(true);
+    setIsPasswordVerified(true);
+    setShowPasswordDialog(false);
   };
 
   const verifyGalleryPassword = async () => {
