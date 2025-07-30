@@ -69,7 +69,7 @@ const Galleries = () => {
             <Link to="/" className="flex items-center gap-3">
               <Camera className="h-8 w-8 text-primary" />
               <div>
-                <h1 className="text-2xl font-bold">Gallery Pro</h1>
+                <h1 className="text-2xl font-bold">PixieStudio</h1>
                 <p className="text-sm text-muted-foreground">Browse Galleries</p>
               </div>
             </Link>
