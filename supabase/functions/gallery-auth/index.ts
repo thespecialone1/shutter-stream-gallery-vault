@@ -42,10 +42,10 @@ serve(async (req) => {
 
     // Check rate limiting first
     const { data: rateLimitResult, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
-      identifier: clientIp,
-      attempt_type: 'gallery_auth',
-      max_attempts: 5,
-      window_minutes: 15
+      p_identifier: clientIp,
+      p_attempt_type: 'gallery_auth',
+      p_max_attempts: 5,
+      p_window_minutes: 15
     })
 
     if (rateLimitError) {
