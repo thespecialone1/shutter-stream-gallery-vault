@@ -12,6 +12,7 @@ import { Camera, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { FavoritesView } from "@/components/FavoritesView";
+import { MasonryGallery } from "@/components/MasonryGallery";
 
 type Gallery = {
   id: string;
@@ -30,6 +31,7 @@ type GalleryImage = {
   upload_date: string;
   width: number | null;
   height: number | null;
+  original_filename: string;
 };
 
 type Section = {
@@ -438,32 +440,13 @@ const Gallery = () => {
                 </p>
               </div>
             ) : (
-              <div className="masonry-grid">
-                {images.map((image) => (
-                  <div key={image.id} className="group relative masonry-item">
-                     <div className="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-border">
-                       <img
-                         src={getImageUrl(image.thumbnail_path || image.full_path)}
-                         alt={image.filename}
-                         className="w-full h-auto rounded group-hover:scale-[1.01] transition-transform duration-300"
-                         style={{ 
-                           aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
-                           display: 'block'
-                         }}
-                         onLoad={() => logImageAccess(image.id, 'image_viewed')}
-                       />
-                     </div>
-                    <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <FavoriteButton
-                        galleryId={gallery!.id}
-                        imageId={image.id}
-                        isFavorited={favoriteImageIds.has(image.id)}
-                        onFavoriteChange={handleFavoriteChange}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <MasonryGallery
+                images={images}
+                galleryId={gallery!.id}
+                favoriteImageIds={favoriteImageIds}
+                onFavoriteChange={handleFavoriteChange}
+                onImageView={(imageId) => logImageAccess(imageId, 'image_viewed')}
+              />
             )}
           </TabsContent>
           
