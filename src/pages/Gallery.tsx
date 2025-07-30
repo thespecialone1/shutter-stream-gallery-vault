@@ -438,18 +438,24 @@ const Gallery = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
                 {images.map((image) => (
-                  <div key={image.id} className="group relative">
-                     <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                  <div key={image.id} className="group relative break-inside-avoid mb-4">
+                     <div className="bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                          style={{ boxShadow: 'var(--shadow-soft)' }}>
                        <img
                          src={getImageUrl(image.thumbnail_path || image.full_path)}
                          alt={image.filename}
-                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                         className="w-full h-auto rounded group-hover:scale-[1.02] transition-transform duration-300"
+                         style={{ 
+                           aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
+                           maxHeight: '400px',
+                           objectFit: 'contain'
+                         }}
                          onLoad={() => logImageAccess(image.id, 'image_viewed')}
                        />
                      </div>
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
                       <FavoriteButton
                         galleryId={gallery!.id}
                         imageId={image.id}

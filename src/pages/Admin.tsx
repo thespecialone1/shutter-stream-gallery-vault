@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, LogOut, User } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, LogOut, User, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ImageUpload } from '@/components/ImageUpload';
 import { ManageGalleryContent } from '@/components/ManageGalleryContent';
 import { GallerySettings } from '@/components/GallerySettings';
+import { GalleryAnalytics } from '@/components/GalleryAnalytics';
 import { Link } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
@@ -322,8 +323,12 @@ export default function Admin() {
           {/* Gallery Details */}
           <div className="lg:col-span-2">
             {selectedGallery && isPasswordVerified ? (
-              <Tabs defaultValue="upload" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+              <Tabs defaultValue="analytics" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="analytics">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Analytics
+                  </TabsTrigger>
                   <TabsTrigger value="upload">
                     <Upload className="w-4 h-4 mr-2" />
                     Upload
@@ -337,6 +342,13 @@ export default function Admin() {
                     Settings
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="analytics" className="space-y-4">
+                  <GalleryAnalytics 
+                    galleryId={selectedGallery.id} 
+                    galleryName={selectedGallery.name}
+                  />
+                </TabsContent>
 
                 <TabsContent value="upload" className="space-y-4">
                   <Card>
