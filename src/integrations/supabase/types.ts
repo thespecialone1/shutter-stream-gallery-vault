@@ -502,6 +502,10 @@ export type Database = {
         }
         Returns: Json
       }
+      generate_secure_gallery_password: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -516,6 +520,14 @@ export type Database = {
       hash_password: {
         Args: { password: string }
         Returns: string
+      }
+      hash_password_secure: {
+        Args: { password: string }
+        Returns: string
+      }
+      is_password_compromised: {
+        Args: { password: string }
+        Returns: boolean
       }
       is_valid_gallery_session: {
         Args: { gallery_id: string; session_token: string }
@@ -554,6 +566,10 @@ export type Database = {
           action_type?: string
         }
         Returns: Json
+      }
+      validate_password_strength: {
+        Args: { password: string }
+        Returns: boolean
       }
       verify_gallery_access: {
         Args: { gallery_id: string; provided_password: string }
