@@ -40,6 +40,39 @@ serve(async (req) => {
 
     console.log(`Gallery auth attempt for gallery ${galleryId} from IP ${clientIp}`)
 
+    // Check rate limiting first
+    const { data: rateLimitResult, error: rateLimitError } = await supabase.rpc('check_rate_limit', {
+      identifier: clientIp,
+      attempt_type: 'gallery_auth',
+      max_attempts: 5,
+      window_minutes: 15
+    })
+
+    if (rateLimitError) {
+      console.error('Rate limit check failed:', rateLimitError)
+      return new Response(
+        JSON.stringify({ success: false, message: 'Security check failed' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    if (!rateLimitResult) {
+      console.log(`Rate limit exceeded for ${clientIp}`)
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Too many authentication attempts. Please try again later.' 
+        }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
     // Call the database function to verify password and create session
     const { data, error } = await supabase.rpc('create_gallery_session', {
       gallery_id: galleryId,
