@@ -55,6 +55,24 @@ const Gallery = () => {
   useEffect(() => {
     if (id) {
       loadGallery();
+      
+      // Check if there's a valid session token for this gallery
+      const sessionToken = sessionStorage.getItem(`gallery_session_${id}`);
+      const expiresAt = sessionStorage.getItem(`gallery_expires_${id}`);
+      
+      if (sessionToken && expiresAt) {
+        const now = new Date();
+        const expiry = new Date(expiresAt);
+        
+        if (now < expiry) {
+          // Session is still valid
+          setIsAuthenticated(true);
+        } else {
+          // Session expired, clean up
+          sessionStorage.removeItem(`gallery_session_${id}`);
+          sessionStorage.removeItem(`gallery_expires_${id}`);
+        }
+      }
     }
   }, [id]);
 
@@ -148,36 +166,48 @@ const Gallery = () => {
   };
 
   const verifyPassword = async () => {
-    if (!gallery || !password) return;
+    if (!password.trim() || !gallery) return;
 
     setAuthLoading(true);
     try {
-      const { data, error } = await supabase.rpc('verify_gallery_access', {
-        gallery_id: gallery.id,
-        provided_password: password
+      // Use the new secure Edge Function for gallery authentication
+      const response = await fetch(`https://xcucqsonzfovlcxktxiy.supabase.co/functions/v1/gallery-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdWNxc29uemZvdmxjeGt0eGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNjYxNTgsImV4cCI6MjA2ODc0MjE1OH0.T6O_dIeMr6mjZPcM8N5VktHQ81IKzusy0t6ZJVembsk`,
+        },
+        body: JSON.stringify({
+          galleryId: id,
+          password: password
+        })
       });
 
-      if (error) throw error;
+      const data = await response.json();
 
-      if ((data as any).success) {
+      if (data.success) {
+        // Store session token securely in sessionStorage (not localStorage to prevent manipulation)
+        sessionStorage.setItem(`gallery_session_${id}`, data.sessionToken);
+        sessionStorage.setItem(`gallery_expires_${id}`, data.expiresAt);
+        
         setIsAuthenticated(true);
-        await loadGalleryContent();
         toast({
           title: "Access granted",
           description: "Welcome to the gallery!",
         });
+        loadGalleryContent();
       } else {
         toast({
           title: "Access denied",
-          description: "Incorrect password. Please try again.",
+          description: data.message || "Invalid password",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Error verifying password:", error);
+      console.error('Error verifying password:', error);
       toast({
         title: "Error",
-        description: "Failed to verify password",
+        description: "Failed to verify password. Please try again.",
         variant: "destructive",
       });
     } finally {

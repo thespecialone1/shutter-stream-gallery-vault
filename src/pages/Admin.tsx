@@ -39,8 +39,10 @@ export default function Admin() {
   const { user, signOut } = useAuth();
 
   useEffect(() => {
-    fetchGalleries();
-  }, []);
+    if (user) {
+      fetchGalleries();
+    }
+  }, [user]);
 
   const fetchGalleries = async () => {
     try {

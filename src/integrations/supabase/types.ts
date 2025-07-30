@@ -119,6 +119,47 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_access_sessions: {
+        Row: {
+          client_ip: unknown | null
+          created_at: string
+          expires_at: string
+          gallery_id: string
+          id: string
+          last_accessed: string | null
+          session_token: string
+          user_agent: string | null
+        }
+        Insert: {
+          client_ip?: unknown | null
+          created_at?: string
+          expires_at: string
+          gallery_id: string
+          id?: string
+          last_accessed?: string | null
+          session_token: string
+          user_agent?: string | null
+        }
+        Update: {
+          client_ip?: unknown | null
+          created_at?: string
+          expires_at?: string
+          gallery_id?: string
+          id?: string
+          last_accessed?: string | null
+          session_token?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gallery_analytics: {
         Row: {
           action: string
@@ -365,6 +406,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_gallery_session: {
+        Args: {
+          gallery_id: string
+          provided_password: string
+          client_ip?: unknown
+          user_agent?: string
+        }
+        Returns: Json
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -391,6 +441,10 @@ export type Database = {
       }
       verify_gallery_access: {
         Args: { gallery_id: string; provided_password: string }
+        Returns: Json
+      }
+      verify_gallery_session: {
+        Args: { gallery_id: string; session_token: string }
         Returns: Json
       }
       verify_password: {

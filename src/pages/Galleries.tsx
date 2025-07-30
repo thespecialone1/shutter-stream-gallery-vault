@@ -24,21 +24,23 @@ const Galleries = () => {
   }, []);
 
   const loadGalleries = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
+      // Only show basic gallery info for public listing - no access to actual content
       const { data, error } = await supabase
-        .from("galleries")
-        .select("id, name, description, client_name, created_at")
-        .order("created_at", { ascending: false });
+        .from('galleries')
+        .select('id, name, description, client_name, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit to prevent large data loads
 
       if (error) {
-        console.error("Error loading galleries:", error);
+        console.error('Error fetching galleries:', error);
         return;
       }
 
       setGalleries(data || []);
     } catch (error) {
-      console.error("Error loading galleries:", error);
+      console.error('Error fetching galleries:', error);
     } finally {
       setLoading(false);
     }
