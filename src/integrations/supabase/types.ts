@@ -439,6 +439,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_image_access: {
+        Args: {
+          gallery_id: string
+          image_id: string
+          action_type: string
+          session_token?: string
+        }
+        Returns: undefined
+      }
+      validate_gallery_session: {
+        Args: {
+          gallery_id: string
+          session_token: string
+          action_type?: string
+        }
+        Returns: Json
+      }
       verify_gallery_access: {
         Args: { gallery_id: string; provided_password: string }
         Returns: Json

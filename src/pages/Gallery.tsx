@@ -65,8 +65,8 @@ const Gallery = () => {
         const expiry = new Date(expiresAt);
         
         if (now < expiry) {
-          // Session is still valid
-          setIsAuthenticated(true);
+          // Validate session with server
+          validateSession(sessionToken);
         } else {
           // Session expired, clean up
           sessionStorage.removeItem(`gallery_session_${id}`);
@@ -153,6 +153,64 @@ const Gallery = () => {
     }
   };
 
+  const validateSession = async (sessionToken: string) => {
+    try {
+      const response = await fetch(`https://xcucqsonzfovlcxktxiy.supabase.co/functions/v1/gallery-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdWNxc29uemZvdmxjeGt0eGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNjYxNTgsImV4cCI6MjA2ODc0MjE1OH0.T6O_dIeMr6mjZPcM8N5VktHQ81IKzusy0t6ZJVembsk`,
+        },
+        body: JSON.stringify({
+          galleryId: id,
+          sessionToken: sessionToken,
+          action: 'gallery_view'
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsAuthenticated(true);
+        setGallery(data.gallery);
+        loadGalleryContent();
+      } else {
+        // Session invalid, clean up
+        sessionStorage.removeItem(`gallery_session_${id}`);
+        sessionStorage.removeItem(`gallery_expires_${id}`);
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('Error validating session:', error);
+      // On error, clean up session
+      sessionStorage.removeItem(`gallery_session_${id}`);
+      sessionStorage.removeItem(`gallery_expires_${id}`);
+      setIsAuthenticated(false);
+    }
+  };
+
+  const logImageAccess = async (imageId: string, action: string) => {
+    try {
+      const sessionToken = sessionStorage.getItem(`gallery_session_${id}`);
+      await fetch(`https://xcucqsonzfovlcxktxiy.supabase.co/functions/v1/image-analytics`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdWNxc29uemZvdmxjeGt0eGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNjYxNTgsImV4cCI6MjA2ODc0MjE1OH0.T6O_dIeMr6mjZPcM8N5VktHQ81IKzusy0t6ZJVembsk`,
+        },
+        body: JSON.stringify({
+          galleryId: id,
+          imageId: imageId,
+          action: action,
+          sessionToken: sessionToken
+        })
+      });
+    } catch (error) {
+      console.error('Error logging image access:', error);
+      // Don't block user experience if analytics fail
+    }
+  };
+
   const handleFavoriteChange = (imageId: string, isFavorited: boolean) => {
     setFavoriteImageIds(prev => {
       const newSet = new Set(prev);
@@ -163,6 +221,9 @@ const Gallery = () => {
       }
       return newSet;
     });
+
+    // Log favorite action
+    logImageAccess(imageId, isFavorited ? 'image_favorited' : 'image_unfavorited');
   };
 
   const verifyPassword = async () => {
@@ -380,13 +441,14 @@ const Gallery = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {images.map((image) => (
                   <div key={image.id} className="group relative">
-                    <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-                      <img
-                        src={getImageUrl(image.thumbnail_path || image.full_path)}
-                        alt={image.filename}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                    </div>
+                     <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                       <img
+                         src={getImageUrl(image.thumbnail_path || image.full_path)}
+                         alt={image.filename}
+                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                         onLoad={() => logImageAccess(image.id, 'image_viewed')}
+                       />
+                     </div>
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <FavoriteButton
                         galleryId={gallery!.id}
