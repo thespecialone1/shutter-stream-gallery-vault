@@ -380,6 +380,50 @@ export type Database = {
           },
         ]
       }
+      security_audit: {
+        Row: {
+          client_ip: unknown | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          gallery_id: string | null
+          id: string
+          severity: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          client_ip?: unknown | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          gallery_id?: string | null
+          id?: string
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          client_ip?: unknown | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          gallery_id?: string | null
+          id?: string
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_audit_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
