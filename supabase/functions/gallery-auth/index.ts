@@ -31,9 +31,11 @@ serve(async (req) => {
     }
 
     // Get client IP and user agent for security logging
-    const clientIp = req.headers.get('x-forwarded-for') || 
-                     req.headers.get('x-real-ip') || 
-                     'unknown'
+    // Handle multiple IPs (like "IP1, IP2, IP3") by taking the first one
+    const clientIpRaw = req.headers.get('x-forwarded-for') || 
+                        req.headers.get('x-real-ip') || 
+                        'unknown'
+    const clientIp = clientIpRaw.split(',')[0].trim() // Take first IP and remove whitespace
     const userAgent = req.headers.get('user-agent') || 'unknown'
 
     console.log(`Gallery auth attempt for gallery ${galleryId} from IP ${clientIp}`)
