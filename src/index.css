@@ -17,24 +17,24 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    --primary: 15 20% 25%; /* Warm charcoal */
+    --primary: 15 89% 70%; /* Soft peach */
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 20 15% 95%; /* Soft off-white */
+    --secondary: 0 0% 97%; /* Light gray */
     --secondary-foreground: 0 0% 25%;
 
-    --muted: 15 10% 97%; /* Very light warm gray */
+    --muted: 220 13% 91%; /* Airy light gray */
     --muted-foreground: 0 0% 45%;
 
-    --accent: 15 25% 92%; /* Soft peach accent */
+    --accent: 15 25% 95%; /* Very soft peach */
     --accent-foreground: 0 0% 25%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 15 10% 90%; /* Subtle warm border */
-    --input: 15 10% 90%;
-    --ring: 15 20% 25%;
+    --border: 220 13% 91%; /* Airy light border */
+    --input: 220 13% 91%;
+    --ring: 15 89% 70%;
 
     --radius: 0.75rem;
 
@@ -55,7 +55,7 @@
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 8%;
     --popover-foreground: 0 0% 95%;
-    --primary: 15 20% 85%;
+    --primary: 15 89% 70%;
     --primary-foreground: 0 0% 10%;
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 85%;
@@ -65,7 +65,7 @@
     --accent-foreground: 0 0% 85%;
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 15 20% 85%;
+    --ring: 15 89% 70%;
   }
 }
 
@@ -326,5 +326,91 @@
   .section-nav-item.active {
     color: hsl(var(--foreground));
     background: hsl(var(--accent));
+  }
+
+  /* Skeleton Loading Animations */
+  .skeleton {
+    background: linear-gradient(90deg, 
+      hsl(var(--muted)) 0%, 
+      hsl(var(--muted-foreground) / 0.1) 50%, 
+      hsl(var(--muted)) 100%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  .skeleton-masonry {
+    column-count: 1;
+    column-gap: 4px;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .skeleton-masonry {
+      column-count: 2;
+      column-gap: 6px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .skeleton-masonry {
+      column-count: 3;
+      column-gap: 8px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .skeleton-masonry {
+      column-count: 4;
+      column-gap: 10px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .skeleton-masonry {
+      column-count: 5;
+      column-gap: 12px;
+    }
+  }
+
+  .skeleton-item {
+    break-inside: avoid;
+    margin-bottom: 4px;
+    display: inline-block;
+    width: 100%;
+    border-radius: 0.5rem;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+
+  @media (min-width: 640px) {
+    .skeleton-item {
+      margin-bottom: 6px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .skeleton-item {
+      margin-bottom: 8px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .skeleton-item {
+      margin-bottom: 10px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .skeleton-item {
+      margin-bottom: 12px;
+    }
   }
 }

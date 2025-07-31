@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FavoriteButton } from "./FavoriteButton";
+import { SkeletonLoader } from "./SkeletonLoader";
 import { Button } from "@/components/ui/button";
 import { Download, Heart, Sparkles } from "lucide-react";
 
@@ -139,17 +140,7 @@ export const FavoritesView = ({ galleryId }: FavoritesViewProps) => {
   }, [galleryId]);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <div className="text-center fade-in">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mx-auto mb-6 animate-pulse">
-            <Heart className="h-8 w-8 text-primary" />
-          </div>
-          <h3 className="heading-md mb-2">Loading Favorites</h3>
-          <p className="text-muted-foreground">Gathering your favorite moments...</p>
-        </div>
-      </div>
-    );
+    return <SkeletonLoader type="favorites" count={6} />;
   }
 
   if (favoriteImages.length === 0) {
