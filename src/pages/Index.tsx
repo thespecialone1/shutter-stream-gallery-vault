@@ -8,25 +8,25 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Premium Header */}
       <header className="nav-premium fixed top-0 left-0 right-0 z-50">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <nav className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Camera className="h-6 w-6 text-primary-foreground" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Camera className="h-4 w-4 sm:h-6 sm:w-6 text-primary-foreground" />
               </div>
               <div>
-                <span className="text-2xl font-serif font-medium text-foreground">Pixie Studio</span>
-                <p className="text-xs text-muted-foreground -mt-1">Secure Galleries</p>
+                <span className="text-lg sm:text-2xl font-serif font-medium text-foreground">Pixie Studio</span>
+                <p className="text-xs text-muted-foreground -mt-1 hidden sm:block">Secure Galleries</p>
               </div>
             </div>
-            <div className="flex gap-4">
-              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+            <div className="flex gap-2 sm:gap-4">
+              <Button variant="ghost" asChild className="hidden md:flex text-muted-foreground hover:text-foreground">
                 <Link to="/browse">Browse Galleries</Link>
               </Button>
-              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" asChild className="hidden sm:flex text-muted-foreground hover:text-foreground">
                 <Link to="/galleries">All Galleries</Link>
               </Button>
-              <Button asChild className="btn-premium">
+              <Button asChild className="btn-premium text-sm sm:text-base px-3 sm:px-4">
                 <Link to="/auth">Get Started</Link>
               </Button>
             </div>
