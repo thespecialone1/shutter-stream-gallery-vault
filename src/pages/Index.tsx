@@ -52,13 +52,13 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Button size="lg" asChild className="btn-premium text-base px-10 py-4">
+              <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
                 <Link to="/auth">
                   Start Creating
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" className="btn-premium-outline text-base px-10 py-4">
+              <Button variant="outline" size="lg" className="btn-premium-outline text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
                 <Play className="mr-2 h-5 w-5" />
                 Watch Demo
               </Button>
@@ -203,13 +203,13 @@ const Index = () => {
                 and create unforgettable gallery experiences for their clients.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" asChild className="btn-premium text-base px-10 py-4">
+                <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
                   <Link to="/auth">
                     Start Your Journey
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-10 py-4">
+                <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
                   <Link to="/galleries">Browse Examples</Link>
                 </Button>
               </div>
