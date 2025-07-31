@@ -21,7 +21,10 @@ const Index = () => {
             </div>
             <div className="flex gap-4">
               <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
-                <Link to="/galleries">Browse Galleries</Link>
+                <Link to="/browse">Browse Galleries</Link>
+              </Button>
+              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+                <Link to="/galleries">All Galleries</Link>
               </Button>
               <Button asChild className="btn-premium">
                 <Link to="/auth">Get Started</Link>
@@ -210,7 +213,7 @@ const Index = () => {
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
-                  <Link to="/galleries">Browse Examples</Link>
+                  <Link to="/browse">Browse Examples</Link>
                 </Button>
               </div>
             </div>

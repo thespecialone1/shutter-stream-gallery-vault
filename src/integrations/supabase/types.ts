@@ -122,30 +122,36 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_public: boolean
           name: string
           password_hash: string
           photographer_id: string | null
           updated_at: string
+          view_count: number
         }
         Insert: {
           client_name: string
           created_at?: string
           description?: string | null
           id?: string
+          is_public?: boolean
           name: string
           password_hash: string
           photographer_id?: string | null
           updated_at?: string
+          view_count?: number
         }
         Update: {
           client_name?: string
           created_at?: string
           description?: string | null
           id?: string
+          is_public?: boolean
           name?: string
           password_hash?: string
           photographer_id?: string | null
           updated_at?: string
+          view_count?: number
         }
         Relationships: []
       }
@@ -524,6 +530,10 @@ export type Database = {
       hash_password_secure: {
         Args: { password: string }
         Returns: string
+      }
+      increment_gallery_views: {
+        Args: { gallery_id: string }
+        Returns: undefined
       }
       is_password_compromised: {
         Args: { password: string }

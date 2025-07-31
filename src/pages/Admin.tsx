@@ -26,6 +26,7 @@ interface Gallery {
   created_at: string;
   password_hash: string;
   photographer_id?: string;
+  is_public?: boolean;
 }
 
 export default function Admin() {
@@ -72,6 +73,7 @@ export default function Admin() {
     const description = formData.get('description') as string;
     const clientName = formData.get('clientName') as string;
     const password = formData.get('password') as string;
+    const isPublic = formData.get('isPublic') === 'on';
 
     if (!name || !clientName || !password) {
       toast({
@@ -97,7 +99,8 @@ export default function Admin() {
           description,
           client_name: clientName,
           password_hash: hashedPassword,
-          photographer_id: user?.id
+          photographer_id: user?.id,
+          is_public: isPublic
         })
         .select()
         .single();
@@ -259,6 +262,17 @@ export default function Admin() {
                 <div>
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" placeholder="Optional description" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="checkbox" 
+                    id="isPublic" 
+                    name="isPublic" 
+                    className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-primary focus:ring-2"
+                  />
+                  <Label htmlFor="isPublic" className="text-sm font-medium">
+                    Make this gallery public (anyone can view without password)
+                  </Label>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsCreateGalleryOpen(false)}>
