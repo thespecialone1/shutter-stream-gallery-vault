@@ -18,9 +18,10 @@ type Gallery = {
   id: string;
   name: string;
   description: string;
-  password_hash: string;
+  password_hash: string | null;
   client_name: string;
   created_at: string;
+  is_public: boolean;
 };
 
 type GalleryImage = {
@@ -110,6 +111,12 @@ const Gallery = () => {
       }
 
       setGallery(data);
+      
+      // If gallery is public, bypass authentication
+      if (data.is_public) {
+        setIsAuthenticated(true);
+        loadGalleryContent();
+      }
     } catch (error) {
       console.error("Error loading gallery:", error);
       toast({
