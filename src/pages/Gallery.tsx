@@ -12,7 +12,6 @@ import { Link } from "react-router-dom";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { FavoritesView } from "@/components/FavoritesView";
 import { MasonryGallery } from "@/components/MasonryGallery";
-import { SkeletonLoader } from "@/components/SkeletonLoader";
 
 type Gallery = {
   id: string;
@@ -54,7 +53,6 @@ const Gallery = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [activeSection, setActiveSection] = useState("all");
-  const [contentLoading, setContentLoading] = useState(false);
 
   // Premium section navigation items
   const sectionNavItems = [
@@ -124,7 +122,6 @@ const Gallery = () => {
   };
 
   const loadGalleryContent = async () => {
-    setContentLoading(true);
     try {
       // Load sections
       const { data: sectionsData, error: sectionsError } = await supabase
@@ -165,8 +162,6 @@ const Gallery = () => {
       }
     } catch (error) {
       console.error("Error loading gallery content:", error);
-    } finally {
-      setContentLoading(false);
     }
   };
 
@@ -461,25 +456,21 @@ const Gallery = () => {
       {/* Premium Section Navigation */}
       <div className="section-nav">
         <div className="container mx-auto px-6">
-          {contentLoading ? (
-            <SkeletonLoader type="sections" />
-          ) : (
-            <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2">
-              {sectionNavItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
-                    className={`section-nav-item ${activeSection === item.id ? 'active' : ''}`}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2">
+            {sectionNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={`section-nav-item ${activeSection === item.id ? 'active' : ''}`}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -505,9 +496,7 @@ const Gallery = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-8 fade-in">
-            {contentLoading ? (
-              <SkeletonLoader type="gallery" count={12} />
-            ) : images.length === 0 ? (
+            {images.length === 0 ? (
               <div className="text-center py-20 fade-in">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-muted to-accent/20 flex items-center justify-center mx-auto mb-8">
                   <Camera className="w-12 h-12 text-muted-foreground" />

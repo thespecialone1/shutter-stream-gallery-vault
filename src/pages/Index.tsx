@@ -19,16 +19,11 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground -mt-1">Secure Galleries</p>
               </div>
             </div>
-            <div className="hidden sm:flex gap-4">
+            <div className="flex gap-4">
               <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
                 <Link to="/galleries">Browse Galleries</Link>
               </Button>
               <Button asChild className="btn-premium">
-                <Link to="/auth">Get Started</Link>
-              </Button>
-            </div>
-            <div className="sm:hidden">
-              <Button asChild className="btn-premium text-sm px-6 py-2">
                 <Link to="/auth">Get Started</Link>
               </Button>
             </div>
@@ -56,14 +51,14 @@ const Index = () => {
               Where professional photography meets elegant presentation.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" asChild className="btn-premium text-base px-8 py-4 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              <Button size="lg" asChild className="btn-premium text-base px-10 py-4">
                 <Link to="/auth">
                   Start Creating
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" className="btn-premium-outline text-base px-8 py-4 w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="btn-premium-outline text-base px-10 py-4">
                 <Play className="mr-2 h-5 w-5" />
                 Watch Demo
               </Button>
@@ -208,13 +203,13 @@ const Index = () => {
                 and create unforgettable gallery experiences for their clients.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" asChild className="btn-premium text-base px-8 py-4 w-full sm:w-auto">
+                <Button size="lg" asChild className="btn-premium text-base px-10 py-4">
                   <Link to="/auth">
                     Start Your Journey
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-8 py-4 w-full sm:w-auto">
+                <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-10 py-4">
                   <Link to="/galleries">Browse Examples</Link>
                 </Button>
               </div>
