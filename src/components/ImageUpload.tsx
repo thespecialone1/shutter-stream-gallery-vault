@@ -44,6 +44,43 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
   }, []);
 
   const handleFiles = async (files: File[]) => {
+    // Check existing image count first
+    const { count, error: countError } = await supabase
+      .from('images')
+      .select('*', { count: 'exact', head: true })
+      .eq('gallery_id', galleryId);
+
+    if (countError) {
+      toast({
+        title: "Error",
+        description: "Failed to check image count",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const currentCount = count || 0;
+    const maxImages = 5;
+    const availableSlots = maxImages - currentCount;
+
+    if (availableSlots <= 0) {
+      toast({
+        title: "Upload limit reached",
+        description: `This gallery can only contain ${maxImages} images maximum`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (files.length > availableSlots) {
+      toast({
+        title: "Too many files",
+        description: `You can only upload ${availableSlots} more image(s) to this gallery`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     const newUploads: UploadProgress[] = files.map(file => ({
       file,
       progress: 0,

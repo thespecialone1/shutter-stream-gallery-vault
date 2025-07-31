@@ -23,6 +23,7 @@ interface MasonryGalleryProps {
   favoriteImageIds: Set<string>;
   onFavoriteChange: (imageId: string, isFavorited: boolean) => void;
   onImageView: (imageId: string) => void;
+  isPublicGallery?: boolean;
 }
 
 export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
@@ -30,7 +31,8 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
   galleryId,
   favoriteImageIds,
   onFavoriteChange,
-  onImageView
+  onImageView,
+  isPublicGallery = false
 }) => {
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -267,6 +269,7 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
                 imageId={image.id}
                 isFavorited={favoriteImageIds.has(image.id)}
                 onFavoriteChange={onFavoriteChange}
+                isPublicGallery={isPublicGallery}
               />
             </div>
           </div>
@@ -336,6 +339,7 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
                   imageId={lightboxImage.id}
                   isFavorited={favoriteImageIds.has(lightboxImage.id)}
                   onFavoriteChange={onFavoriteChange}
+                  isPublicGallery={isPublicGallery}
                 />
               </div>
 

@@ -465,10 +465,10 @@ const Gallery = () => {
         </div>
       </header>
 
-      {/* Premium Section Navigation */}
+      {/* Premium Section Navigation - Only show for private galleries */}
       {loading ? (
         <SectionTabsSkeleton />
-      ) : (
+      ) : !gallery?.is_public ? (
         <div className="section-nav">
           <div className="container mx-auto px-6">
             <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2">
@@ -488,7 +488,7 @@ const Gallery = () => {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       <div className="container mx-auto px-6 py-8">
         <Tabs value={activeSection === "favorites" ? "favorites" : "all"} className="w-full">
@@ -532,6 +532,7 @@ const Gallery = () => {
                 favoriteImageIds={favoriteImageIds}
                 onFavoriteChange={handleFavoriteChange}
                 onImageView={(imageId) => logImageAccess(imageId, 'image_viewed')}
+                isPublicGallery={gallery!.is_public}
               />
             )}
           </TabsContent>

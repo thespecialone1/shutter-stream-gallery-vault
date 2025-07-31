@@ -3,12 +3,15 @@ import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface FavoriteButtonProps {
   galleryId: string;
   imageId: string;
   isFavorited: boolean;
   onFavoriteChange: (imageId: string, isFavorited: boolean) => void;
+  isPublicGallery?: boolean;
 }
 
 export const FavoriteButton = ({
@@ -16,11 +19,24 @@ export const FavoriteButton = ({
   imageId,
   isFavorited,
   onFavoriteChange,
+  isPublicGallery = false,
 }: FavoriteButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const toggleFavorite = async () => {
+    // If public gallery and user not authenticated, redirect to auth
+    if (isPublicGallery && !user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to add favorites",
+      });
+      navigate("/auth");
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (isFavorited) {
