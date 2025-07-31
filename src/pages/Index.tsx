@@ -16,7 +16,7 @@ const Index = () => {
               </div>
               <div>
                 <span className="text-2xl font-serif font-medium text-foreground">Pixie Studio</span>
-                <p className="text-xs text-muted-foreground -mt-1">Premium Galleries</p>
+                <p className="text-xs text-muted-foreground -mt-1">Secure Galleries</p>
               </div>
             </div>
             <div className="flex gap-4">
