@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Eye, Square, CheckSquare } from 'lucide-react';
+import { Download, Eye, Square, CheckSquare, Heart, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { FavoriteButton } from './FavoriteButton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +35,7 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const { toast } = useToast();
 
   const getImageUrl = (imagePath: string) => {
@@ -100,7 +101,7 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
       description: `Downloading ${selectedImages.size} image${selectedImages.size > 1 ? 's' : ''}`,
     });
 
-    // Download each image individually (in a real app, you'd want to create a zip file)
+    // Download each image individually
     for (const image of selectedImageData) {
       await downloadImage(image);
       // Add a small delay to prevent overwhelming the browser
@@ -108,8 +109,9 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
     }
   };
 
-  const openLightbox = (image: GalleryImage) => {
+  const openLightbox = (image: GalleryImage, index: number) => {
     setLightboxImage(image);
+    setLightboxIndex(index);
     onImageView(image.id);
   };
 
@@ -117,16 +119,47 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
     setLightboxImage(null);
   };
 
-  const getRandomHeight = (index: number) => {
-    // Create variety in heights for masonry effect
-    const heights = [250, 300, 350, 400, 280, 320, 380];
-    return heights[index % heights.length];
+  const navigateLightbox = (direction: 'prev' | 'next') => {
+    const newIndex = direction === 'next' 
+      ? (lightboxIndex + 1) % images.length
+      : (lightboxIndex - 1 + images.length) % images.length;
+    
+    setLightboxIndex(newIndex);
+    setLightboxImage(images[newIndex]);
+    onImageView(images[newIndex].id);
   };
+
+  const handleKeyPress = (e: KeyboardEvent) => {
+    if (!lightboxImage) return;
+    
+    if (e.key === 'Escape') {
+      closeLightbox();
+    } else if (e.key === 'ArrowLeft') {
+      navigateLightbox('prev');
+    } else if (e.key === 'ArrowRight') {
+      navigateLightbox('next');
+    }
+  };
+
+  useEffect(() => {
+    if (lightboxImage) {
+      document.addEventListener('keydown', handleKeyPress);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.removeEventListener('keydown', handleKeyPress);
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+      document.body.style.overflow = 'unset';
+    };
+  }, [lightboxImage, lightboxIndex]);
 
   return (
     <div className="space-y-6">
-      {/* Selection Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      {/* Premium Selection Controls */}
+      <div className="flex items-center justify-between flex-wrap gap-4 px-4">
         <div className="flex items-center gap-4">
           <Button
             variant={isSelectionMode ? "default" : "outline"}
@@ -136,18 +169,22 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
                 clearSelection();
               }
             }}
-            className="flex items-center gap-2"
+            className={`transition-all duration-300 ${
+              isSelectionMode 
+                ? "btn-premium" 
+                : "btn-premium-outline"
+            }`}
           >
-            {isSelectionMode ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+            {isSelectionMode ? <CheckSquare className="w-4 h-4 mr-2" /> : <Square className="w-4 h-4 mr-2" />}
             {isSelectionMode ? "Exit Selection" : "Select Images"}
           </Button>
           
           {isSelectionMode && (
             <>
-              <Button variant="ghost" onClick={selectAllImages}>
+              <Button variant="ghost" onClick={selectAllImages} className="text-muted-foreground hover:text-foreground">
                 Select All ({images.length})
               </Button>
-              <Button variant="ghost" onClick={clearSelection}>
+              <Button variant="ghost" onClick={clearSelection} className="text-muted-foreground hover:text-foreground">
                 Clear Selection
               </Button>
             </>
@@ -155,71 +192,76 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
         </div>
 
         {selectedImages.size > 0 && (
-          <Button onClick={downloadSelectedImages} className="flex items-center gap-2">
-            <Download className="w-4 h-4" />
+          <Button onClick={downloadSelectedImages} className="btn-premium">
+            <Download className="w-4 h-4 mr-2" />
             Download Selected ({selectedImages.size})
           </Button>
         )}
       </div>
 
-      {/* Masonry Grid */}
-      <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-3 space-y-3">
+      {/* Premium Masonry Grid */}
+      <div className="masonry-grid px-2">
         {images.map((image, index) => (
           <div
             key={image.id}
-            className="group relative break-inside-avoid mb-3 overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300"
+            className="masonry-item group relative overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-lg transition-all duration-500"
           >
             {/* Selection Checkbox */}
             {isSelectionMode && (
-              <div className="absolute top-3 left-3 z-10">
-                <Checkbox
-                  checked={selectedImages.has(image.id)}
-                  onCheckedChange={() => toggleImageSelection(image.id)}
-                  className="bg-white shadow-md"
-                />
+              <div className="absolute top-3 left-3 z-20">
+                <div className="w-6 h-6 rounded-full bg-white/90 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                  <Checkbox
+                    checked={selectedImages.has(image.id)}
+                    onCheckedChange={() => toggleImageSelection(image.id)}
+                    className="w-4 h-4"
+                  />
+                </div>
               </div>
             )}
 
-            {/* Image */}
+            {/* Premium Image Container */}
             <div 
-              className="relative cursor-pointer"
-              onClick={() => openLightbox(image)}
-              style={{ height: `${getRandomHeight(index)}px` }}
+              className="relative cursor-pointer image-hover-effect"
+              onClick={() => openLightbox(image, index)}
             >
               <img
                 src={getImageUrl(image.thumbnail_path || image.full_path)}
                 alt={image.original_filename}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                 loading="lazy"
+                style={{ 
+                  aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
+                }}
               />
               
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2">
+              {/* Premium Hover Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Premium Action Buttons */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <div className="flex gap-3">
                   <Button
                     size="sm"
-                    variant="secondary"
                     onClick={(e) => {
                       e.stopPropagation();
                       downloadImage(image);
                     }}
-                    className="bg-white/90 hover:bg-white text-black"
+                    className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white text-primary border-0 shadow-lg hover:scale-110 transition-all duration-300"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-5 h-5" />
                   </Button>
                   <Button
                     size="sm"
-                    variant="secondary"
-                    className="bg-white/90 hover:bg-white text-black"
+                    className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white text-primary border-0 shadow-lg hover:scale-110 transition-all duration-300"
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-5 h-5" />
                   </Button>
                 </div>
               </div>
             </div>
 
-            {/* Favorite Button */}
-            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Premium Favorite Button */}
+            <div className={`favorite-btn ${favoriteImageIds.has(image.id) ? 'active' : ''}`}>
               <FavoriteButton
                 galleryId={galleryId}
                 imageId={image.id}
@@ -231,52 +273,78 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
         ))}
       </div>
 
-      {/* Lightbox */}
+      {/* Premium Lightbox */}
       {lightboxImage && (
-        <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={closeLightbox}
-        >
-          <div className="relative max-w-7xl max-h-full">
-            <img
-              src={getImageUrl(lightboxImage.full_path)}
-              alt={lightboxImage.original_filename}
-              className="max-w-full max-h-full object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-            
-            {/* Close Button */}
+        <div className="lightbox-overlay fade-in">
+          <div className="relative max-w-7xl max-h-full flex items-center justify-center">
+            {/* Navigation Arrows */}
             <Button
               variant="ghost"
               size="sm"
-              onClick={closeLightbox}
-              className="absolute top-4 right-4 text-white hover:bg-white/20"
+              onClick={() => navigateLightbox('prev')}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-0"
             >
-              ✕
+              <ArrowLeft className="w-6 h-6" />
             </Button>
             
-            {/* Download Button */}
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                downloadImage(lightboxImage);
-              }}
-              className="absolute bottom-4 right-4 bg-white/90 hover:bg-white text-black"
+              onClick={() => navigateLightbox('next')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-0"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Download
+              <ArrowRight className="w-6 h-6" />
             </Button>
+
+            {/* Main Image */}
+            <img
+              src={getImageUrl(lightboxImage.full_path)}
+              alt={lightboxImage.original_filename}
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
             
-            {/* Favorite Button */}
-            <div className="absolute bottom-4 left-4">
-              <FavoriteButton
-                galleryId={galleryId}
-                imageId={lightboxImage.id}
-                isFavorited={favoriteImageIds.has(lightboxImage.id)}
-                onFavoriteChange={onFavoriteChange}
-              />
+            {/* Control Bar */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/20 backdrop-blur-md rounded-full px-6 py-3">
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closeLightbox}
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white border-0"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+              
+              {/* Download Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  downloadImage(lightboxImage);
+                }}
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white border-0"
+              >
+                <Download className="w-5 h-5" />
+              </Button>
+              
+              {/* Favorite Button */}
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                <FavoriteButton
+                  galleryId={galleryId}
+                  imageId={lightboxImage.id}
+                  isFavorited={favoriteImageIds.has(lightboxImage.id)}
+                  onFavoriteChange={onFavoriteChange}
+                />
+              </div>
+
+              {/* Image Counter */}
+              <div className="px-4 py-2 bg-white/10 rounded-full">
+                <span className="text-white text-sm font-medium">
+                  {lightboxIndex + 1} of {images.length}
+                </span>
+              </div>
             </div>
           </div>
         </div>

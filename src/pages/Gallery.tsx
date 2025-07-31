@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Camera, Lock, ArrowLeft, Eye, EyeOff, Heart, Star, Calendar, User, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { FavoritesView } from "@/components/FavoritesView";
@@ -53,6 +52,17 @@ const Gallery = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState("all");
+
+  // Premium section navigation items
+  const sectionNavItems = [
+    { id: "all", label: "All Photos", icon: Camera },
+    { id: "highlights", label: "Highlights", icon: Star },
+    { id: "ceremony", label: "Ceremony", icon: Heart },
+    { id: "reception", label: "Reception", icon: Sparkles },
+    { id: "portraits", label: "Portraits", icon: User },
+    { id: "family", label: "Family", icon: Heart },
+  ];
 
   useEffect(() => {
     if (id) {
@@ -299,9 +309,12 @@ const Gallery = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading gallery...</p>
+        <div className="text-center fade-in">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-6 animate-pulse">
+            <Camera className="h-8 w-8 text-primary-foreground" />
+          </div>
+          <h3 className="heading-md mb-2">Loading Gallery</h3>
+          <p className="text-muted-foreground">Preparing your viewing experience...</p>
         </div>
       </div>
     );
@@ -310,15 +323,17 @@ const Gallery = () => {
   if (!gallery) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Gallery not found</h2>
-          <p className="text-muted-foreground mb-4">
+        <div className="text-center fade-in">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-muted to-accent/20 flex items-center justify-center mx-auto mb-8">
+            <Camera className="w-12 h-12 text-muted-foreground" />
+          </div>
+          <h2 className="heading-xl mb-4">Gallery Not Found</h2>
+          <p className="text-muted-foreground mb-8 max-w-md">
             The gallery you're looking for doesn't exist or has been removed.
           </p>
-          <Link to="/galleries">
-            <Button>Browse Galleries</Button>
-          </Link>
+          <Button asChild className="btn-premium">
+            <Link to="/galleries">Browse Galleries</Link>
+          </Button>
         </div>
       </div>
     );
@@ -327,42 +342,49 @@ const Gallery = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b">
-          <div className="container mx-auto px-4 py-4">
-            <Link to="/galleries" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Galleries
+        {/* Premium Header */}
+        <header className="nav-premium">
+          <div className="container mx-auto px-6 py-4">
+            <Link to="/galleries" className="inline-flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group">
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span>Back to Galleries</span>
             </Link>
           </div>
         </header>
 
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-md mx-auto">
-            <Card>
-              <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-8 h-8 text-primary" />
+        <div className="container mx-auto px-6 py-20">
+          <div className="max-w-md mx-auto fade-in-up">
+            <div className="card-premium p-8">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Lock className="w-10 h-10 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">Protected Gallery</CardTitle>
+                <h2 className="heading-lg mb-4">Private Gallery</h2>
                 <p className="text-muted-foreground">
-                  This gallery is password protected. Enter the password to view the photos.
+                  This gallery is password protected. Enter the access code to view the collection.
                 </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">{gallery.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Client: {gallery.client_name}
-                  </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="text-center space-y-2">
+                  <h3 className="heading-md">{gallery.name}</h3>
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <User className="w-4 h-4" />
+                    <span>{gallery.client_name}</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span>{formatDate(gallery.created_at)}</span>
+                  </div>
                   {gallery.description && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-3">
                       {gallery.description}
                     </p>
                   )}
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="password" className="text-sm font-medium">Access Code</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -371,19 +393,19 @@ const Gallery = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Enter gallery password"
-                      className="pr-10"
+                      className="pr-12 h-12 rounded-xl border-border/50 focus:border-primary transition-colors"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-muted-foreground" />
                       )}
                     </Button>
                   </div>
@@ -391,13 +413,13 @@ const Gallery = () => {
                 
                 <Button 
                   onClick={verifyPassword} 
-                  className="w-full"
+                  className="w-full btn-premium h-12 text-base"
                   disabled={!password || authLoading}
                 >
-                  {authLoading ? "Verifying..." : "Access Gallery"}
+                  {authLoading ? "Verifying..." : "Enter Gallery"}
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -406,37 +428,83 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
+      {/* Premium Header */}
+      <header className="nav-premium">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/galleries" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Galleries
+            <Link to="/galleries" className="inline-flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group">
+              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span>Back to Galleries</span>
             </Link>
             <div className="text-right">
-              <h1 className="text-xl font-bold">{gallery.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {gallery.client_name} • {formatDate(gallery.created_at)}
-              </p>
+              <h1 className="heading-md">{gallery.name}</h1>
+              <div className="flex items-center justify-end gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <User className="w-4 h-4" />
+                  <span>{gallery.client_name}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>{formatDate(gallery.created_at)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-            <TabsTrigger value="all">All Images</TabsTrigger>
-            <TabsTrigger value="favorites">Favorites</TabsTrigger>
+      {/* Premium Section Navigation */}
+      <div className="section-nav">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2">
+            {sectionNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={`section-nav-item ${activeSection === item.id ? 'active' : ''}`}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8">
+        <Tabs value={activeSection === "favorites" ? "favorites" : "all"} className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8 bg-accent/20 rounded-full p-1">
+            <TabsTrigger 
+              value="all" 
+              onClick={() => setActiveSection("all")}
+              className="rounded-full data-[state=active]:bg-background data-[state=active]:shadow-md"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              All Images
+            </TabsTrigger>
+            <TabsTrigger 
+              value="favorites"
+              onClick={() => setActiveSection("favorites")}
+              className="rounded-full data-[state=active]:bg-background data-[state=active]:shadow-md"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Favorites
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="all" className="mt-6">
+          <TabsContent value="all" className="mt-8 fade-in">
             {images.length === 0 ? (
-              <div className="text-center py-12">
-                <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No photos yet</h3>
-                <p className="text-muted-foreground">
-                  Photos will appear here once they're uploaded to this gallery.
+              <div className="text-center py-20 fade-in">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-muted to-accent/20 flex items-center justify-center mx-auto mb-8">
+                  <Camera className="w-12 h-12 text-muted-foreground" />
+                </div>
+                <h3 className="heading-lg mb-4">No Photos Yet</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Photos will appear here once they're uploaded to this gallery. 
+                  Check back soon for beautiful memories.
                 </p>
               </div>
             ) : (
@@ -450,7 +518,7 @@ const Gallery = () => {
             )}
           </TabsContent>
           
-          <TabsContent value="favorites" className="mt-6">
+          <TabsContent value="favorites" className="mt-8 fade-in">
             <FavoritesView galleryId={gallery!.id} />
           </TabsContent>
         </Tabs>

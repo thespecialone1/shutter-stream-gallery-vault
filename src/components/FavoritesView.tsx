@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FavoriteButton } from "./FavoriteButton";
+import { Button } from "@/components/ui/button";
+import { Download, Heart, Sparkles } from "lucide-react";
 
 interface FavoriteImage {
   id: string;
@@ -23,7 +25,7 @@ export const FavoritesView = ({ galleryId }: FavoritesViewProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const getImageUrl = (imagePath: string, isPublic: boolean = true) => {
+  const getImageUrl = (imagePath: string) => {
     const { data } = supabase.storage
       .from('gallery-images')
       .getPublicUrl(imagePath);
@@ -87,57 +89,158 @@ export const FavoritesView = ({ galleryId }: FavoritesViewProps) => {
     }
   };
 
+  const downloadImage = async (image: FavoriteImage) => {
+    try {
+      const imageUrl = getImageUrl(image.full_path);
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = image.filename;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Download started",
+        description: `Downloading ${image.filename}`,
+      });
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast({
+        title: "Download failed",
+        description: "Failed to download image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadAllFavorites = async () => {
+    if (favoriteImages.length === 0) return;
+    
+    toast({
+      title: "Download started",
+      description: `Downloading ${favoriteImages.length} favorite image${favoriteImages.length > 1 ? 's' : ''}`,
+    });
+
+    // Download each image individually
+    for (const image of favoriteImages) {
+      await downloadImage(image);
+      // Add a small delay to prevent overwhelming the browser
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  };
+
   useEffect(() => {
     fetchFavorites();
   }, [galleryId]);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <div className="text-muted-foreground">Loading favorites...</div>
+      <div className="flex justify-center items-center py-20">
+        <div className="text-center fade-in">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mx-auto mb-6 animate-pulse">
+            <Heart className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="heading-md mb-2">Loading Favorites</h3>
+          <p className="text-muted-foreground">Gathering your favorite moments...</p>
+        </div>
       </div>
     );
   }
 
   if (favoriteImages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="text-muted-foreground mb-2">No favorite images yet</div>
-        <div className="text-sm text-muted-foreground">
-          Click the heart icon on any image to add it to your favorites
+      <div className="flex flex-col items-center justify-center py-20 text-center fade-in">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center mx-auto mb-8">
+          <Heart className="h-12 w-12 text-muted-foreground" />
+        </div>
+        <h3 className="heading-lg mb-4">No Favorites Yet</h3>
+        <p className="text-muted-foreground mb-8 max-w-md">
+          Start building your collection by clicking the heart icon on images you love. 
+          Your favorites will appear here for easy access.
+        </p>
+        <div className="flex items-center gap-2 px-6 py-3 bg-accent/20 rounded-full border border-accent/30">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-primary">Tip: Tap the heart to save images</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-      {favoriteImages.map((image) => (
-        <div key={image.id} className="relative group break-inside-avoid mb-4">
-          <div className="bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-               style={{ boxShadow: 'var(--shadow-soft)' }}>
-            <img
-              src={getImageUrl(image.thumbnail_path || image.full_path)}
-              alt={image.filename}
-              className="w-full h-auto rounded group-hover:scale-[1.02] transition-transform duration-300"
-              style={{ 
-                aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
-                maxHeight: '400px',
-                objectFit: 'contain'
-              }}
-              loading="lazy"
-            />
-          </div>
-          <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-            <FavoriteButton
-              galleryId={galleryId}
-              imageId={image.id}
-              isFavorited={favoriteImageIds.has(image.id)}
-              onFavoriteChange={handleFavoriteChange}
-            />
-          </div>
+    <div className="space-y-8 fade-in">
+      {/* Favorites Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="heading-lg">Your Favorites</h3>
+          <p className="text-muted-foreground">
+            {favoriteImages.length} image{favoriteImages.length !== 1 ? 's' : ''} in your collection
+          </p>
         </div>
-      ))}
+        {favoriteImages.length > 0 && (
+          <Button onClick={downloadAllFavorites} className="btn-premium">
+            <Download className="w-4 h-4 mr-2" />
+            Download All
+          </Button>
+        )}
+      </div>
+
+      {/* Premium Masonry Grid for Favorites */}
+      <div className="masonry-grid">
+        {favoriteImages.map((image) => (
+          <div key={image.id} className="masonry-item group relative overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-lg transition-all duration-500">
+            <div className="relative image-hover-effect">
+              <img
+                src={getImageUrl(image.thumbnail_path || image.full_path)}
+                alt={image.filename}
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                style={{ 
+                  aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
+                }}
+                loading="lazy"
+              />
+              
+              {/* Premium Hover Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Premium Action Buttons */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <Button
+                  size="sm"
+                  onClick={() => downloadImage(image)}
+                  className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white text-primary border-0 shadow-lg hover:scale-110 transition-all duration-300"
+                >
+                  <Download className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Premium Favorite Button */}
+            <div className="favorite-btn active">
+              <FavoriteButton
+                galleryId={galleryId}
+                imageId={image.id}
+                isFavorited={favoriteImageIds.has(image.id)}
+                onFavoriteChange={handleFavoriteChange}
+              />
+            </div>
+
+            {/* Image Info Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <p className="text-white text-sm font-medium truncate">
+                {image.filename}
+              </p>
+              <p className="text-white/70 text-xs">
+                Added {new Date(image.upload_date).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -36,7 +36,7 @@ export const FavoriteButton = ({
         onFavoriteChange(imageId, false);
         toast({
           title: "Removed from favorites",
-          description: "Image removed from your favorites"
+          description: "Image removed from your collection"
         });
       } else {
         // Add to favorites
@@ -52,7 +52,7 @@ export const FavoriteButton = ({
         onFavoriteChange(imageId, true);
         toast({
           title: "Added to favorites",
-          description: "Image added to your favorites"
+          description: "Image saved to your collection"
         });
       }
     } catch (error) {
@@ -73,10 +73,20 @@ export const FavoriteButton = ({
       size="sm"
       onClick={toggleFavorite}
       disabled={isLoading}
-      className={`p-2 h-auto ${isFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-500'}`}
+      className={`
+        p-0 w-full h-full hover:bg-transparent hover:scale-110 transition-all duration-300
+        ${isFavorited 
+          ? 'text-red-500 hover:text-red-600' 
+          : 'text-white/70 hover:text-red-500'
+        }
+      `}
     >
       <Heart
-        className={`h-5 w-5 ${isFavorited ? 'fill-current' : ''}`}
+        className={`h-5 w-5 transition-all duration-300 ${
+          isFavorited 
+            ? 'fill-current scale-110' 
+            : 'hover:scale-110'
+        }`}
       />
     </Button>
   );
