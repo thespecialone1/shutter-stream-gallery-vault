@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +38,7 @@ export default function Admin() {
   const [galleryPassword, setGalleryPassword] = useState('');
   const [isPasswordVerified, setIsPasswordVerified] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [isPublicGallery, setIsPublicGallery] = useState(false);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
 
@@ -73,9 +75,8 @@ export default function Admin() {
     const description = formData.get('description') as string;
     const clientName = formData.get('clientName') as string;
     const password = formData.get('password') as string;
-    const isPublic = formData.get('isPublic') === 'on';
 
-    if (!name || !clientName || !password) {
+    if (!name || !clientName || (!isPublicGallery && !password)) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -85,12 +86,16 @@ export default function Admin() {
     }
 
     try {
-      // Use secure SHA256 hashing with salt
-      const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password', {
-        password: password
-      });
-
-      if (hashError) throw hashError;
+      let hashedPassword = null;
+      
+      // Only hash password if it's a private gallery
+      if (!isPublicGallery && password) {
+        const { data: hashResult, error: hashError } = await supabase.rpc('hash_password', {
+          password: password
+        });
+        if (hashError) throw hashError;
+        hashedPassword = hashResult;
+      }
       
       const { data, error } = await supabase
         .from('galleries')
@@ -100,7 +105,7 @@ export default function Admin() {
           client_name: clientName,
           password_hash: hashedPassword,
           photographer_id: user?.id,
-          is_public: isPublic
+          is_public: isPublicGallery
         })
         .select()
         .single();
@@ -109,6 +114,7 @@ export default function Admin() {
 
       setGalleries(prev => [data, ...prev]);
       setIsCreateGalleryOpen(false);
+      setIsPublicGallery(false); // Reset the toggle
       
       toast({
         title: "Gallery created",
@@ -256,24 +262,34 @@ export default function Admin() {
                   <Input id="clientName" name="clientName" placeholder="John & Jane Smith" required />
                 </div>
                 <div>
-                  <Label htmlFor="password">Gallery Password *</Label>
-                  <Input id="password" name="password" type="password" placeholder="Secure password for clients" required />
-                </div>
-                <div>
                   <Label htmlFor="description">Description</Label>
                   <Textarea id="description" name="description" placeholder="Optional description" />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <input 
-                    type="checkbox" 
-                    id="isPublic" 
-                    name="isPublic" 
-                    className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-primary focus:ring-2"
-                  />
-                  <Label htmlFor="isPublic" className="text-sm font-medium">
-                    Make this gallery public (anyone can view without password)
-                  </Label>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="privacy-toggle" className="text-sm font-medium">
+                      Gallery Privacy
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {isPublicGallery ? "Anyone can view without password" : "Password required for access"}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="privacy-toggle" className="text-sm">Private</Label>
+                    <Switch
+                      id="privacy-toggle"
+                      checked={isPublicGallery}
+                      onCheckedChange={setIsPublicGallery}
+                    />
+                    <Label htmlFor="privacy-toggle" className="text-sm">Public</Label>
+                  </div>
                 </div>
+                {!isPublicGallery && (
+                  <div>
+                    <Label htmlFor="password">Gallery Password *</Label>
+                    <Input id="password" name="password" type="password" placeholder="Secure password for clients" required />
+                  </div>
+                )}
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsCreateGalleryOpen(false)}>
                     Cancel
