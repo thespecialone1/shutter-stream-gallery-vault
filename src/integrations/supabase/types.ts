@@ -124,7 +124,7 @@ export type Database = {
           id: string
           is_public: boolean
           name: string
-          password_hash: string
+          password_hash: string | null
           photographer_id: string | null
           updated_at: string
           view_count: number
@@ -136,7 +136,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           name: string
-          password_hash: string
+          password_hash?: string | null
           photographer_id?: string | null
           updated_at?: string
           view_count?: number
@@ -148,7 +148,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           name?: string
-          password_hash?: string
+          password_hash?: string | null
           photographer_id?: string | null
           updated_at?: string
           view_count?: number
