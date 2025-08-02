@@ -60,7 +60,7 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
     }
 
     const currentCount = count || 0;
-    const maxImages = 5;
+    const maxImages = 200;
     const availableSlots = maxImages - currentCount;
 
     if (availableSlots <= 0) {
