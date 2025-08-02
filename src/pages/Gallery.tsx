@@ -133,6 +133,39 @@ const Gallery = () => {
   const loadGalleryContent = async () => {
     setContentLoading(true);
     try {
+      // For private galleries, validate session before loading content
+      if (gallery && !gallery.is_public) {
+        const sessionToken = sessionStorage.getItem(`gallery_session_${id}`);
+        if (sessionToken) {
+          // Validate session with Edge Function
+          try {
+            const sessionResponse = await fetch(`https://xcucqsonzfovlcxktxiy.supabase.co/functions/v1/gallery-session`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdWNxc29uemZvdmxjeGt0eGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNjYxNTgsImV4cCI6MjA2ODc0MjE1OH0.T6O_dIeMr6mjZPcM8N5VktHQ81IKzusy0t6ZJVembsk`,
+              },
+              body: JSON.stringify({
+                galleryId: id,
+                sessionToken: sessionToken,
+                action: 'gallery_view'
+              })
+            });
+
+            const sessionData = await sessionResponse.json();
+            if (!sessionData.success) {
+              console.error("Session validation failed:", sessionData.message);
+              setIsAuthenticated(false);
+              return;
+            }
+          } catch (sessionError) {
+            console.error("Error validating session:", sessionError);
+            setIsAuthenticated(false);
+            return;
+          }
+        }
+      }
+
       // Load sections
       const { data: sectionsData, error: sectionsError } = await supabase
         .from("sections")
