@@ -61,6 +61,7 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
 
     const currentCount = count || 0;
     const maxImages = 200;
+    console.log('Upload check:', { currentCount, maxImages, galleryId });
     const availableSlots = maxImages - currentCount;
 
     if (availableSlots <= 0) {
