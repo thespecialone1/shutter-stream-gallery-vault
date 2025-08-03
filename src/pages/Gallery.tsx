@@ -137,75 +137,39 @@ const Gallery = () => {
   const loadGalleryContent = async () => {
     setContentLoading(true);
     try {
-      // For private galleries, validate session before loading content
-      if (gallery && !gallery.is_public) {
-        const sessionToken = sessionStorage.getItem(`gallery_session_${id}`);
-        if (sessionToken) {
-          // Validate session with Edge Function
-          try {
-            const sessionResponse = await fetch(`https://xcucqsonzfovlcxktxiy.supabase.co/functions/v1/gallery-session`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdWNxc29uemZvdmxjeGt0eGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNjYxNTgsImV4cCI6MjA2ODc0MjE1OH0.T6O_dIeMr6mjZPcM8N5VktHQ81IKzusy0t6ZJVembsk`,
-              },
-              body: JSON.stringify({
-                galleryId: id,
-                sessionToken: sessionToken,
-                action: 'gallery_view'
-              })
-            });
+      const sessionToken = sessionStorage.getItem(`gallery_session_${id}`);
+      
+      // Use edge function to load gallery content with proper session validation
+      const response = await fetch(`https://xcucqsonzfovlcxktxiy.supabase.co/functions/v1/gallery-images`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjdWNxc29uemZvdmxjeGt0eGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNjYxNTgsImV4cCI6MjA2ODc0MjE1OH0.T6O_dIeMr6mjZPcM8N5VktHQ81IKzusy0t6ZJVembsk`,
+        },
+        body: JSON.stringify({
+          galleryId: id,
+          sessionToken: sessionToken
+        })
+      });
 
-            const sessionData = await sessionResponse.json();
-            if (!sessionData.success) {
-              console.error("Session validation failed:", sessionData.message);
-              setIsAuthenticated(false);
-              return;
-            }
-          } catch (sessionError) {
-            console.error("Error validating session:", sessionError);
-            setIsAuthenticated(false);
-            return;
-          }
+      const data = await response.json();
+
+      if (data.success) {
+        setImages(data.images || []);
+        setSections(data.sections || []);
+        
+        // Set anonymous favorites
+        if (data.favorites && sessionToken) {
+          setAnonymousFavorites(new Set(data.favorites.map((fav: any) => fav.image_id)));
         }
-      }
-
-      // Load sections
-      const { data: sectionsData, error: sectionsError } = await supabase
-        .from("sections")
-        .select("*")
-        .eq("gallery_id", id)
-        .order("sort_order", { ascending: true });
-
-      if (sectionsError) {
-        console.error("Error loading sections:", sectionsError);
       } else {
-        setSections(sectionsData || []);
-      }
-
-      // Load images
-      const { data: imagesData, error: imagesError } = await supabase
-        .from("images")
-        .select("*")
-        .eq("gallery_id", id)
-        .order("upload_date", { ascending: true });
-
-      if (imagesError) {
-        console.error("Error loading images:", imagesError);
-      } else {
-        setImages(imagesData || []);
-      }
-
-      // Load favorites
-      const { data: favoritesData, error: favoritesError } = await supabase
-        .from('favorites')
-        .select('image_id')
-        .eq('gallery_id', id);
-
-      if (favoritesError) {
-        console.error("Error loading favorites:", favoritesError);
-      } else {
-        setFavoriteImageIds(new Set(favoritesData?.map(fav => fav.image_id) || []));
+        console.error("Error loading gallery content:", data.message);
+        if (data.message === 'Invalid session') {
+          // Clean up invalid session
+          sessionStorage.removeItem(`gallery_session_${id}`);
+          sessionStorage.removeItem(`gallery_expires_${id}`);
+          setIsAuthenticated(false);
+        }
       }
     } catch (error) {
       console.error("Error loading gallery content:", error);
