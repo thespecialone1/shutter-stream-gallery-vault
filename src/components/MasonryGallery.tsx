@@ -240,6 +240,26 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
                   style={{ 
                     aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
                   }}
+                  onError={(e) => {
+                    // If HEIC fails to load, show fallback
+                    if (image.filename.toLowerCase().endsWith('.heic')) {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px]">
+                            <svg class="w-16 h-16 text-muted-foreground mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground mb-2">HEIC</div>
+                            <p class="text-sm text-muted-foreground text-center truncate max-w-full">${image.original_filename}</p>
+                            <p class="text-xs text-muted-foreground mt-2">Preview not available</p>
+                          </div>
+                        `;
+                      }
+                    }
+                  }}
                 />
               ) : (
                 <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px]">

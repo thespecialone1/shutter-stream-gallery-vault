@@ -48,17 +48,30 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
 
   const convertHeicToJpeg = async (file: File): Promise<File> => {
     try {
+      console.log('Converting HEIC file:', file.name);
+      
       const convertedBlob = await heic2any({
         blob: file,
         toType: "image/jpeg",
         quality: 0.9
-      }) as Blob;
+      });
+
+      // heic2any can return an array of blobs, so handle both cases
+      const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
       
-      return new File([convertedBlob], file.name.replace(/\.heic$/i, '.jpg'), {
+      const newFileName = file.name.replace(/\.heic$/i, '.jpg');
+      console.log('HEIC converted successfully:', newFileName);
+      
+      return new File([blob], newFileName, {
         type: 'image/jpeg'
       });
     } catch (error) {
       console.error('HEIC conversion failed:', error);
+      toast({
+        title: "Conversion Error",
+        description: `Failed to convert ${file.name}. Please try a different format.`,
+        variant: "destructive"
+      });
       throw new Error('Failed to convert HEIC file');
     }
   };
@@ -117,6 +130,9 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
       const uploadIndex = uploads.length + i;
 
       try {
+        let processedFile = file;
+        let isConverted = false;
+        
         // Convert HEIC files to JPEG
         if (file.name.toLowerCase().endsWith('.heic')) {
           setUploads(prev => prev.map((upload, index) => 
@@ -124,15 +140,27 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
               ? { ...upload, status: 'processing', progress: 25 }
               : upload
           ));
-          file = await convertHeicToJpeg(file);
+          
+          try {
+            processedFile = await convertHeicToJpeg(file);
+            isConverted = true;
+          } catch (conversionError) {
+            // Skip this file if conversion fails
+            setUploads(prev => prev.map((upload, index) => 
+              index === uploadIndex 
+                ? { ...upload, status: 'error', error: 'Conversion failed' }
+                : upload
+            ));
+            continue;
+          }
         }
 
         // Generate unique filename
-        const fileExt = file.name.split('.').pop();
+        const fileExt = processedFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
         const filePath = `${galleryId}/${fileName}`;
 
-        // Update progress to processing
+        // Update progress to uploading
         setUploads(prev => prev.map((upload, index) => 
           index === uploadIndex 
             ? { ...upload, status: 'processing', progress: 50 }
@@ -142,7 +170,7 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
         // Upload to storage
         const { error: uploadError } = await supabase.storage
           .from('gallery-images')
-          .upload(filePath, file);
+          .upload(filePath, processedFile);
 
         if (uploadError) throw uploadError;
 
@@ -158,9 +186,9 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
             gallery_id: galleryId,
             section_id: sectionId || null,
             filename: fileName,
-            original_filename: file.name,
-            file_size: file.size,
-            mime_type: file.type,
+            original_filename: isConverted ? file.name : processedFile.name,
+            file_size: processedFile.size,
+            mime_type: processedFile.type,
             full_path: filePath
           })
           .select()

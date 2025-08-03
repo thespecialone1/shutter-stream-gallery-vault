@@ -25,14 +25,21 @@ export const getDisplayImageUrl = (imageUrl: string, filename: string): string =
 
 /**
  * Check if the browser can display this image format natively
+ * Now includes a fallback for existing HEIC files
  */
 export const isSupportedFormat = (filename: string): boolean => {
   const lowercaseFilename = filename.toLowerCase();
-  // HEIC files are converted to JPEG during upload, so they're supported
-  // Only DNG (RAW) files remain unsupported
   const supportedFormats = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+  
+  // DNG files are definitely not supported
+  if (lowercaseFilename.endsWith('.dng')) {
+    return false;
+  }
+  
+  // HEIC files may work in some browsers (Safari/iOS), but we'll show them anyway
+  // since they might display or we have fallback handling
   return supportedFormats.some(format => lowercaseFilename.endsWith(format)) || 
-         lowercaseFilename.endsWith('.heic'); // HEIC files are converted to JPEG
+         lowercaseFilename.endsWith('.heic');
 };
 
 /**
