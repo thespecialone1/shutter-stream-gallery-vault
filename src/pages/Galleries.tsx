@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Search, Calendar, User, Heart, ArrowRight, Sparkles, Eye } from "lucide-react";
+import { Camera, Search, Calendar, User, Heart, ArrowRight, Sparkles, Eye, Globe, Lock } from "lucide-react";
 
 type Gallery = {
   id: string;
@@ -12,6 +13,7 @@ type Gallery = {
   description: string;
   client_name: string;
   created_at: string;
+  is_public: boolean;
 };
 
 const Galleries = () => {
@@ -26,10 +28,10 @@ const Galleries = () => {
   const loadGalleries = async () => {
     try {
       setLoading(true);
-      // Only show basic gallery info for public listing - no access to actual content
+      // Include is_public field for privacy toggle
       const { data, error } = await supabase
         .from('galleries')
-        .select('id, name, description, client_name, created_at')
+        .select('id, name, description, client_name, created_at, is_public')
         .order('created_at', { ascending: false })
         .limit(50); // Limit to prevent large data loads
 
@@ -58,6 +60,29 @@ const Galleries = () => {
       month: "long",
       day: "numeric",
     });
+  };
+
+  const handlePrivacyToggle = async (galleryId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('galleries')
+        .update({ is_public: !currentStatus })
+        .eq('id', galleryId);
+
+      if (error) {
+        console.error('Error updating gallery privacy:', error);
+        return;
+      }
+
+      // Update local state
+      setGalleries(galleries.map(gallery => 
+        gallery.id === galleryId 
+          ? { ...gallery, is_public: !currentStatus }
+          : gallery
+      ));
+    } catch (error) {
+      console.error('Error updating gallery privacy:', error);
+    }
   };
 
   return (
@@ -206,6 +231,24 @@ const Galleries = () => {
                     <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
                       {gallery.description || "A beautiful collection of moments captured in time."}
                     </p>
+                    
+                    {/* Privacy Toggle */}
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        {gallery.is_public ? (
+                          <Globe className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Lock className="h-4 w-4 text-amber-600" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {gallery.is_public ? "Public" : "Private"}
+                        </span>
+                      </div>
+                      <Switch
+                        checked={gallery.is_public}
+                        onCheckedChange={() => handlePrivacyToggle(gallery.id, gallery.is_public)}
+                      />
+                    </div>
                     
                     <div className="flex items-center justify-between pt-2">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
