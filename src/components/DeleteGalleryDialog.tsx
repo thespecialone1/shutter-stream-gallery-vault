@@ -44,6 +44,28 @@ export function DeleteGalleryDialog({ gallery, onDelete }: DeleteGalleryDialogPr
 
     setIsDeleting(true);
     try {
+      // First, get all images in the gallery to delete their files
+      const { data: images, error: imagesError } = await supabase
+        .from('images')
+        .select('full_path')
+        .eq('gallery_id', gallery.id);
+
+      if (imagesError) throw imagesError;
+
+      // Delete all image files from storage
+      if (images && images.length > 0) {
+        const filePaths = images.map(img => img.full_path);
+        const { error: storageError } = await supabase.storage
+          .from('gallery-images')
+          .remove(filePaths);
+
+        if (storageError) {
+          console.warn('Failed to delete some files from storage:', storageError);
+          // Continue with gallery deletion even if storage cleanup fails
+        }
+      }
+
+      // Delete the gallery (this will cascade delete images due to foreign key)
       const { error } = await supabase
         .from('galleries')
         .delete()
@@ -54,7 +76,7 @@ export function DeleteGalleryDialog({ gallery, onDelete }: DeleteGalleryDialogPr
       onDelete(gallery.id);
       toast({
         title: "Gallery deleted",
-        description: `Gallery "${gallery.name}" has been permanently deleted`
+        description: `Gallery "${gallery.name}" and all its images have been permanently deleted`
       });
     } catch (error) {
       console.error('Error deleting gallery:', error);

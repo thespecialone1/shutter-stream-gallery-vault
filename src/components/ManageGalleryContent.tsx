@@ -103,17 +103,34 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
 
   const handleDeleteImage = async (imageId: string) => {
     try {
-      const { error } = await supabase
+      // Find the image to get its file path
+      const imageToDelete = images.find(img => img.id === imageId);
+      if (!imageToDelete) {
+        throw new Error('Image not found');
+      }
+
+      // Delete from database first
+      const { error: dbError } = await supabase
         .from('images')
         .delete()
         .eq('id', imageId);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('gallery-images')
+        .remove([imageToDelete.full_path]);
+
+      if (storageError) {
+        console.warn('Failed to delete file from storage:', storageError);
+        // Don't throw here as the database record is already deleted
+      }
 
       setImages(prev => prev.filter(img => img.id !== imageId));
       toast({
         title: "Image deleted",
-        description: "Image has been removed from the gallery"
+        description: "Image has been removed from the gallery and storage"
       });
     } catch (error) {
       console.error('Error deleting image:', error);
