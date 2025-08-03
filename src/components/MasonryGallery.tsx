@@ -71,8 +71,8 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
         });
       },
       {
-        rootMargin: '50px', // Start loading 50px before image comes into view
-        threshold: 0.1
+        rootMargin: '200px', // More aggressive - start loading 200px before image comes into view
+        threshold: 0.01 // Very low threshold for faster triggering
       }
     );
 
@@ -80,6 +80,16 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
       observerRef.current?.disconnect();
     };
   }, [handleImageLoad, loadedImages]);
+
+  // Preload first few images immediately for better initial experience
+  useEffect(() => {
+    const firstImages = images.slice(0, 6); // Load first 6 images immediately
+    firstImages.forEach(image => {
+      if (!loadedImages.has(image.id)) {
+        handleImageLoad(image.id);
+      }
+    });
+  }, [images, handleImageLoad, loadedImages]);
 
   // Ref callback for image container observation
   const imageContainerRef = useCallback((node: HTMLDivElement | null, imageId: string) => {
