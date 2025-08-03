@@ -61,15 +61,6 @@ const Gallery = () => {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [anonymousFavorites, setAnonymousFavorites] = useState<Set<string>>(new Set());
 
-  // Premium section navigation items
-  const sectionNavItems = [
-    { id: "all", label: "All Photos", icon: Camera },
-    { id: "highlights", label: "Highlights", icon: Star },
-    { id: "ceremony", label: "Ceremony", icon: Heart },
-    { id: "reception", label: "Reception", icon: Sparkles },
-    { id: "portraits", label: "Portraits", icon: User },
-    { id: "family", label: "Family", icon: Heart },
-  ];
 
   useEffect(() => {
     if (id) {
@@ -468,30 +459,6 @@ const Gallery = () => {
         </div>
       </header>
 
-      {/* Premium Section Navigation - Only show for private galleries */}
-      {loading ? (
-        <SectionTabsSkeleton />
-      ) : !gallery?.is_public ? (
-        <div className="section-nav">
-          <div className="container mx-auto px-6">
-            <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2">
-              {sectionNavItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
-                    className={`section-nav-item ${activeSection === item.id ? 'active' : ''}`}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       <div className="container mx-auto px-6 py-8">
         <Tabs value={activeSection === "favorites" ? "favorites" : "all"} className="w-full">
