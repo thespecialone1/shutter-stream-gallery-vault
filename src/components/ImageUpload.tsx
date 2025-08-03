@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import heic2any from 'heic2any';
+import { dngConverter } from '@/utils/dngConverter';
 
 interface ImageUploadProps {
   galleryId: string;
@@ -89,6 +90,27 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
     }
   };
 
+  const convertDngToJpeg = async (file: File): Promise<File> => {
+    try {
+      console.log('Converting DNG file:', file.name);
+      const { blob, filename } = await dngConverter.convertDNGToJPEG(file);
+      
+      return new File([blob], filename, {
+        type: 'image/jpeg'
+      });
+    } catch (error) {
+      console.error('DNG conversion failed:', error);
+      toast({
+        title: "Conversion Warning",
+        description: `${file.name} could not be converted. Uploading as-is.`,
+        variant: "default"
+      });
+      
+      // Return original file if conversion fails
+      return file;
+    }
+  };
+
   const handleFiles = async (files: File[]) => {
     // Check existing image count first
     const { count, error: countError } = await supabase
@@ -156,6 +178,28 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
           
           try {
             processedFile = await convertHeicToJpeg(file);
+            isConverted = true;
+          } catch (conversionError) {
+            // Skip this file if conversion fails
+            setUploads(prev => prev.map((upload, index) => 
+              index === uploadIndex 
+                ? { ...upload, status: 'error', error: 'Conversion failed' }
+                : upload
+            ));
+            continue;
+          }
+        }
+
+        // Convert DNG files to JPEG
+        if (file.name.toLowerCase().endsWith('.dng')) {
+          setUploads(prev => prev.map((upload, index) => 
+            index === uploadIndex 
+              ? { ...upload, status: 'processing', progress: 25 }
+              : upload
+          ));
+          
+          try {
+            processedFile = await convertDngToJpeg(file);
             isConverted = true;
           } catch (conversionError) {
             // Skip this file if conversion fails

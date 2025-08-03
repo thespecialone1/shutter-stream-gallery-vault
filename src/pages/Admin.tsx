@@ -515,33 +515,17 @@ export default function Admin() {
                         </div>
                         
                         <div className="border-t pt-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <h4 className="font-medium">DNG Image Conversion</h4>
-                              <p className="text-sm text-muted-foreground">
-                                Convert existing DNG (RAW) images to JPEG for web display
-                              </p>
-                            </div>
-                            <Button 
-                              onClick={convertDngImages}
-                              disabled={isConvertingDng}
-                              variant="outline"
-                              size="sm"
-                            >
-                              {isConvertingDng ? (
-                                <>
-                                  <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
-                                  Converting...
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCcw className="w-4 h-4 mr-2" />
-                                  Convert DNG Files
-                                </>
-                              )}
-                             </Button>
-                           </div>
-                         </div>
+                          <div className="p-4 bg-muted/50 rounded-lg">
+                            <h4 className="font-medium mb-2">DNG Image Support</h4>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              DNG files are now automatically converted to JPEG during upload in the browser. 
+                              No server processing or API keys required!
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Legacy batch conversion has been replaced with client-side processing.
+                            </p>
+                          </div>
+                        </div>
                        </div>
                      </CardContent>
                    </Card>
