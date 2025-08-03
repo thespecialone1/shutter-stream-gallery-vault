@@ -198,7 +198,7 @@ export default function Admin() {
         description: "Starting batch conversion of HEIC files to JPEG..."
       });
 
-      const { data, error } = await supabase.functions.invoke('batch-convert-heic', {
+      const { data, error } = await supabase.functions.invoke('convert-heic-wasm', {
         body: { galleryId: selectedGallery.id }
       });
 

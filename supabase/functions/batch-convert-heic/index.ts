@@ -77,8 +77,8 @@ serve(async (req) => {
         try {
           console.log(`Converting image ${image.id}: ${image.filename}`)
           
-          // Call the convert-heic function
-          const { data, error } = await supabase.functions.invoke('convert-heic', {
+          // Call the convert-heic-wasm function
+          const { data, error } = await supabase.functions.invoke('convert-heic-wasm', {
             body: { 
               imageId: image.id, 
               galleryId: image.gallery_id 
