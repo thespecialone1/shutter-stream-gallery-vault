@@ -40,6 +40,7 @@ export default function Admin() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [isPublicGallery, setIsPublicGallery] = useState(false);
   const [isConvertingHeic, setIsConvertingHeic] = useState(false);
+  const [isConvertingDng, setIsConvertingDng] = useState(false);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
 
@@ -226,6 +227,47 @@ export default function Admin() {
       });
     } finally {
       setIsConvertingHeic(false);
+    }
+  };
+
+  const convertDngImages = async () => {
+    if (!selectedGallery) return;
+
+    setIsConvertingDng(true);
+    
+    try {
+      toast({
+        title: "Converting DNG Images",
+        description: "Starting batch conversion of DNG files to JPEG..."
+      });
+
+      const { data, error } = await supabase.functions.invoke('batch-convert-dng', {
+        body: { galleryId: selectedGallery.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Conversion Complete",
+        description: `Successfully processed ${data.processed} DNG images (${data.successful} successful, ${data.errors} errors)`
+      });
+
+      if (data.errors > 0) {
+        toast({
+          title: "Some Conversions Failed", 
+          description: `${data.errors} images failed to convert. Check the browser console for details.`,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('DNG conversion error:', error);
+      toast({
+        title: "Conversion Failed",
+        description: "Failed to convert DNG images. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsConvertingDng(false);
     }
   };
 
@@ -471,10 +513,39 @@ export default function Admin() {
                             </Button>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                        
+                        <div className="border-t pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="font-medium">DNG Image Conversion</h4>
+                              <p className="text-sm text-muted-foreground">
+                                Convert existing DNG (RAW) images to JPEG for web display
+                              </p>
+                            </div>
+                            <Button 
+                              onClick={convertDngImages}
+                              disabled={isConvertingDng}
+                              variant="outline"
+                              size="sm"
+                            >
+                              {isConvertingDng ? (
+                                <>
+                                  <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
+                                  Converting...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCcw className="w-4 h-4 mr-2" />
+                                  Convert DNG Files
+                                </>
+                              )}
+                             </Button>
+                           </div>
+                         </div>
+                       </div>
+                     </CardContent>
+                   </Card>
+                 </TabsContent>
 
                 <TabsContent value="manage">
                   <ManageGalleryContent
