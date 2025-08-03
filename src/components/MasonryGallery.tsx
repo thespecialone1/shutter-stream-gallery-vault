@@ -354,7 +354,7 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
               <img
                 src={getImageUrl(lightboxImage.full_path)}
                 alt={lightboxImage.original_filename}
-                className="max-w-full max-h-full object-contain rounded-lg"
+                className="max-w-[90vw] max-h-[80vh] w-auto h-auto object-contain rounded-lg"
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
