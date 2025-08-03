@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import heic2any from 'heic2any';
 
 interface ImageUploadProps {
   galleryId: string;
@@ -45,6 +46,23 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
     }
   }, []);
 
+  const convertHeicToJpeg = async (file: File): Promise<File> => {
+    try {
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.9
+      }) as Blob;
+      
+      return new File([convertedBlob], file.name.replace(/\.heic$/i, '.jpg'), {
+        type: 'image/jpeg'
+      });
+    } catch (error) {
+      console.error('HEIC conversion failed:', error);
+      throw new Error('Failed to convert HEIC file');
+    }
+  };
+
   const handleFiles = async (files: File[]) => {
     // Check existing image count first
     const { count, error: countError } = await supabase
@@ -62,7 +80,7 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
     }
 
     const currentCount = count || 0;
-    const maxImages = 200; // Updated to 200 from 5 - timestamp: 2025-01-02
+    const maxImages = 200;
     console.log('Upload check - NEW CODE:', { currentCount, maxImages, galleryId, timestamp: new Date().toISOString() });
     const availableSlots = maxImages - currentCount;
 
@@ -95,10 +113,20 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
     const uploadedImages: UploadedImage[] = [];
 
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+      let file = files[i];
       const uploadIndex = uploads.length + i;
 
       try {
+        // Convert HEIC files to JPEG
+        if (file.name.toLowerCase().endsWith('.heic')) {
+          setUploads(prev => prev.map((upload, index) => 
+            index === uploadIndex 
+              ? { ...upload, status: 'processing', progress: 25 }
+              : upload
+          ));
+          file = await convertHeicToJpeg(file);
+        }
+
         // Generate unique filename
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
