@@ -27,7 +27,7 @@ const Index = () => {
                 <Link to="/galleries">All Galleries</Link>
               </Button>
               <Button asChild className="btn-premium text-sm sm:text-base px-3 sm:px-4">
-                <Link to="/auth">Get Started</Link>
+                <Link to="/auth">Log In</Link>
               </Button>
             </div>
           </nav>
@@ -61,9 +61,11 @@ const Index = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" className="btn-premium-outline text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
-                <Play className="mr-2 h-5 w-5" />
-                Watch Demo
+              <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
+                <Link to="/browse">
+                  <Eye className="mr-2 h-5 w-5" />
+                  Browse Galleries
+                </Link>
               </Button>
             </div>
           </div>
@@ -208,12 +210,12 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
                   <Link to="/auth">
-                    Start Your Journey
+                    Log In
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
-                  <Link to="/browse">Browse Examples</Link>
+                  <Link to="/browse">Browse Public Galleries</Link>
                 </Button>
               </div>
             </div>

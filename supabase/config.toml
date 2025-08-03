@@ -1,1 +1,16 @@
 project_id = "xcucqsonzfovlcxktxiy"
+
+[functions.gallery-auth]
+verify_jwt = false
+
+[functions.gallery-session]
+verify_jwt = false
+
+[functions.image-analytics]
+verify_jwt = false
+
+[functions.anonymous-favorites]
+verify_jwt = false
+
+[functions.security-monitor]
+verify_jwt = false

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Download, Eye, Square, CheckSquare, Heart, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { FavoriteButton } from './FavoriteButton';
+import AnonymousFavoriteButton from './AnonymousFavoriteButton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,6 +25,7 @@ interface MasonryGalleryProps {
   onFavoriteChange: (imageId: string, isFavorited: boolean) => void;
   onImageView: (imageId: string) => void;
   isPublicGallery?: boolean;
+  sessionToken?: string | null;
 }
 
 export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
@@ -32,7 +34,8 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
   favoriteImageIds,
   onFavoriteChange,
   onImageView,
-  isPublicGallery = false
+  isPublicGallery = false,
+  sessionToken
 }) => {
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -264,13 +267,23 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
 
             {/* Premium Favorite Button */}
             <div className={`favorite-btn ${favoriteImageIds.has(image.id) ? 'active' : ''}`}>
-              <FavoriteButton
-                galleryId={galleryId}
-                imageId={image.id}
-                isFavorited={favoriteImageIds.has(image.id)}
-                onFavoriteChange={onFavoriteChange}
-                isPublicGallery={isPublicGallery}
-              />
+              {sessionToken ? (
+                <AnonymousFavoriteButton
+                  galleryId={galleryId}
+                  imageId={image.id}
+                  sessionToken={sessionToken}
+                  isFavorited={favoriteImageIds.has(image.id)}
+                  onFavoriteChange={onFavoriteChange}
+                />
+              ) : (
+                <FavoriteButton
+                  galleryId={galleryId}
+                  imageId={image.id}
+                  isFavorited={favoriteImageIds.has(image.id)}
+                  onFavoriteChange={onFavoriteChange}
+                  isPublicGallery={isPublicGallery}
+                />
+              )}
             </div>
           </div>
         ))}
@@ -334,13 +347,23 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
               
               {/* Favorite Button */}
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                <FavoriteButton
-                  galleryId={galleryId}
-                  imageId={lightboxImage.id}
-                  isFavorited={favoriteImageIds.has(lightboxImage.id)}
-                  onFavoriteChange={onFavoriteChange}
-                  isPublicGallery={isPublicGallery}
-                />
+                {sessionToken ? (
+                  <AnonymousFavoriteButton
+                    galleryId={galleryId}
+                    imageId={lightboxImage.id}
+                    sessionToken={sessionToken}
+                    isFavorited={favoriteImageIds.has(lightboxImage.id)}
+                    onFavoriteChange={onFavoriteChange}
+                  />
+                ) : (
+                  <FavoriteButton
+                    galleryId={galleryId}
+                    imageId={lightboxImage.id}
+                    isFavorited={favoriteImageIds.has(lightboxImage.id)}
+                    onFavoriteChange={onFavoriteChange}
+                    isPublicGallery={isPublicGallery}
+                  />
+                )}
               </div>
 
               {/* Image Counter */}

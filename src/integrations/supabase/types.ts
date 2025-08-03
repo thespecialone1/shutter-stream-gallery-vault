@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      anonymous_favorites: {
+        Row: {
+          client_ip: unknown | null
+          created_at: string
+          gallery_id: string
+          id: string
+          image_id: string
+          session_token: string
+        }
+        Insert: {
+          client_ip?: unknown | null
+          created_at?: string
+          gallery_id: string
+          id?: string
+          image_id: string
+          session_token: string
+        }
+        Update: {
+          client_ip?: unknown | null
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          image_id?: string
+          session_token?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -512,6 +539,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_anonymous_favorites: {
+        Args: { p_gallery_id: string; p_session_token: string }
+        Returns: {
+          image_id: string
+          created_at: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -567,6 +601,15 @@ export type Database = {
       }
       rotate_gallery_session: {
         Args: { gallery_id: string; old_session_token: string }
+        Returns: Json
+      }
+      toggle_anonymous_favorite: {
+        Args: {
+          p_gallery_id: string
+          p_image_id: string
+          p_session_token: string
+          p_client_ip?: unknown
+        }
         Returns: Json
       }
       validate_gallery_session: {

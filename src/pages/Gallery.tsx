@@ -11,6 +11,8 @@ import { Camera, Lock, ArrowLeft, Eye, EyeOff, Heart, Star, Calendar, User, Spar
 import { Link } from "react-router-dom";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { FavoritesView } from "@/components/FavoritesView";
+import AnonymousFavoriteButton from "@/components/AnonymousFavoriteButton";
+import AnonymousFavoritesView from "@/components/AnonymousFavoritesView";
 import { MasonryGallery } from "@/components/MasonryGallery";
 import { ImageGridSkeleton, SectionTabsSkeleton, FavoritesViewSkeleton } from "@/components/SkeletonLoader";
 
@@ -56,6 +58,8 @@ const Gallery = () => {
   const [authLoading, setAuthLoading] = useState(false);
   const [activeSection, setActiveSection] = useState("all");
   const [contentLoading, setContentLoading] = useState(false);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [anonymousFavorites, setAnonymousFavorites] = useState<Set<string>>(new Set());
 
   // Premium section navigation items
   const sectionNavItems = [
@@ -230,6 +234,7 @@ const Gallery = () => {
       if (data.success) {
         setIsAuthenticated(true);
         setGallery(data.gallery);
+        setSessionToken(sessionToken);
         loadGalleryContent();
       } else {
         // Session invalid, clean up
@@ -307,6 +312,7 @@ const Gallery = () => {
         // Store session token securely in sessionStorage (not localStorage to prevent manipulation)
         sessionStorage.setItem(`gallery_session_${id}`, data.sessionToken);
         sessionStorage.setItem(`gallery_expires_${id}`, data.expiresAt);
+        setSessionToken(data.sessionToken);
         
         setIsAuthenticated(true);
         toast({
@@ -566,6 +572,7 @@ const Gallery = () => {
                 onFavoriteChange={handleFavoriteChange}
                 onImageView={(imageId) => logImageAccess(imageId, 'image_viewed')}
                 isPublicGallery={gallery!.is_public}
+                sessionToken={sessionToken}
               />
             )}
           </TabsContent>
@@ -573,6 +580,12 @@ const Gallery = () => {
           <TabsContent value="favorites" className="mt-8 fade-in">
             {contentLoading ? (
               <FavoritesViewSkeleton />
+            ) : sessionToken ? (
+              <AnonymousFavoritesView 
+                galleryId={gallery!.id} 
+                sessionToken={sessionToken}
+                images={images}
+              />
             ) : (
               <FavoritesView galleryId={gallery!.id} />
             )}
