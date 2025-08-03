@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Search, Calendar, User, Heart, ArrowRight, Sparkles, Eye, Globe, Lock } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Camera, Search, Calendar, User, Heart, ArrowRight, Sparkles, Eye } from "lucide-react";
 
 type Gallery = {
   id: string;
@@ -14,26 +16,38 @@ type Gallery = {
   client_name: string;
   created_at: string;
   is_public: boolean;
+  photographer_id?: string;
 };
 
 const Galleries = () => {
+  const { user } = useAuth();
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showMyGalleries, setShowMyGalleries] = useState(false);
 
   useEffect(() => {
     loadGalleries();
-  }, []);
+  }, [showMyGalleries, user]);
 
   const loadGalleries = async () => {
     try {
       setLoading(true);
-      // Include is_public field for privacy toggle
-      const { data, error } = await supabase
+      let query = supabase
         .from('galleries')
-        .select('id, name, description, client_name, created_at, is_public')
-        .order('created_at', { ascending: false })
-        .limit(50); // Limit to prevent large data loads
+        .select('id, name, description, client_name, created_at, is_public, photographer_id');
+
+      if (showMyGalleries && user) {
+        // Show user's own galleries
+        query = query.eq('photographer_id', user.id);
+      } else {
+        // Show public galleries
+        query = query.eq('is_public', true);
+      }
+
+      query = query.order('created_at', { ascending: false }).limit(50);
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching galleries:', error);
@@ -60,29 +74,6 @@ const Galleries = () => {
       month: "long",
       day: "numeric",
     });
-  };
-
-  const handlePrivacyToggle = async (galleryId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('galleries')
-        .update({ is_public: !currentStatus })
-        .eq('id', galleryId);
-
-      if (error) {
-        console.error('Error updating gallery privacy:', error);
-        return;
-      }
-
-      // Update local state
-      setGalleries(galleries.map(gallery => 
-        gallery.id === galleryId 
-          ? { ...gallery, is_public: !currentStatus }
-          : gallery
-      ));
-    } catch (error) {
-      console.error('Error updating gallery privacy:', error);
-    }
   };
 
   return (
@@ -119,13 +110,32 @@ const Galleries = () => {
             </div>
             
             <h2 className="heading-hero mb-6">
-              Available Galleries
+              {showMyGalleries ? "My Galleries" : "Available Galleries"}
             </h2>
             
             <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Browse and access your photo galleries. Each collection tells a unique story, 
-              beautifully preserved and ready to view.
+              {showMyGalleries 
+                ? "Manage and share your beautiful photography collections"
+                : "Browse and access your photo galleries. Each collection tells a unique story, beautifully preserved and ready to view."
+              }
             </p>
+
+            {/* Toggle Switch */}
+            {user && (
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <Label htmlFor="gallery-toggle" className="text-sm font-medium">
+                  Public Galleries
+                </Label>
+                <Switch
+                  id="gallery-toggle"
+                  checked={showMyGalleries}
+                  onCheckedChange={setShowMyGalleries}
+                />
+                <Label htmlFor="gallery-toggle" className="text-sm font-medium">
+                  My Galleries
+                </Label>
+              </div>
+            )}
 
             {/* Premium Search */}
             <div className="relative max-w-md mx-auto">
@@ -190,7 +200,7 @@ const Galleries = () => {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="heading-lg">
-                  {searchTerm ? "Search Results" : "All Galleries"}
+                  {searchTerm ? "Search Results" : (showMyGalleries ? "My Galleries" : "Public Galleries")}
                 </h3>
                 <p className="text-muted-foreground mt-1">
                   {filteredGalleries.length} {filteredGalleries.length === 1 ? "gallery" : "galleries"} found
@@ -231,24 +241,6 @@ const Galleries = () => {
                     <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
                       {gallery.description || "A beautiful collection of moments captured in time."}
                     </p>
-                    
-                    {/* Privacy Toggle */}
-                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        {gallery.is_public ? (
-                          <Globe className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <Lock className="h-4 w-4 text-amber-600" />
-                        )}
-                        <span className="text-sm font-medium">
-                          {gallery.is_public ? "Public" : "Private"}
-                        </span>
-                      </div>
-                      <Switch
-                        checked={gallery.is_public}
-                        onCheckedChange={() => handlePrivacyToggle(gallery.id, gallery.is_public)}
-                      />
-                    </div>
                     
                     <div className="flex items-center justify-between pt-2">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
