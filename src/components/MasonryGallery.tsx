@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -43,11 +43,51 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const getImageUrl = (imagePath: string) => {
     return `${supabase.storage.from("gallery-images").getPublicUrl(imagePath).data.publicUrl}`;
   };
+
+  // Intersection Observer callback for lazy loading
+  const handleImageLoad = useCallback((imageId: string) => {
+    setLoadedImages(prev => new Set([...prev, imageId]));
+  }, []);
+
+  // Setup intersection observer for lazy loading
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const imageId = entry.target.getAttribute('data-image-id');
+            if (imageId && !loadedImages.has(imageId)) {
+              handleImageLoad(imageId);
+              observerRef.current?.unobserve(entry.target);
+            }
+          }
+        });
+      },
+      {
+        rootMargin: '50px', // Start loading 50px before image comes into view
+        threshold: 0.1
+      }
+    );
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [handleImageLoad, loadedImages]);
+
+  // Ref callback for image container observation
+  const imageContainerRef = useCallback((node: HTMLDivElement | null, imageId: string) => {
+    if (node && observerRef.current && !loadedImages.has(imageId)) {
+      node.setAttribute('data-image-id', imageId);
+      observerRef.current.observe(node);
+    }
+  }, [loadedImages]);
 
   const toggleImageSelection = (imageId: string) => {
     setSelectedImages(prev => {
@@ -211,6 +251,7 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
         {images.map((image, index) => (
           <div
             key={image.id}
+            ref={(node) => imageContainerRef(node, image.id)}
             className="masonry-item group relative overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-lg transition-all duration-500"
           >
             {/* Selection Checkbox */}
@@ -231,48 +272,60 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
               className="relative cursor-pointer image-hover-effect"
               onClick={() => openLightbox(image, index)}
             >
-              {isSupportedFormat(image.filename) ? (
-                <img
-                  src={getImageUrl(image.thumbnail_path || image.full_path)}
-                  alt={image.original_filename}
-                  className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                  style={{ 
-                    aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
-                  }}
-                  onError={(e) => {
-                    // If HEIC fails to load, show fallback
-                    if (image.filename.toLowerCase().endsWith('.heic')) {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `
-                          <div class="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px]">
-                            <svg class="w-16 h-16 text-muted-foreground mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground mb-2">HEIC</div>
-                            <p class="text-sm text-muted-foreground text-center truncate max-w-full">${image.original_filename}</p>
-                            <p class="text-xs text-muted-foreground mt-2">Preview not available</p>
-                          </div>
-                        `;
+              {loadedImages.has(image.id) ? (
+                isSupportedFormat(image.filename) ? (
+                  <img
+                    src={getImageUrl(image.thumbnail_path || image.full_path)}
+                    alt={image.original_filename}
+                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105 fade-in"
+                    style={{ 
+                      aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
+                    }}
+                    onError={(e) => {
+                      // If HEIC fails to load, show fallback
+                      if (image.filename.toLowerCase().endsWith('.heic')) {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                            <div class="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px]">
+                              <svg class="w-16 h-16 text-muted-foreground mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                              </svg>
+                              <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground mb-2">HEIC</div>
+                              <p class="text-sm text-muted-foreground text-center truncate max-w-full">${image.original_filename}</p>
+                              <p class="text-xs text-muted-foreground mt-2">Preview not available</p>
+                            </div>
+                          `;
+                        }
                       }
-                    }
-                  }}
-                />
+                    }}
+                  />
+                ) : (
+                  <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px] fade-in">
+                    <FileImage className="w-16 h-16 text-muted-foreground mb-3" />
+                    <Badge variant="secondary" className="mb-2">
+                      {getFormatName(image.filename)}
+                    </Badge>
+                    <p className="text-sm text-muted-foreground text-center truncate max-w-full">
+                      {image.original_filename}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Preview not available
+                    </p>
+                  </div>
+                )
               ) : (
-                <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px]">
-                  <FileImage className="w-16 h-16 text-muted-foreground mb-3" />
-                  <Badge variant="secondary" className="mb-2">
-                    {getFormatName(image.filename)}
-                  </Badge>
-                  <p className="text-sm text-muted-foreground text-center truncate max-w-full">
-                    {image.original_filename}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Preview not available
-                  </p>
+                // Skeleton/placeholder while loading
+                <div 
+                  className="w-full loading-skeleton flex items-center justify-center"
+                  style={{ 
+                    aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : '1',
+                    minHeight: '200px'
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-full bg-muted-foreground/30" />
                 </div>
               )}
               
