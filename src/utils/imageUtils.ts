@@ -25,7 +25,6 @@ export const getDisplayImageUrl = (imageUrl: string, filename: string): string =
 
 /**
  * Check if the browser can display this image format natively
- * Now includes a fallback for existing HEIC files
  */
 export const isSupportedFormat = (filename: string): boolean => {
   const lowercaseFilename = filename.toLowerCase();
@@ -36,8 +35,8 @@ export const isSupportedFormat = (filename: string): boolean => {
     return false;
   }
   
-  // HEIC files may work in some browsers (Safari/iOS), but we'll show them anyway
-  // since they might display or we have fallback handling
+  // For HEIC files, let's be optimistic and try to display them
+  // Modern browsers (Safari, Chrome) can often handle HEIC
   return supportedFormats.some(format => lowercaseFilename.endsWith(format)) || 
          lowercaseFilename.endsWith('.heic');
 };
