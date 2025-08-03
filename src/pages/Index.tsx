@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Shield, Heart, Sparkles, Image, Users, Download, Eye, Lock, Star, ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
+  const { user, loading } = useAuth();
   return (
     <div className="min-h-screen bg-background">
       {/* Premium Header */}
@@ -23,9 +25,17 @@ const Index = () => {
               <Button variant="ghost" asChild className="hidden md:flex text-muted-foreground hover:text-foreground">
                 <Link to="/browse">Browse Galleries</Link>
               </Button>
-              <Button asChild className="btn-premium text-sm sm:text-base px-3 sm:px-4">
-                <Link to="/auth">Log In</Link>
-              </Button>
+              {!loading && (
+                user ? (
+                  <Button asChild className="btn-premium text-sm sm:text-base px-3 sm:px-4">
+                    <Link to="/admin">Admin Panel</Link>
+                  </Button>
+                ) : (
+                  <Button asChild className="btn-premium text-sm sm:text-base px-3 sm:px-4">
+                    <Link to="/auth">Log In</Link>
+                  </Button>
+                )
+              )}
             </div>
           </nav>
         </div>
@@ -52,12 +62,23 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
-                <Link to="/auth">
-                  Start Creating
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
+              {!loading && (
+                user ? (
+                  <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
+                    <Link to="/admin">
+                      Go to Admin Panel
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
+                    <Link to="/auth">
+                      Start Creating
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                )
+              )}
               <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
                 <Link to="/browse">
                   <Eye className="mr-2 h-5 w-5" />
@@ -205,12 +226,23 @@ const Index = () => {
                 and create unforgettable gallery experiences for their clients.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
-                  <Link to="/auth">
-                    Log In
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
+                {!loading && (
+                  user ? (
+                    <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
+                      <Link to="/admin">
+                        Go to Admin Panel
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button size="lg" asChild className="btn-premium text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
+                      <Link to="/auth">
+                        Log In
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Link>
+                    </Button>
+                  )
+                )}
                 <Button variant="outline" size="lg" asChild className="btn-premium-outline text-base px-8 sm:px-10 py-4 w-full sm:w-auto">
                   <Link to="/browse">Browse Public Galleries</Link>
                 </Button>
