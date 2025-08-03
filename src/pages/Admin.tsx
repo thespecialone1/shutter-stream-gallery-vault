@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, LogOut, User, BarChart3 } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, LogOut, User, BarChart3, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,7 @@ export default function Admin() {
   const [isPasswordVerified, setIsPasswordVerified] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [isPublicGallery, setIsPublicGallery] = useState(false);
+  const [isConvertingHeic, setIsConvertingHeic] = useState(false);
   const { toast } = useToast();
   const { user, signOut } = useAuth();
 
@@ -183,6 +184,48 @@ export default function Admin() {
         description: "Failed to verify password",
         variant: "destructive"
       });
+    }
+  };
+
+  const convertHeicImages = async () => {
+    if (!selectedGallery) return;
+
+    setIsConvertingHeic(true);
+    
+    try {
+      toast({
+        title: "Converting HEIC Images",
+        description: "Starting batch conversion of HEIC files to JPEG..."
+      });
+
+      const { data, error } = await supabase.functions.invoke('batch-convert-heic', {
+        body: { galleryId: selectedGallery.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Conversion Complete",
+        description: `Successfully converted ${data.converted} out of ${data.total} HEIC images`
+      });
+
+      if (data.errors > 0) {
+        toast({
+          title: "Some Conversions Failed",
+          description: `${data.errors} images failed to convert. Check the browser console for details.`,
+          variant: "destructive"
+        });
+        console.log('Conversion results:', data.results);
+      }
+    } catch (error) {
+      console.error('HEIC conversion error:', error);
+      toast({
+        title: "Conversion Failed",
+        description: "Failed to convert HEIC images. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsConvertingHeic(false);
     }
   };
 
@@ -389,15 +432,46 @@ export default function Admin() {
                       </p>
                     </CardHeader>
                     <CardContent>
-                      <ImageUpload
-                        galleryId={selectedGallery.id}
-                        onUploadComplete={(images) => {
-                          toast({
-                            title: "Upload complete",
-                            description: `Uploaded ${images.length} image(s) successfully`
-                          });
-                        }}
-                      />
+                      <div className="space-y-4">
+                        <ImageUpload
+                          galleryId={selectedGallery.id}
+                          onUploadComplete={(images) => {
+                            toast({
+                              title: "Upload complete",
+                              description: `Uploaded ${images.length} image(s) successfully`
+                            });
+                          }}
+                        />
+                        
+                        <div className="border-t pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="font-medium">HEIC Image Conversion</h4>
+                              <p className="text-sm text-muted-foreground">
+                                Convert existing HEIC images to JPEG for better browser compatibility
+                              </p>
+                            </div>
+                            <Button 
+                              onClick={convertHeicImages}
+                              disabled={isConvertingHeic}
+                              variant="outline"
+                              size="sm"
+                            >
+                              {isConvertingHeic ? (
+                                <>
+                                  <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
+                                  Converting...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCcw className="w-4 h-4 mr-2" />
+                                  Convert HEIC Files
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
