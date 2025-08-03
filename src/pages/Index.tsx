@@ -23,9 +23,6 @@ const Index = () => {
               <Button variant="ghost" asChild className="hidden md:flex text-muted-foreground hover:text-foreground">
                 <Link to="/browse">Browse Galleries</Link>
               </Button>
-              <Button variant="ghost" asChild className="hidden sm:flex text-muted-foreground hover:text-foreground">
-                <Link to="/galleries">All Galleries</Link>
-              </Button>
               <Button asChild className="btn-premium text-sm sm:text-base px-3 sm:px-4">
                 <Link to="/auth">Log In</Link>
               </Button>

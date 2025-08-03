@@ -66,6 +66,16 @@ const Gallery = () => {
     if (id) {
       loadGallery();
       
+      // Check for invite token in URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const inviteToken = urlParams.get('invite');
+      
+      if (inviteToken) {
+        // Validate invite token
+        validateInviteToken(inviteToken);
+        return;
+      }
+      
       // Check if there's a valid session token for this gallery
       const sessionToken = sessionStorage.getItem(`gallery_session_${id}`);
       const expiresAt = sessionStorage.getItem(`gallery_expires_${id}`);
@@ -101,7 +111,7 @@ const Gallery = () => {
           description: "Gallery not found",
           variant: "destructive",
         });
-        navigate("/galleries");
+        navigate("/browse");
         return;
       }
 
@@ -119,7 +129,7 @@ const Gallery = () => {
         description: "Failed to load gallery",
         variant: "destructive",
       });
-      navigate("/galleries");
+      navigate("/browse");
     } finally {
       setLoading(false);
     }
@@ -166,6 +176,54 @@ const Gallery = () => {
       console.error("Error loading gallery content:", error);
     } finally {
       setContentLoading(false);
+    }
+  };
+
+  const validateInviteToken = async (inviteToken: string) => {
+    try {
+      const { data, error } = await supabase.rpc('validate_gallery_invite', {
+        invite_token: inviteToken
+      });
+
+      if (error) throw error;
+
+      const response = data as any;
+      if (response?.success) {
+        setGallery(response.gallery);
+        setIsAuthenticated(true);
+        
+        // Store a temporary session for this visit
+        const tempSessionId = `invite_${Date.now()}`;
+        sessionStorage.setItem(`gallery_session_${id}`, tempSessionId);
+        sessionStorage.setItem(`gallery_expires_${id}`, response.invite_expires);
+        setSessionToken(tempSessionId);
+        
+        // Remove invite parameter from URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+        
+        loadGalleryContent();
+        
+        toast({
+          title: "Access granted",
+          description: "Welcome to the gallery via invite!",
+        });
+      } else {
+        toast({
+          title: "Invalid invite",
+          description: response?.message || "This invite link is invalid or expired",
+          variant: "destructive",
+        });
+        navigate("/browse");
+      }
+    } catch (error) {
+      console.error('Error validating invite:', error);
+      toast({
+        title: "Error",
+        description: "Failed to validate invite link",
+        variant: "destructive",
+      });
+      navigate("/browse");
     }
   };
 
@@ -338,7 +396,7 @@ const Gallery = () => {
             The gallery you're looking for doesn't exist or has been removed.
           </p>
           <Button asChild className="btn-premium">
-            <Link to="/galleries">Browse Galleries</Link>
+            <Link to="/browse">Browse Galleries</Link>
           </Button>
         </div>
       </div>
@@ -351,7 +409,7 @@ const Gallery = () => {
         {/* Premium Header */}
         <header className="nav-premium">
           <div className="container mx-auto px-6 py-4">
-            <Link to="/galleries" className="inline-flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group">
+            <Link to="/browse" className="inline-flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group">
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               <span>Back to Galleries</span>
             </Link>
@@ -438,7 +496,7 @@ const Gallery = () => {
       <header className="nav-premium">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/galleries" className="inline-flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group">
+            <Link to="/browse" className="inline-flex items-center gap-3 text-muted-foreground hover:text-foreground transition-colors group">
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               <span>Back to Galleries</span>
             </Link>

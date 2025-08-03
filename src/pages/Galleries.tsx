@@ -79,9 +79,6 @@ const Galleries = () => {
               <Button variant="outline" asChild className="btn-premium-outline">
                 <Link to="/admin">Admin Panel</Link>
               </Button>
-              <Button asChild className="btn-premium">
-                <Link to="/auth">Get Started</Link>
-              </Button>
             </div>
           </div>
         </div>

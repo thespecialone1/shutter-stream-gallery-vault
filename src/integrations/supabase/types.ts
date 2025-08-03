@@ -271,6 +271,50 @@ export type Database = {
           },
         ]
       }
+      gallery_invites: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string
+          gallery_id: string
+          id: string
+          invite_token: string
+          is_active: boolean
+          max_uses: number | null
+          used_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          gallery_id: string
+          id?: string
+          invite_token: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          gallery_id?: string
+          id?: string
+          invite_token?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_invites_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       image_variants: {
         Row: {
           created_at: string
@@ -526,6 +570,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_gallery_invite: {
+        Args: {
+          gallery_id: string
+          max_uses?: number
+          expires_in_days?: number
+        }
+        Returns: Json
+      }
       create_gallery_session: {
         Args: {
           gallery_id: string
@@ -610,6 +662,10 @@ export type Database = {
           p_session_token: string
           p_client_ip?: unknown
         }
+        Returns: Json
+      }
+      validate_gallery_invite: {
+        Args: { invite_token: string }
         Returns: Json
       }
       validate_gallery_session: {

@@ -1,43 +1,66 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Eye, Users, Camera, Sparkles, ArrowRight } from "lucide-react";
+import { Search, Eye, Users, Camera, Sparkles, ArrowRight, Share2, Copy, CheckCircle, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
-interface PublicGallery {
+interface Gallery {
   id: string;
   name: string;
   description: string | null;
   client_name: string;
   created_at: string;
   view_count: number;
+  is_public: boolean;
+  photographer_id?: string;
 }
 
 export default function BrowseGalleries() {
-  const [galleries, setGalleries] = useState<PublicGallery[]>([]);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showMyGalleries, setShowMyGalleries] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [selectedGalleryId, setSelectedGalleryId] = useState<string | null>(null);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [generatedInvite, setGeneratedInvite] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPublicGalleries();
-  }, []);
+    loadGalleries();
+  }, [showMyGalleries, user]);
 
-  const loadPublicGalleries = async () => {
+  const loadGalleries = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      let query = supabase
         .from('galleries')
-        .select('id, name, description, client_name, created_at, view_count')
-        .eq('is_public', true)
-        .order('view_count', { ascending: false })
-        .limit(50);
+        .select('id, name, description, client_name, created_at, view_count, is_public, photographer_id');
 
+      if (showMyGalleries && user) {
+        // Show user's own galleries
+        query = query.eq('photographer_id', user.id);
+      } else {
+        // Show public galleries
+        query = query.eq('is_public', true);
+      }
+
+      query = query.order('view_count', { ascending: false }).limit(50);
+
+      const { data, error } = await query;
       if (error) throw error;
       setGalleries(data || []);
     } catch (error) {
-      console.error('Error loading public galleries:', error);
+      console.error('Error loading galleries:', error);
     } finally {
       setLoading(false);
     }
@@ -48,6 +71,60 @@ export default function BrowseGalleries() {
       await supabase.rpc('increment_gallery_views', { gallery_id: galleryId });
     } catch (error) {
       console.error('Error incrementing view count:', error);
+    }
+  };
+
+  const generateInvite = async (galleryId: string) => {
+    if (!user) return;
+    
+    setGeneratingInvite(true);
+    try {
+      const { data, error } = await supabase.rpc('create_gallery_invite', {
+        gallery_id: galleryId,
+        max_uses: null,
+        expires_in_days: 30
+      });
+
+      if (error) throw error;
+      
+      const response = data as any;
+      if (response?.success) {
+        const inviteUrl = `${window.location.origin}/gallery/${galleryId}?invite=${response.invite_token}`;
+        setGeneratedInvite(inviteUrl);
+      } else {
+        toast({
+          title: "Error",
+          description: response?.message || "Failed to generate invite",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating invite:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate invite link",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
+  const copyInviteLink = async () => {
+    if (!generatedInvite) return;
+    
+    try {
+      await navigator.clipboard.writeText(generatedInvite);
+      toast({
+        title: "Copied!",
+        description: "Invite link copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link",
+        variant: "destructive",
+      });
     }
   };
 
@@ -80,12 +157,15 @@ export default function BrowseGalleries() {
               </div>
             </Link>
             <div className="flex items-center gap-4">
-              <Button variant="outline" asChild className="btn-premium-outline">
-                <Link to="/galleries">All Galleries</Link>
-              </Button>
-              <Button asChild className="btn-premium">
-                <Link to="/auth">Sign In</Link>
-              </Button>
+              {user ? (
+                <Button variant="outline" asChild className="btn-premium-outline">
+                  <Link to="/admin">Admin Panel</Link>
+                </Button>
+              ) : (
+                <Button asChild className="btn-premium">
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -101,12 +181,32 @@ export default function BrowseGalleries() {
             </div>
             
             <h2 className="heading-hero mb-6">
-              Browse Public Galleries
+              {showMyGalleries ? "My Galleries" : "Browse Galleries"}
             </h2>
             
-            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Discover stunning photography collections shared by photographers worldwide
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              {showMyGalleries 
+                ? "Manage and share your beautiful photography collections"
+                : "Discover stunning photography collections shared by photographers worldwide"
+              }
             </p>
+
+            {/* Toggle Switch */}
+            {user && (
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <Label htmlFor="gallery-toggle" className="text-sm font-medium">
+                  Public Galleries
+                </Label>
+                <Switch
+                  id="gallery-toggle"
+                  checked={showMyGalleries}
+                  onCheckedChange={setShowMyGalleries}
+                />
+                <Label htmlFor="gallery-toggle" className="text-sm font-medium">
+                  My Galleries
+                </Label>
+              </div>
+            )}
 
             {/* Premium Search */}
             <div className="relative max-w-md mx-auto">
@@ -175,7 +275,7 @@ export default function BrowseGalleries() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="heading-lg">
-                  {searchTerm ? "Search Results" : "Public Galleries"}
+                  {searchTerm ? "Search Results" : (showMyGalleries ? "My Galleries" : "Public Galleries")}
                 </h3>
                 <p className="text-muted-foreground mt-1">
                   {filteredGalleries.length} {filteredGalleries.length === 1 ? "gallery" : "galleries"} found
@@ -206,7 +306,7 @@ export default function BrowseGalleries() {
                           {gallery.name}
                         </CardTitle>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                          <Users className="h-3 w-3" />
+                          <User className="h-3 w-3" />
                           <span className="truncate">{gallery.client_name}</span>
                         </div>
                       </div>
@@ -225,13 +325,30 @@ export default function BrowseGalleries() {
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span>{formatDate(gallery.created_at)}</span>
                       </div>
-                      <Button asChild size="sm" className="btn-premium group/btn" onClick={() => incrementViewCount(gallery.id)}>
-                        <Link to={`/gallery/${gallery.id}`} className="flex items-center gap-2">
-                          <Eye className="h-4 w-4" />
-                          <span>View</span>
-                          <ArrowRight className="h-3 w-3 group-hover/btn:translate-x-0.5 transition-transform" />
-                        </Link>
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {showMyGalleries && user && gallery.photographer_id === user.id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedGalleryId(gallery.id);
+                              setGeneratedInvite(null);
+                              setInviteDialogOpen(true);
+                            }}
+                            className="flex items-center gap-2"
+                          >
+                            <Share2 className="h-4 w-4" />
+                            Invite
+                          </Button>
+                        )}
+                        <Button asChild size="sm" className="btn-premium group/btn" onClick={() => incrementViewCount(gallery.id)}>
+                          <Link to={`/gallery/${gallery.id}`} className="flex items-center gap-2">
+                            <Eye className="h-4 w-4" />
+                            <span>View</span>
+                            <ArrowRight className="h-3 w-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -249,6 +366,45 @@ export default function BrowseGalleries() {
           </div>
         )}
       </div>
+
+      {/* Invite Dialog */}
+      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+        <DialogContent className="card-premium">
+          <DialogHeader>
+            <DialogTitle className="heading-md">Share Gallery</DialogTitle>
+            <DialogDescription>
+              Generate an invite link to share this gallery with others. 
+              The link will be valid for 30 days.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {!generatedInvite ? (
+              <Button
+                onClick={() => selectedGalleryId && generateInvite(selectedGalleryId)}
+                disabled={generatingInvite}
+                className="w-full btn-premium"
+              >
+                {generatingInvite ? "Generating..." : "Generate Invite Link"}
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  Invite link generated successfully!
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <code className="text-sm break-all">{generatedInvite}</code>
+                </div>
+                <Button onClick={copyInviteLink} className="w-full btn-premium">
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Link
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer CTA */}
       <section className="py-20 bg-gradient-to-t from-accent/10 to-background border-t border-border/50">
@@ -272,9 +428,11 @@ export default function BrowseGalleries() {
               <Button asChild className="btn-premium">
                 <Link to="/auth">Get Started</Link>
               </Button>
-              <Button variant="outline" asChild className="btn-premium-outline">
-                <Link to="/galleries">Browse All</Link>
-              </Button>
+              {!user && (
+                <Button variant="outline" asChild className="btn-premium-outline">
+                  <Link to="/auth">Sign Up Free</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
