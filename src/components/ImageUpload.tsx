@@ -35,7 +35,9 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files).filter(file => 
-      file.type.startsWith('image/')
+      file.type.startsWith('image/') || 
+      file.name.toLowerCase().endsWith('.heic') || 
+      file.name.toLowerCase().endsWith('.dng')
     );
     
     if (files.length > 0) {
@@ -214,7 +216,7 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
               const input = document.createElement('input');
               input.type = 'file';
               input.multiple = true;
-              input.accept = 'image/*';
+              input.accept = 'image/*,.heic,.dng';
               input.onchange = (e) => {
                 const files = Array.from((e.target as HTMLInputElement).files || []);
                 if (files.length > 0) {

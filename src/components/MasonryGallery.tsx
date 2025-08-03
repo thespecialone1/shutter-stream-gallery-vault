@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Eye, Square, CheckSquare, Heart, X, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Download, Eye, Square, CheckSquare, Heart, X, ArrowLeft, ArrowRight, FileImage } from 'lucide-react';
 import { FavoriteButton } from './FavoriteButton';
 import AnonymousFavoriteButton from './AnonymousFavoriteButton';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getDisplayImageUrl, isSupportedFormat, getFormatName } from '@/utils/imageUtils';
 
 type GalleryImage = {
   id: string;
@@ -229,15 +231,30 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
               className="relative cursor-pointer image-hover-effect"
               onClick={() => openLightbox(image, index)}
             >
-              <img
-                src={getImageUrl(image.thumbnail_path || image.full_path)}
-                alt={image.original_filename}
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-                style={{ 
-                  aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
-                }}
-              />
+              {isSupportedFormat(image.filename) ? (
+                <img
+                  src={getImageUrl(image.thumbnail_path || image.full_path)}
+                  alt={image.original_filename}
+                  className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                  style={{ 
+                    aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
+                  }}
+                />
+              ) : (
+                <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px]">
+                  <FileImage className="w-16 h-16 text-muted-foreground mb-3" />
+                  <Badge variant="secondary" className="mb-2">
+                    {getFormatName(image.filename)}
+                  </Badge>
+                  <p className="text-sm text-muted-foreground text-center truncate max-w-full">
+                    {image.original_filename}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Preview not available
+                  </p>
+                </div>
+              )}
               
               {/* Premium Hover Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -313,12 +330,35 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
             </Button>
 
             {/* Main Image */}
-            <img
-              src={getImageUrl(lightboxImage.full_path)}
-              alt={lightboxImage.original_filename}
-              className="max-w-full max-h-full object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
+            {isSupportedFormat(lightboxImage.filename) ? (
+              <img
+                src={getImageUrl(lightboxImage.full_path)}
+                alt={lightboxImage.original_filename}
+                className="max-w-full max-h-full object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div className="max-w-2xl bg-card rounded-lg p-12 text-center">
+                <FileImage className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
+                <Badge variant="secondary" className="mb-4 text-lg px-4 py-2">
+                  {getFormatName(lightboxImage.filename)}
+                </Badge>
+                <h3 className="text-xl font-semibold mb-2">{lightboxImage.original_filename}</h3>
+                <p className="text-muted-foreground mb-6">
+                  This format cannot be previewed in the browser, but you can download the original file.
+                </p>
+                <Button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    downloadImage(lightboxImage);
+                  }}
+                  className="btn-premium"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Original File
+                </Button>
+              </div>
+            )}
             
             {/* Control Bar */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/20 backdrop-blur-md rounded-full px-6 py-3">

@@ -25,6 +25,9 @@ interface Gallery {
 
 export default function BrowseGalleries() {
   const { user } = useAuth();
+  
+  // Debug user state
+  console.log('BrowseGalleries - User state:', { user: !!user, userId: user?.id });
   const { toast } = useToast();
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
