@@ -63,35 +63,36 @@ const Gallery = () => {
 
 
   useEffect(() => {
-    if (id) {
-      loadGallery();
+    if (!id) return;
+
+    // Check for invite token in URL params FIRST
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteToken = urlParams.get('invite');
+    
+    if (inviteToken) {
+      // Validate invite token and require password afterwards
+      validateInviteToken(inviteToken);
+      return;
+    }
+
+    // Otherwise, load gallery normally
+    loadGallery();
+    
+    // Check if there's a valid session token for this gallery
+    const existingSessionToken = sessionStorage.getItem(`gallery_session_${id}`);
+    const expiresAt = sessionStorage.getItem(`gallery_expires_${id}`);
+    
+    if (existingSessionToken && expiresAt) {
+      const now = new Date();
+      const expiry = new Date(expiresAt);
       
-      // Check for invite token in URL params
-      const urlParams = new URLSearchParams(window.location.search);
-      const inviteToken = urlParams.get('invite');
-      
-      if (inviteToken) {
-        // Validate invite token
-        validateInviteToken(inviteToken);
-        return;
-      }
-      
-      // Check if there's a valid session token for this gallery
-      const sessionToken = sessionStorage.getItem(`gallery_session_${id}`);
-      const expiresAt = sessionStorage.getItem(`gallery_expires_${id}`);
-      
-      if (sessionToken && expiresAt) {
-        const now = new Date();
-        const expiry = new Date(expiresAt);
-        
-        if (now < expiry) {
-          // Validate session with server
-          validateSession(sessionToken);
-        } else {
-          // Session expired, clean up
-          sessionStorage.removeItem(`gallery_session_${id}`);
-          sessionStorage.removeItem(`gallery_expires_${id}`);
-        }
+      if (now < expiry) {
+        // Validate session with server
+        validateSession(existingSessionToken);
+      } else {
+        // Session expired, clean up
+        sessionStorage.removeItem(`gallery_session_${id}`);
+        sessionStorage.removeItem(`gallery_expires_${id}`);
       }
     }
   }, [id]);
@@ -189,24 +190,18 @@ const Gallery = () => {
 
       const response = data as any;
       if (response?.success) {
+        // Preload gallery info from invite, but still require password for access
         setGallery(response.gallery);
-        setIsAuthenticated(true);
-        
-        // Store a temporary session for this visit
-        const tempSessionId = `invite_${Date.now()}`;
-        sessionStorage.setItem(`gallery_session_${id}`, tempSessionId);
-        sessionStorage.setItem(`gallery_expires_${id}`, response.invite_expires);
-        setSessionToken(tempSessionId);
-        
+        setIsAuthenticated(false);
+        setSessionToken(null);
+
         // Remove invite parameter from URL
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
-        
-        loadGalleryContent();
-        
+
         toast({
-          title: "Access granted",
-          description: "Welcome to the gallery via invite!",
+          title: "Invite verified",
+          description: "Please enter the gallery password to continue",
         });
       } else {
         toast({
@@ -322,10 +317,18 @@ const Gallery = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Store session token securely in sessionStorage (not localStorage to prevent manipulation)
-        sessionStorage.setItem(`gallery_session_${id}`, data.sessionToken);
-        sessionStorage.setItem(`gallery_expires_${id}`, data.expiresAt);
-        setSessionToken(data.sessionToken);
+        // Normalize keys from edge function (snake_case or camelCase)
+        const sToken = data.sessionToken ?? data.session_token;
+        const expAt = data.expiresAt ?? data.expires_at;
+
+        if (!sToken) {
+          throw new Error('Missing session token from server');
+        }
+        
+        // Store session token securely in sessionStorage (not localStorage)
+        sessionStorage.setItem(`gallery_session_${id}`!, sToken);
+        if (expAt) sessionStorage.setItem(`gallery_expires_${id}`!, expAt);
+        setSessionToken(sToken);
         
         setIsAuthenticated(true);
         toast({

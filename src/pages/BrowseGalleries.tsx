@@ -377,7 +377,7 @@ export default function BrowseGalleries() {
             <DialogTitle className="heading-md">Share Gallery</DialogTitle>
             <DialogDescription>
               Generate an invite link to share this gallery with others. 
-              The link will be valid for 30 days.
+              The link will be valid for 30 days. Recipients will still need the gallery password to access.
             </DialogDescription>
           </DialogHeader>
           

@@ -15,6 +15,7 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { ManageGalleryContent } from '@/components/ManageGalleryContent';
 import { GallerySettings } from '@/components/GallerySettings';
 import { GalleryAnalytics } from '@/components/GalleryAnalytics';
+import AnonymousFavoritesAnalytics from '@/components/AnonymousFavoritesAnalytics';
 import { Link } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
@@ -463,6 +464,7 @@ export default function Admin() {
                     galleryId={selectedGallery.id} 
                     galleryName={selectedGallery.name}
                   />
+                  <AnonymousFavoritesAnalytics galleryId={selectedGallery.id} />
                 </TabsContent>
 
                 <TabsContent value="upload" className="space-y-4">
