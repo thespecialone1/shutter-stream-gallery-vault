@@ -219,6 +219,9 @@ const Gallery = () => {
         variant: "destructive",
       });
       navigate("/browse");
+    } finally {
+      // Ensure we exit the loading state so the password screen can render
+      setLoading(false);
     }
   };
 
