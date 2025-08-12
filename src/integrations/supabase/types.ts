@@ -278,7 +278,8 @@ export type Database = {
           expires_at: string
           gallery_id: string
           id: string
-          invite_token: string
+          invite_token: string | null
+          invite_token_hash: string | null
           is_active: boolean
           max_uses: number | null
           used_count: number
@@ -289,7 +290,8 @@ export type Database = {
           expires_at?: string
           gallery_id: string
           id?: string
-          invite_token: string
+          invite_token?: string | null
+          invite_token_hash?: string | null
           is_active?: boolean
           max_uses?: number | null
           used_count?: number
@@ -300,7 +302,8 @@ export type Database = {
           expires_at?: string
           gallery_id?: string
           id?: string
-          invite_token?: string
+          invite_token?: string | null
+          invite_token_hash?: string | null
           is_active?: boolean
           max_uses?: number | null
           used_count?: number
@@ -554,7 +557,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      gallery_invites_safe: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          gallery_id: string | null
+          id: string | null
+          is_active: boolean | null
+          max_uses: number | null
+          used_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          gallery_id?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          max_uses?: number | null
+          used_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          gallery_id?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          max_uses?: number | null
+          used_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_invites_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_rate_limit: {
