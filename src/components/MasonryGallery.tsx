@@ -18,6 +18,8 @@ type GalleryImage = {
   width: number | null;
   height: number | null;
   original_filename: string;
+  signed_thumbnail_url?: string | null;
+  signed_full_url?: string | null;
 };
 
 interface MasonryGalleryProps {
@@ -44,12 +46,13 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-  const { toast } = useToast();
+const { toast } = useToast();
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const [heicFallback, setHeicFallback] = useState<Set<string>>(new Set());
 
-  const getImageUrl = (imagePath: string) => {
-    return `${supabase.storage.from("gallery-images").getPublicUrl(imagePath).data.publicUrl}`;
-  };
+const publicUrl = (path: string) => `${supabase.storage.from('gallery-images').getPublicUrl(path).data.publicUrl}`;
+  const getThumbUrl = (image: GalleryImage) => image.signed_thumbnail_url || (image.thumbnail_path ? publicUrl(image.thumbnail_path) : publicUrl(image.full_path));
+  const getFullUrl = (image: GalleryImage) => image.signed_full_url || publicUrl(image.full_path);
 
   // Intersection Observer callback for lazy loading
   const handleImageLoad = useCallback((imageId: string) => {
@@ -121,7 +124,7 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
 
   const downloadImage = async (image: GalleryImage) => {
     try {
-      const imageUrl = getImageUrl(image.full_path);
+      const imageUrl = getFullUrl(image);
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       
@@ -284,34 +287,30 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
             >
               {loadedImages.has(image.id) ? (
                 isSupportedFormat(image.filename) ? (
-                  <img
-                    src={getImageUrl(image.thumbnail_path || image.full_path)}
-                    alt={image.original_filename}
-                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105 fade-in"
-                    style={{ 
-                      aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
-                    }}
-                    onError={(e) => {
-                      // If HEIC fails to load, show fallback
-                      if (image.filename.toLowerCase().endsWith('.heic')) {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent) {
-                          parent.innerHTML = `
-                            <div class="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px]">
-                              <svg class="w-16 h-16 text-muted-foreground mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                              </svg>
-                              <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary text-secondary-foreground mb-2">HEIC</div>
-                              <p class="text-sm text-muted-foreground text-center truncate max-w-full">${image.original_filename}</p>
-                              <p class="text-xs text-muted-foreground mt-2">Preview not available</p>
-                            </div>
-                          `;
+                  heicFallback.has(image.id) ? (
+                    <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px] fade-in">
+                      <FileImage className="w-16 h-16 text-muted-foreground mb-3" />
+                      <Badge variant="secondary" className="mb-2">HEIC</Badge>
+                      <p className="text-sm text-muted-foreground text-center truncate max-w-full">
+                        {image.original_filename}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">Preview not available</p>
+                    </div>
+                  ) : (
+                    <img
+                      src={getThumbUrl(image)}
+                      alt={image.original_filename}
+                      className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105 fade-in"
+                      style={{ 
+                        aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
+                      }}
+                      onError={() => {
+                        if (image.filename.toLowerCase().endsWith('.heic')) {
+                          setHeicFallback(prev => new Set(prev).add(image.id));
                         }
-                      }
-                    }}
-                  />
+                      }}
+                    />
+                  )
                 ) : (
                   <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px] fade-in">
                     <FileImage className="w-16 h-16 text-muted-foreground mb-3" />
@@ -415,7 +414,7 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
             {/* Main Image */}
             {isSupportedFormat(lightboxImage.filename) ? (
               <img
-                src={getImageUrl(lightboxImage.full_path)}
+                src={getFullUrl(lightboxImage)}
                 alt={lightboxImage.original_filename}
                 className="max-w-[90vw] max-h-[80vh] w-auto h-auto object-contain rounded-lg"
                 onClick={(e) => e.stopPropagation()}

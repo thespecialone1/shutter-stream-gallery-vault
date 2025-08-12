@@ -114,10 +114,27 @@ serve(async (req) => {
 
     console.log(`Successfully loaded ${imagesResult.data?.length || 0} images for gallery ${galleryId}`)
 
+    // Generate short-lived signed URLs for images (bucket is private)
+    const imagesWithSignedUrls = await Promise.all((imagesResult.data || []).map(async (img) => {
+      try {
+        const thumbPath = img.thumbnail_path || img.full_path;
+        const { data: thumb } = await supabase.storage
+          .from('gallery-images')
+          .createSignedUrl(thumbPath, 600);
+        const { data: full } = await supabase.storage
+          .from('gallery-images')
+          .createSignedUrl(img.full_path, 600);
+        return { ...img, signed_thumbnail_url: thumb?.signedUrl || null, signed_full_url: full?.signedUrl || null };
+      } catch (e) {
+        console.error('Failed to sign URL for image', img.id, e);
+        return { ...img, signed_thumbnail_url: null, signed_full_url: null };
+      }
+    }));
+
     return new Response(
       JSON.stringify({
         success: true,
-        images: imagesResult.data || [],
+        images: imagesWithSignedUrls,
         sections: sectionsResult.data || [],
         favorites: favoritesResult.data || []
       }),
