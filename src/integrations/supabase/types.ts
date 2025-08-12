@@ -557,47 +557,7 @@ export type Database = {
       }
     }
     Views: {
-      gallery_invites_safe: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          expires_at: string | null
-          gallery_id: string | null
-          id: string | null
-          is_active: boolean | null
-          max_uses: number | null
-          used_count: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          expires_at?: string | null
-          gallery_id?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          max_uses?: number | null
-          used_count?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          expires_at?: string | null
-          gallery_id?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          max_uses?: number | null
-          used_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gallery_invites_gallery_id_fkey"
-            columns: ["gallery_id"]
-            isOneToOne: false
-            referencedRelation: "galleries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       check_rate_limit: {
