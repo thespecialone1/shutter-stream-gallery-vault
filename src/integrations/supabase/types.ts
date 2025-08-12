@@ -631,6 +631,15 @@ export type Database = {
         }
         Returns: Json
       }
+      create_session_from_share_link: {
+        Args: {
+          invite_token?: string
+          alias?: string
+          client_ip?: unknown
+          user_agent?: string
+        }
+        Returns: Json
+      }
       generate_secure_gallery_password: {
         Args: Record<PropertyKey, never>
         Returns: string

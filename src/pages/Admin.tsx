@@ -19,6 +19,7 @@ import AnonymousFavoritesAnalytics from '@/components/AnonymousFavoritesAnalytic
 import { Link } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
+import ShareLinksManager from '@/components/ShareLinksManager';
 
 interface Gallery {
   id: string;
@@ -541,11 +542,12 @@ export default function Admin() {
                   />
                 </TabsContent>
 
-                <TabsContent value="settings">
+                <TabsContent value="settings" className="space-y-4">
                   <GallerySettings
                     gallery={selectedGallery}
                     onGalleryUpdated={handleGalleryUpdated}
                   />
+                  <ShareLinksManager galleryId={selectedGallery.id} />
                 </TabsContent>
               </Tabs>
             ) : (

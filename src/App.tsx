@@ -11,6 +11,7 @@ import Gallery from "./pages/Gallery";
 import Galleries from "./pages/Galleries";
 import BrowseGalleries from "./pages/BrowseGalleries";
 import NotFound from "./pages/NotFound";
+import ShareLink from "./pages/ShareLink";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,8 @@ const App = () => (
             <Route path="/browse" element={<BrowseGalleries />} />
             <Route path="/galleries" element={<Galleries />} />
             <Route path="/gallery/:id" element={<Gallery />} />
+            <Route path="/s/:alias" element={<ShareLink />} />
+            <Route path="/share" element={<ShareLink />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
