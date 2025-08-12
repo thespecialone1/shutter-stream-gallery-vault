@@ -145,36 +145,60 @@ const Index = () => {
           </div>
         </section>
 
-{/* Featured Work */}
-<section className="container mx-auto px-6 py-12">
-  <div className="mb-6 flex items-end justify-between">
-    <h2 className="heading-xl">Featured Work</h2>
-    <Button asChild variant="ghost" className="story-link hidden sm:inline-flex">
-      <Link to="/browse">View all galleries</Link>
-    </Button>
+{/* Client Stories */}
+<section className="container mx-auto px-6 py-16">
+  <div className="text-center mb-10">
+    <h2 className="heading-xl">Client Stories</h2>
+    <p className="text-muted-foreground max-w-2xl mx-auto mt-3">
+      Real moments. Real reactions. A seamless experience clients love.
+    </p>
   </div>
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-    {featured.length === 0 ? (
-      Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="aspect-[4/3] rounded-lg bg-accent/20 animate-pulse" />
-      ))
-    ) : (
-      featured.map((img) => (
-        <Link
-          key={img.id}
-          to="/browse"
-          className="block group overflow-hidden rounded-lg hover-scale animate-fade-in"
-          aria-label="View public galleries"
-        >
-          <img
-            src={img.url}
-            alt={img.alt}
-            loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        </Link>
-      ))
-    )}
+
+  <div className="grid md:grid-cols-3 gap-6">
+    <div className="card-premium p-6 animate-fade-in">
+      <div className="flex items-center gap-3 mb-4">
+        <img src="/placeholder.svg" alt="Wedding couple portrait" className="w-10 h-10 rounded-full object-cover" />
+        <div>
+          <div className="font-medium">Emma & Liam</div>
+          <div className="text-xs text-muted-foreground">Wedding Clients</div>
+        </div>
+      </div>
+      <p className="text-sm leading-relaxed">
+        "The gallery felt like our day—elegant and effortless. Sharing with family was so easy, and the favorites feature was a lifesaver."
+      </p>
+    </div>
+
+    <div className="card-premium p-6 animate-fade-in" style={{ animationDelay: '0.05s' }}>
+      <div className="flex items-center gap-3 mb-4">
+        <img src="/placeholder.svg" alt="Brand designer headshot" className="w-10 h-10 rounded-full object-cover" />
+        <div>
+          <div className="font-medium">Sofia Martinez</div>
+          <div className="text-xs text-muted-foreground">Brand Designer</div>
+        </div>
+      </div>
+      <p className="text-sm leading-relaxed">
+        "My clients loved the clean delivery. Password access, secure links, and an experience that matches the quality of the work."
+      </p>
+    </div>
+
+    <div className="card-premium p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+      <div className="flex items-center gap-3 mb-4">
+        <img src="/placeholder.svg" alt="Family session photo" className="w-10 h-10 rounded-full object-cover" />
+        <div>
+          <div className="font-medium">The Parkers</div>
+          <div className="text-xs text-muted-foreground">Family Session</div>
+        </div>
+      </div>
+      <p className="text-sm leading-relaxed">
+        "The gallery made choosing prints simple. We couldn’t stop favoriting photos—everything looked stunning on mobile too."
+      </p>
+    </div>
+  </div>
+
+  <div className="text-center mt-10">
+    <Button asChild className="btn-premium">
+      <Link to="/browse">Explore Client Galleries</Link>
+    </Button>
   </div>
 </section>
 
