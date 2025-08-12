@@ -3,9 +3,65 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Camera, Shield, Heart, Sparkles, Image, Users, Download, Eye, Lock, Star, ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const { user, loading } = useAuth();
+  const [featured, setFeatured] = useState<{ id: string; url: string; alt: string }[]>([]);
+
+  useEffect(() => {
+    // SEO basics
+    document.title = "Photographer Client Galleries | Pixie Studio";
+    const metaDesc = "Elegant, secure client photo galleries for photographers. Beautiful portfolio presentation.";
+    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.appendChild(meta);
+    }
+    meta.content = metaDesc;
+
+    const canonicalHref = `${window.location.origin}/`;
+    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'canonical';
+      document.head.appendChild(link);
+    }
+    link.href = canonicalHref;
+
+    // Load a few public images to showcase on the homepage
+    (async () => {
+      try {
+        const { data: galleries, error: gErr } = await supabase
+          .from('galleries')
+          .select('id')
+          .eq('is_public', true)
+          .limit(8);
+        if (gErr) throw gErr;
+        const ids = (galleries || []).map((g: any) => g.id);
+        if (ids.length === 0) return;
+
+        const { data: imgs, error: iErr } = await supabase
+          .from('images')
+          .select('id, thumbnail_path, full_path, original_filename, gallery_id, upload_date')
+          .in('gallery_id', ids)
+          .order('upload_date', { ascending: false })
+          .limit(12);
+        if (iErr) throw iErr;
+
+        const mapped = (imgs || []).map((img: any) => {
+          const path = img.thumbnail_path || img.full_path;
+          const { data } = supabase.storage.from('gallery-images').getPublicUrl(path);
+          return { id: img.id, url: data.publicUrl, alt: img.original_filename || 'Featured photo' };
+        });
+        setFeatured(mapped);
+      } catch (e) {
+        console.warn('Featured load failed', e);
+      }
+    })();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Premium Header */}
@@ -89,7 +145,40 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Features Section */}
+{/* Featured Work */}
+<section className="container mx-auto px-6 py-12">
+  <div className="mb-6 flex items-end justify-between">
+    <h2 className="heading-xl">Featured Work</h2>
+    <Button asChild variant="ghost" className="story-link hidden sm:inline-flex">
+      <Link to="/browse">View all galleries</Link>
+    </Button>
+  </div>
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+    {featured.length === 0 ? (
+      Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="aspect-[4/3] rounded-lg bg-accent/20 animate-pulse" />
+      ))
+    ) : (
+      featured.map((img) => (
+        <Link
+          key={img.id}
+          to="/browse"
+          className="block group overflow-hidden rounded-lg hover-scale animate-fade-in"
+          aria-label="View public galleries"
+        >
+          <img
+            src={img.url}
+            alt={img.alt}
+            loading="lazy"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </Link>
+      ))
+    )}
+  </div>
+</section>
+
+{/* Features Section */}
         <section className="container mx-auto px-6 py-20">
           <div className="text-center mb-16 fade-in">
             <h2 className="heading-xl mb-6">Crafted for Photographers</h2>
