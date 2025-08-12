@@ -273,39 +273,66 @@ export type Database = {
       }
       gallery_invites: {
         Row: {
+          alias: string | null
           created_at: string
           created_by: string
+          description: string | null
+          email_domains: string[] | null
           expires_at: string
           gallery_id: string
           id: string
           invite_token: string | null
           invite_token_hash: string | null
+          ip_restrictions: unknown[] | null
           is_active: boolean
+          last_used_at: string | null
+          last_used_ip: unknown | null
+          last_used_user_agent: string | null
+          link_type: string | null
           max_uses: number | null
+          requires_email: boolean | null
           used_count: number
         }
         Insert: {
+          alias?: string | null
           created_at?: string
           created_by: string
+          description?: string | null
+          email_domains?: string[] | null
           expires_at?: string
           gallery_id: string
           id?: string
           invite_token?: string | null
           invite_token_hash?: string | null
+          ip_restrictions?: unknown[] | null
           is_active?: boolean
+          last_used_at?: string | null
+          last_used_ip?: unknown | null
+          last_used_user_agent?: string | null
+          link_type?: string | null
           max_uses?: number | null
+          requires_email?: boolean | null
           used_count?: number
         }
         Update: {
+          alias?: string | null
           created_at?: string
           created_by?: string
+          description?: string | null
+          email_domains?: string[] | null
           expires_at?: string
           gallery_id?: string
           id?: string
           invite_token?: string | null
           invite_token_hash?: string | null
+          ip_restrictions?: unknown[] | null
           is_active?: boolean
+          last_used_at?: string | null
+          last_used_ip?: unknown | null
+          last_used_user_agent?: string | null
+          link_type?: string | null
           max_uses?: number | null
+          requires_email?: boolean | null
           used_count?: number
         }
         Relationships: [
@@ -590,6 +617,20 @@ export type Database = {
         }
         Returns: Json
       }
+      create_secure_share_link: {
+        Args: {
+          gallery_id: string
+          link_type?: string
+          expires_in_days?: number
+          max_uses?: number
+          description?: string
+          alias?: string
+          ip_restrictions?: unknown[]
+          requires_email?: boolean
+          email_domains?: string[]
+        }
+        Returns: Json
+      }
       generate_secure_gallery_password: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -604,6 +645,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_share_link_analytics: {
+        Args: { gallery_id: string }
+        Returns: Json
       }
       has_role: {
         Args: {
@@ -682,6 +727,16 @@ export type Database = {
       validate_password_strength: {
         Args: { password: string }
         Returns: boolean
+      }
+      validate_secure_share_link: {
+        Args: {
+          invite_token?: string
+          alias?: string
+          client_ip?: unknown
+          user_agent?: string
+          email?: string
+        }
+        Returns: Json
       }
       verify_gallery_access: {
         Args: { gallery_id: string; provided_password: string }
