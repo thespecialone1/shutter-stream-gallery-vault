@@ -145,60 +145,105 @@ const Index = () => {
           </div>
         </section>
 
-{/* Client Stories */}
+{/* Gallery Styles Preview (Unique Section) */}
 <section className="container mx-auto px-6 py-16">
   <div className="text-center mb-10">
-    <h2 className="heading-xl">Client Stories</h2>
+    <h2 className="heading-xl">Gallery Styles Preview</h2>
     <p className="text-muted-foreground max-w-2xl mx-auto mt-3">
-      Real moments. Real reactions. A seamless experience clients love.
+      Explore three distinctive presentation styles to match your brand and clients.
     </p>
   </div>
 
   <div className="grid md:grid-cols-3 gap-6">
-    <div className="card-premium p-6 animate-fade-in">
+    {/* Cinematic */}
+    <div className="card-premium p-6 animate-fade-in group">
       <div className="flex items-center gap-3 mb-4">
-        <img src="/placeholder.svg" alt="Wedding couple portrait" className="w-10 h-10 rounded-full object-cover" />
+        <div className="w-10 h-10 rounded-xl bg-accent/40 flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-primary" />
+        </div>
         <div>
-          <div className="font-medium">Emma & Liam</div>
-          <div className="text-xs text-muted-foreground">Wedding Clients</div>
+          <div className="font-medium">Cinematic</div>
+          <div className="text-xs text-muted-foreground">Bold and immersive</div>
         </div>
       </div>
-      <p className="text-sm leading-relaxed">
-        "The gallery felt like our day—elegant and effortless. Sharing with family was so easy, and the favorites feature was a lifesaver."
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {(featured.length ? featured.slice(0, 6) : Array.from({ length: 6 }).map((_, i) => ({ id: String(i), url: "/placeholder.svg", alt: "Cinematic preview" }))).map((img, i) => (
+          <img
+            key={img.id + "cin"}
+            src={img.url}
+            alt={`Cinematic gallery preview ${i + 1}`}
+            loading="lazy"
+            className="rounded-md object-cover w-full h-20 image-hover-effect"
+          />
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Gradient headers, dramatic spacing, and immersive viewing for storytelling.
       </p>
+      <Button asChild className="btn-premium">
+        <Link to="/browse?style=cinematic">Preview Cinematic</Link>
+      </Button>
     </div>
 
-    <div className="card-premium p-6 animate-fade-in" style={{ animationDelay: '0.05s' }}>
+    {/* Minimal */}
+    <div className="card-premium p-6 animate-fade-in group" style={{ animationDelay: '0.05s' }}>
       <div className="flex items-center gap-3 mb-4">
-        <img src="/placeholder.svg" alt="Brand designer headshot" className="w-10 h-10 rounded-full object-cover" />
+        <div className="w-10 h-10 rounded-xl bg-accent/40 flex items-center justify-center">
+          <Image className="w-5 h-5 text-primary" />
+        </div>
         <div>
-          <div className="font-medium">Sofia Martinez</div>
-          <div className="text-xs text-muted-foreground">Brand Designer</div>
+          <div className="font-medium">Minimal</div>
+          <div className="text-xs text-muted-foreground">Clean and editorial</div>
         </div>
       </div>
-      <p className="text-sm leading-relaxed">
-        "My clients loved the clean delivery. Password access, secure links, and an experience that matches the quality of the work."
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {(featured.length ? featured.slice(6, 12) : Array.from({ length: 6 }).map((_, i) => ({ id: String(i), url: "/placeholder.svg", alt: "Minimal preview" }))).map((img, i) => (
+          <img
+            key={img.id + "min"}
+            src={img.url}
+            alt={`Minimal gallery preview ${i + 1}`}
+            loading="lazy"
+            className="rounded-md object-cover w-full h-20 image-hover-effect"
+          />
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Understated typography and breathable layout that lets imagery shine.
       </p>
+      <Button variant="outline" asChild className="btn-premium-outline">
+        <Link to="/browse?style=minimal">Preview Minimal</Link>
+      </Button>
     </div>
 
-    <div className="card-premium p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+    {/* Classic */}
+    <div className="card-premium p-6 animate-fade-in group" style={{ animationDelay: '0.1s' }}>
       <div className="flex items-center gap-3 mb-4">
-        <img src="/placeholder.svg" alt="Family session photo" className="w-10 h-10 rounded-full object-cover" />
+        <div className="w-10 h-10 rounded-xl bg-accent/40 flex items-center justify-center">
+          <Star className="w-5 h-5 text-primary" />
+        </div>
         <div>
-          <div className="font-medium">The Parkers</div>
-          <div className="text-xs text-muted-foreground">Family Session</div>
+          <div className="font-medium">Classic</div>
+          <div className="text-xs text-muted-foreground">Warm and timeless</div>
         </div>
       </div>
-      <p className="text-sm leading-relaxed">
-        "The gallery made choosing prints simple. We couldn’t stop favoriting photos—everything looked stunning on mobile too."
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {(featured.length ? featured.slice(3, 9) : Array.from({ length: 6 }).map((_, i) => ({ id: String(i), url: "/placeholder.svg", alt: "Classic preview" }))).map((img, i) => (
+          <img
+            key={img.id + "cla"}
+            src={img.url}
+            alt={`Classic gallery preview ${i + 1}`}
+            loading="lazy"
+            className="rounded-md object-cover w-full h-20 image-hover-effect"
+          />
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Familiar, elegant structure with subtle accents and refined balance.
       </p>
+      <Button asChild className="btn-premium">
+        <Link to="/browse?style=classic">Preview Classic</Link>
+      </Button>
     </div>
-  </div>
-
-  <div className="text-center mt-10">
-    <Button asChild className="btn-premium">
-      <Link to="/browse">Explore Client Galleries</Link>
-    </Button>
   </div>
 </section>
 
