@@ -135,6 +135,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "favorites_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "favorites_image_id_fkey"
             columns: ["image_id"]
             isOneToOne: false
@@ -221,6 +228,13 @@ export type Database = {
             referencedRelation: "galleries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       gallery_analytics: {
@@ -260,6 +274,13 @@ export type Database = {
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_analytics_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
             referencedColumns: ["id"]
           },
           {
@@ -341,6 +362,13 @@ export type Database = {
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_invites_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
             referencedColumns: ["id"]
           },
         ]
@@ -444,6 +472,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "images_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "images_section_id_fkey"
             columns: ["section_id"]
             isOneToOne: false
@@ -515,6 +550,13 @@ export type Database = {
             referencedRelation: "galleries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sections_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       security_audit: {
@@ -559,6 +601,13 @@ export type Database = {
             referencedRelation: "galleries"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "security_audit_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -584,7 +633,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      gallery_public: {
+        Row: {
+          client_name: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_rate_limit: {
