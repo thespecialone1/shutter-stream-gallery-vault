@@ -21,9 +21,21 @@ const ShareLink = () => {
     const run = async () => {
       try {
         setStatus("Creating secure session...");
+        
+        // Get client IP (best effort)
+        let clientIp = null;
+        try {
+          const ipResponse = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipResponse.json();
+          clientIp = ipData.ip;
+        } catch (ipError) {
+          console.log('Could not fetch IP:', ipError);
+        }
+        
         const { data, error } = await supabase.rpc('create_session_from_share_link', {
           invite_token: token,
           alias: alias ?? null,
+          client_ip: clientIp,
           user_agent: navigator.userAgent,
         });
         if (error) throw error;

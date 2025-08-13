@@ -126,6 +126,21 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
     }
   };
 
+  const deleteLink = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('gallery_invites')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Link deleted permanently' });
+      fetchInvites();
+    } catch (err) {
+      console.error('Failed to delete link', err);
+      toast({ title: 'Error', description: 'Failed to delete link', variant: 'destructive' });
+    }
+  };
+
   const copyLink = async (inv: InviteRow) => {
     if (inv.alias) {
       const url = `${origin}/s/${inv.alias}`;
@@ -223,9 +238,13 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
                     <Button variant="outline" size="sm" onClick={() => copyLink(inv)}>
                       <Copy className="w-4 h-4 mr-1" /> Copy
                     </Button>
-                    {inv.is_active && (
+                    {inv.is_active ? (
                       <Button variant="destructive" size="sm" onClick={() => deactivateLink(inv.id)}>
                         <Trash2 className="w-4 h-4 mr-1" /> Deactivate
+                      </Button>
+                    ) : (
+                      <Button variant="destructive" size="sm" onClick={() => deleteLink(inv.id)}>
+                        <Trash2 className="w-4 h-4 mr-1" /> Delete
                       </Button>
                     )}
                   </div>
