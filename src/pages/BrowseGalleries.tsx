@@ -82,19 +82,25 @@ export default function BrowseGalleries() {
     
     setGeneratingInvite(true);
     try {
+      console.log('Generating invite for gallery:', galleryId);
+      
       const { data, error } = await supabase.rpc('create_gallery_invite', {
         gallery_id: galleryId,
         max_uses: null,
         expires_in_days: 30
       });
 
+      console.log('Invite generation response:', { data, error });
+
       if (error) throw error;
       
       const response = data as any;
       if (response?.success) {
         const inviteUrl = `${window.location.origin}/gallery/${galleryId}?invite=${response.invite_token}`;
+        console.log('Invite URL generated:', inviteUrl);
         setGeneratedInvite(inviteUrl);
       } else {
+        console.error('Invite generation failed:', response);
         toast({
           title: "Error",
           description: response?.message || "Failed to generate invite",

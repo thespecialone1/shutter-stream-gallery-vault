@@ -21,6 +21,7 @@ serve(async (req) => {
     const { galleryId, password } = await req.json()
     
     if (!galleryId || !password) {
+      console.error('Missing required parameters:', { galleryId: !!galleryId, password: !!password });
       return new Response(
         JSON.stringify({ success: false, message: 'Gallery ID and password are required' }),
         { 
@@ -29,6 +30,26 @@ serve(async (req) => {
         }
       )
     }
+
+    // Validate gallery exists first
+    const { data: galleryExists, error: galleryCheckError } = await supabase
+      .from('galleries')
+      .select('id, name, is_public')
+      .eq('id', galleryId)
+      .single();
+
+    if (galleryCheckError || !galleryExists) {
+      console.error('Gallery not found:', { galleryId, error: galleryCheckError });
+      return new Response(
+        JSON.stringify({ success: false, message: 'Gallery not found' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    console.log('Gallery found:', { id: galleryExists.id, name: galleryExists.name, isPublic: galleryExists.is_public });
 
     // Get client IP and user agent for security logging
     // Handle multiple IPs (like "IP1, IP2, IP3") by taking the first one
@@ -107,6 +128,19 @@ serve(async (req) => {
 
     if (!data.success) {
       console.log(`Gallery auth failed for ${galleryId}: ${data.message}`)
+      
+      // Log failed authentication attempt
+      await supabase.rpc('log_security_event', {
+        event_type: 'failed_gallery_auth',
+        severity: 'warning',
+        details: {
+          gallery_id: galleryId,
+          client_ip: clientIp,
+          user_agent: userAgent,
+          error_message: data.message
+        }
+      }).catch(logError => console.warn('Failed to log security event:', logError));
+      
       return new Response(
         JSON.stringify({ success: false, message: data.message }),
         { 

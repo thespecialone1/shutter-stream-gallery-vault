@@ -183,14 +183,23 @@ const Gallery = () => {
 
   const validateInviteToken = async (inviteToken: string) => {
     try {
+      console.log('Validating invite token:', { token: inviteToken.substring(0, 8) + '...' });
+      
       const { data, error } = await supabase.rpc('validate_gallery_invite', {
         invite_token: inviteToken
       });
+
+      console.log('Invite validation response:', { data, error });
 
       if (error) throw error;
 
       const response = data as any;
       if (response?.success) {
+        console.log('Invite validation successful:', {
+          galleryId: response.gallery?.id,
+          galleryName: response.gallery?.name
+        });
+        
         // Preload gallery info from invite, but still require password for access
         setGallery(response.gallery);
         setIsAuthenticated(false);
@@ -205,6 +214,7 @@ const Gallery = () => {
           description: "Please enter the gallery password to continue",
         });
       } else {
+        console.error('Invite validation failed:', response);
         toast({
           title: "Invalid invite",
           description: response?.message || "This invite link is invalid or expired",

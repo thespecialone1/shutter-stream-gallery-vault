@@ -67,6 +67,15 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
     if (!galleryId) return;
     setCreating(true);
     try {
+      console.log('Creating share link with params:', {
+        gallery_id: galleryId,
+        link_type: linkType,
+        expires_in_days: expiresInDays,
+        max_uses: maxUses ? Number(maxUses) : null,
+        description: description || null,
+        alias: alias || null,
+      });
+
       const { data, error } = await supabase.rpc('create_secure_share_link', {
         gallery_id: galleryId,
         link_type: linkType,
@@ -76,9 +85,12 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
         alias: alias || null,
       });
 
+      console.log('Share link creation response:', { data, error });
+
       if (error) throw error;
       const res = data as any;
       if (!res?.success) {
+        console.error('Share link creation failed:', res);
         toast({ title: 'Could not create link', description: res?.message || 'Unknown error', variant: 'destructive' });
         return;
       }
@@ -87,6 +99,12 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
       const shareUrl = res.alias
         ? `${origin}/s/${res.alias}`
         : `${origin}/share?token=${res.invite_token}`;
+
+      console.log('Share link created successfully:', {
+        shareUrl,
+        alias: res.alias,
+        invite_token: res.invite_token ? 'present' : 'missing'
+      });
 
       await fetchInvites();
       setAlias("");
@@ -144,9 +162,11 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
   const copyLink = async (inv: InviteRow) => {
     if (inv.alias) {
       const url = `${origin}/s/${inv.alias}`;
+      console.log('Copying alias-based URL:', url);
       await navigator.clipboard.writeText(url);
       toast({ title: 'Copied', description: 'Share URL copied to clipboard.' });
     } else {
+      console.warn('Attempted to copy link without alias:', inv);
       toast({ title: 'Token unavailable', description: 'This link has no alias and its token is only shown on creation.' });
     }
   };
