@@ -160,9 +160,10 @@ const Gallery = () => {
         setImages(data.images || []);
         setSections(data.sections || []);
         
-        // Set anonymous favorites
+        // Initialize favorites from server
         if (data.favorites && sessionToken) {
-          setAnonymousFavorites(new Set(data.favorites.map((fav: any) => fav.image_id)));
+          const favIds = new Set((data.favorites as any[]).map((fav: any) => fav.image_id));
+          setFavoriteImageIds(favIds);
         }
       } else {
         console.error("Error loading gallery content:", data.message);

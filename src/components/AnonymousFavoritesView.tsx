@@ -8,11 +8,13 @@ import AnonymousFavoriteButton from './AnonymousFavoriteButton';
 interface FavoriteImage {
   id: string;
   full_path: string;
-  thumbnail_path: string;
+  thumbnail_path: string | null;
   original_filename: string;
   width: number;
   height: number;
   upload_date: string;
+  signed_thumbnail_url?: string | null;
+  signed_full_url?: string | null;
 }
 
 interface AnonymousFavoritesViewProps {
@@ -26,9 +28,9 @@ const AnonymousFavoritesView = ({ galleryId, sessionToken, images }: AnonymousFa
   const [favoriteImages, setFavoriteImages] = useState<FavoriteImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const getImageUrl = (imagePath: string) => {
-    return supabase.storage.from('gallery-images').getPublicUrl(imagePath).data.publicUrl;
-  };
+  const publicUrl = (path: string) => supabase.storage.from('gallery-images').getPublicUrl(path).data.publicUrl;
+  const getThumbUrl = (img: FavoriteImage) => img.signed_thumbnail_url || (img.thumbnail_path ? publicUrl(img.thumbnail_path) : publicUrl(img.full_path));
+  const getFullUrl = (img: FavoriteImage) => img.signed_full_url || publicUrl(img.full_path);
 
   const fetchFavorites = async () => {
     if (!sessionToken) return;
@@ -79,7 +81,7 @@ const AnonymousFavoritesView = ({ galleryId, sessionToken, images }: AnonymousFa
 
   const downloadImage = async (image: FavoriteImage) => {
     try {
-      const imageUrl = getImageUrl(image.full_path);
+      const imageUrl = getFullUrl(image);
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -153,7 +155,7 @@ const AnonymousFavoritesView = ({ galleryId, sessionToken, images }: AnonymousFa
             className="group relative aspect-square bg-muted rounded-lg overflow-hidden"
           >
             <img
-              src={getImageUrl(image.thumbnail_path || image.full_path)}
+              src={getThumbUrl(image)}
               alt={image.original_filename}
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
             />
