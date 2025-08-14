@@ -67,25 +67,17 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
     if (!galleryId) return;
     setCreating(true);
     try {
-      console.log('Creating share link with params:', {
-        gallery_id: galleryId,
-        link_type: linkType,
-        expires_in_days: expiresInDays,
-        max_uses: maxUses ? Number(maxUses) : null,
-        description: description || null,
-        alias: alias || null,
-      });
-
+      // Generate a simple alias if none provided
+      const finalAlias = alias || `gallery-${Date.now().toString(36)}`;
+      
       const { data, error } = await supabase.rpc('create_secure_share_link', {
         gallery_id: galleryId,
-        link_type: linkType,
+        link_type: 'passwordless', // Make it passwordless access with direct link
         expires_in_days: expiresInDays,
         max_uses: maxUses ? Number(maxUses) : null,
-        description: description || null,
-        alias: alias || null,
+        description: description || 'Simple share link',
+        alias: finalAlias,
       });
-
-      console.log('Share link creation response:', { data, error });
 
       if (error) throw error;
       const res = data as any;
@@ -95,32 +87,24 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
         return;
       }
 
-      // Build share URL for user
-      const shareUrl = res.alias
-        ? `${origin}/s/${res.alias}`
-        : `${origin}/share?token=${res.invite_token}`;
-
-      console.log('Share link created successfully:', {
-        shareUrl,
-        alias: res.alias,
-        invite_token: res.invite_token ? 'present' : 'missing'
-      });
+      // Build simple share URL
+      const shareUrl = `${origin}/gallery/${galleryId}?share=${finalAlias}`;
 
       await fetchInvites();
       setAlias("");
       setDescription("");
       setMaxUses("");
-      setLinkType('standard');
+      setLinkType('passwordless');
       setExpiresInDays(30);
 
-      // Show token only once for non-alias links
-      toast({ title: 'Share link created', description: 'The share link has been created.' });
+      toast({ title: 'Share link created', description: 'Share URL copied to clipboard!' });
 
-      // Copy to clipboard for convenience
+      // Copy to clipboard
       try {
         await navigator.clipboard.writeText(shareUrl);
-        toast({ title: 'Link copied', description: 'Share URL copied to clipboard.' });
-      } catch {}
+      } catch {
+        console.log('Could not copy to clipboard');
+      }
     } catch (err: any) {
       console.error('Failed to create link', err);
       toast({ title: 'Error', description: err?.message || 'Failed to create link', variant: 'destructive' });
@@ -160,14 +144,12 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
   };
 
   const copyLink = async (inv: InviteRow) => {
-    if (inv.alias) {
-      const url = `${origin}/s/${inv.alias}`;
-      console.log('Copying alias-based URL:', url);
+    const url = `${origin}/gallery/${galleryId}?share=${inv.alias}`;
+    try {
       await navigator.clipboard.writeText(url);
       toast({ title: 'Copied', description: 'Share URL copied to clipboard.' });
-    } else {
-      console.warn('Attempted to copy link without alias:', inv);
-      toast({ title: 'Token unavailable', description: 'This link has no alias and its token is only shown on creation.' });
+    } catch {
+      toast({ title: 'Copy failed', description: 'Could not copy to clipboard.' });
     }
   };
 
@@ -238,14 +220,10 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
                       )}
                     </div>
                     <div className="text-sm mt-1 truncate">
-                      {inv.alias ? (
-                        <div className="flex items-center gap-2">
-                          <LinkIcon className="w-4 h-4" />
-                          <span className="truncate">{origin}/s/{inv.alias}</span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">Token link (shown on creation only)</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4" />
+                        <span className="truncate">{origin}/gallery/{galleryId}?share={inv.alias}</span>
+                      </div>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       Uses: {inv.used_count} {inv.max_uses ? `/ ${inv.max_uses}` : ''} · Expires: {new Date(inv.expires_at).toLocaleDateString()}

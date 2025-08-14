@@ -65,13 +65,13 @@ const Gallery = () => {
   useEffect(() => {
     if (!id) return;
 
-    // Check for invite token in URL params FIRST
+    // Check for share token in URL params FIRST
     const urlParams = new URLSearchParams(window.location.search);
-    const inviteToken = urlParams.get('invite');
+    const shareAlias = urlParams.get('share');
     
-    if (inviteToken) {
-      // Validate invite token and require password afterwards
-      validateInviteToken(inviteToken);
+    if (shareAlias) {
+      // This is a shared gallery access - validate share link and create session
+      validateShareLink(shareAlias);
       return;
     }
 
@@ -181,57 +181,66 @@ const Gallery = () => {
     }
   };
 
-  const validateInviteToken = async (inviteToken: string) => {
+  const validateShareLink = async (shareAlias: string) => {
     try {
-      console.log('Validating invite token:', { token: inviteToken.substring(0, 8) + '...' });
+      console.log('Validating share link:', { alias: shareAlias });
       
-      const { data, error } = await supabase.rpc('validate_gallery_invite', {
-        invite_token: inviteToken
+      // Create session directly from share link
+      const { data, error } = await supabase.rpc('create_session_from_share_link', {
+        alias: shareAlias,
+        client_ip: null, // Will be handled server-side
+        user_agent: navigator.userAgent
       });
-
-      console.log('Invite validation response:', { data, error });
 
       if (error) throw error;
 
       const response = data as any;
       if (response?.success) {
-        console.log('Invite validation successful:', {
+        console.log('Share link validation successful:', {
           galleryId: response.gallery?.id,
           galleryName: response.gallery?.name
         });
         
-        // Preload gallery info from invite, but still require password for access
+        // Store session token
+        const sessionToken = response.session_token;
+        const expiresAt = response.expires_at;
+        
+        sessionStorage.setItem(`gallery_session_${id}`, sessionToken);
+        if (expiresAt) sessionStorage.setItem(`gallery_expires_${id}`, expiresAt);
+        
         setGallery(response.gallery);
-        setIsAuthenticated(false);
-        setSessionToken(null);
+        setSessionToken(sessionToken);
+        setIsAuthenticated(true);
 
-        // Remove invite parameter from URL
+        // Remove share parameter from URL
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
 
+        // Load gallery content
+        loadGalleryContent();
+
         toast({
-          title: "Invite verified",
-          description: "Please enter the gallery password to continue",
+          title: "Welcome",
+          description: "Gallery accessed successfully via share link",
         });
       } else {
-        console.error('Invite validation failed:', response);
+        console.error('Share link validation failed:', response);
         toast({
-          title: "Invalid invite",
-          description: response?.message || "This invite link is invalid or expired",
+          title: "Invalid link",
+          description: response?.message || "This share link is invalid or expired",
           variant: "destructive",
         });
         navigate("/browse");
       }
     } catch (error) {
-      console.error('Error validating invite:', error);
+      console.error('Error validating share link:', error);
       toast({
         title: "Error",
-        description: "Failed to validate invite link",
+        description: "Failed to validate share link",
         variant: "destructive",
       });
       navigate("/browse");
     } finally {
-      // Ensure we exit the loading state so the password screen can render
       setLoading(false);
     }
   };
