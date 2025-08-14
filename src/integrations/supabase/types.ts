@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -664,8 +664,8 @@ export type Database = {
     Functions: {
       check_rate_limit: {
         Args: {
-          identifier: string
           attempt_type: string
+          identifier: string
           max_attempts?: number
           window_minutes?: number
         }
@@ -677,42 +677,50 @@ export type Database = {
       }
       create_gallery_invite: {
         Args: {
+          expires_in_days?: number
           gallery_id: string
           max_uses?: number
-          expires_in_days?: number
         }
         Returns: Json
       }
       create_gallery_session: {
         Args: {
+          client_ip?: unknown
           gallery_id: string
           provided_password: string
-          client_ip?: unknown
           user_agent?: string
         }
         Returns: Json
       }
       create_secure_share_link: {
         Args: {
-          gallery_id: string
-          link_type?: string
-          expires_in_days?: number
-          max_uses?: number
-          description?: string
           alias?: string
-          ip_restrictions?: unknown[]
-          requires_email?: boolean
+          description?: string
           email_domains?: string[]
+          expires_in_days?: number
+          gallery_id: string
+          ip_restrictions?: unknown[]
+          link_type?: string
+          max_uses?: number
+          requires_email?: boolean
         }
         Returns: Json
       }
       create_session_from_share_link: {
-        Args: {
-          invite_token?: string
-          alias?: string
-          client_ip?: unknown
-          user_agent?: string
-        }
+        Args:
+          | {
+              alias?: string
+              client_ip?: unknown
+              gallery_password?: string
+              invite_token?: string
+              user_agent?: string
+            }
+          | {
+              alias?: string
+              client_ip?: unknown
+              invite_token?: string
+              user_agent?: string
+            }
         Returns: Json
       }
       generate_secure_gallery_password: {
@@ -722,8 +730,8 @@ export type Database = {
       get_anonymous_favorites: {
         Args: { p_gallery_id: string; p_session_token: string }
         Returns: {
-          image_id: string
           created_at: string
+          image_id: string
         }[]
       }
       get_current_user_role: {
@@ -736,8 +744,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -764,23 +772,23 @@ export type Database = {
       log_audit_action: {
         Args: {
           _action: string
-          _table_name: string
-          _record_id?: string
           _metadata?: Json
+          _record_id?: string
+          _table_name: string
         }
         Returns: undefined
       }
       log_image_access: {
         Args: {
+          action_type: string
           gallery_id: string
           image_id: string
-          action_type: string
           session_token?: string
         }
         Returns: undefined
       }
       log_security_event: {
-        Args: { event_type: string; severity?: string; details?: Json }
+        Args: { details?: Json; event_type: string; severity?: string }
         Returns: undefined
       }
       rotate_gallery_session: {
@@ -789,10 +797,10 @@ export type Database = {
       }
       toggle_anonymous_favorite: {
         Args: {
+          p_client_ip?: unknown
           p_gallery_id: string
           p_image_id: string
           p_session_token: string
-          p_client_ip?: unknown
         }
         Returns: Json
       }
@@ -802,9 +810,9 @@ export type Database = {
       }
       validate_gallery_session: {
         Args: {
+          action_type?: string
           gallery_id: string
           session_token: string
-          action_type?: string
         }
         Returns: Json
       }
@@ -814,11 +822,11 @@ export type Database = {
       }
       validate_secure_share_link: {
         Args: {
-          invite_token?: string
           alias?: string
           client_ip?: unknown
-          user_agent?: string
           email?: string
+          invite_token?: string
+          user_agent?: string
         }
         Returns: Json
       }
@@ -831,7 +839,7 @@ export type Database = {
         Returns: Json
       }
       verify_password: {
-        Args: { password: string; hash: string }
+        Args: { hash: string; password: string }
         Returns: boolean
       }
     }

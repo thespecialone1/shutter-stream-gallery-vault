@@ -181,15 +181,16 @@ const Gallery = () => {
     }
   };
 
-  const validateShareLink = async (shareAlias: string) => {
+  const validateShareLink = async (shareAlias: string, galleryPassword?: string) => {
     try {
-      console.log('Validating share link:', { alias: shareAlias });
+      console.log('Validating share link:', { alias: shareAlias, hasPassword: !!galleryPassword });
       
-      // Create session directly from share link
+      // Create session directly from share link with password if provided
       const { data, error } = await supabase.rpc('create_session_from_share_link', {
         alias: shareAlias,
         client_ip: null, // Will be handled server-side
-        user_agent: navigator.userAgent
+        user_agent: navigator.userAgent,
+        gallery_password: galleryPassword || null
       });
 
       if (error) throw error;
@@ -223,6 +224,12 @@ const Gallery = () => {
           title: "Welcome",
           description: "Gallery accessed successfully via share link",
         });
+      } else if (response?.requires_password) {
+        // Share link requires password - show password form for this gallery
+        console.log('Share link requires password');
+        setGallery(response.gallery);
+        setIsAuthenticated(false); // Stay on password form
+        // Don't navigate away - let user enter password
       } else {
         console.error('Share link validation failed:', response);
         toast({
@@ -324,6 +331,16 @@ const Gallery = () => {
 
     setAuthLoading(true);
     try {
+      // Check if this is a share link access first
+      const urlParams = new URLSearchParams(window.location.search);
+      const shareAlias = urlParams.get('share');
+      
+      if (shareAlias) {
+        // Re-validate share link with password
+        await validateShareLink(shareAlias, password);
+        return;
+      }
+
       // Use the new secure Edge Function for gallery authentication
       const response = await fetch(`https://xcucqsonzfovlcxktxiy.supabase.co/functions/v1/gallery-auth`, {
         method: 'POST',
