@@ -31,7 +31,6 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
   const [invites, setInvites] = useState<InviteRow[]>([]);
 
   // Form state
-  const [linkType, setLinkType] = useState<'standard' | 'temporary' | 'client' | 'preview' | 'passwordless'>('standard');
   const [expiresInDays, setExpiresInDays] = useState<number>(30);
   const [maxUses, setMaxUses] = useState<string>("");
   const [alias, setAlias] = useState<string>("");
@@ -72,7 +71,7 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
       
       const { data, error } = await supabase.rpc('create_secure_share_link', {
         gallery_id: galleryId,
-        link_type: 'passwordless', // Make it passwordless access with direct link
+        link_type: 'standard', // Use standard type - password checking handled by gallery
         expires_in_days: expiresInDays,
         max_uses: maxUses ? Number(maxUses) : null,
         description: description || 'Simple share link',
@@ -94,7 +93,6 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
       setAlias("");
       setDescription("");
       setMaxUses("");
-      setLinkType('passwordless');
       setExpiresInDays(30);
 
       toast({ title: 'Share link created', description: 'Share URL copied to clipboard!' });
@@ -163,20 +161,6 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>Link type</Label>
-            <select
-              className="w-full h-10 rounded-md border bg-background"
-              value={linkType}
-              onChange={(e) => setLinkType(e.target.value as any)}
-            >
-              <option value="standard">Standard</option>
-              <option value="temporary">Temporary</option>
-              <option value="client">Client</option>
-              <option value="preview">Preview (limited)</option>
-              <option value="passwordless">Passwordless</option>
-            </select>
-          </div>
-          <div>
             <Label>Expires in (days)</Label>
             <Input type="number" min={1} value={expiresInDays} onChange={(e) => setExpiresInDays(Number(e.target.value))} />
           </div>
@@ -214,7 +198,7 @@ export const ShareLinksManager: React.FC<ShareLinksManagerProps> = ({ galleryId 
                 <div key={inv.id} className="flex items-center justify-between rounded-md border p-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm px-2 py-0.5 rounded-full bg-accent/30">{inv.link_type}</span>
+                      <span className="text-sm px-2 py-0.5 rounded-full bg-accent/30">Share Link</span>
                       {!inv.is_active && (
                         <span className="text-xs text-muted-foreground">(inactive)</span>
                       )}
