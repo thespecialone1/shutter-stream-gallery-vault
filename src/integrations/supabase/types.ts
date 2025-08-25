@@ -757,6 +757,61 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_sessions_safe: {
+        Row: {
+          client_ip_masked: string | null
+          created_at: string | null
+          expires_at: string | null
+          gallery_id: string | null
+          id: string | null
+          last_accessed: string | null
+          session_token_status: string | null
+          user_agent_partial: string | null
+        }
+        Insert: {
+          client_ip_masked?: never
+          created_at?: string | null
+          expires_at?: string | null
+          gallery_id?: string | null
+          id?: string | null
+          last_accessed?: string | null
+          session_token_status?: never
+          user_agent_partial?: never
+        }
+        Update: {
+          client_ip_masked?: never
+          created_at?: string | null
+          expires_at?: string | null
+          gallery_id?: string | null
+          id?: string | null
+          last_accessed?: string | null
+          session_token_status?: never
+          user_agent_partial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       images_public_view: {
         Row: {
           filename: string | null
@@ -802,6 +857,10 @@ export type Database = {
       }
     }
     Functions: {
+      anonymize_ip_address: {
+        Args: { ip_addr: unknown }
+        Returns: string
+      }
       check_rate_limit: {
         Args: {
           attempt_type: string
@@ -878,9 +937,43 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_gallery_analytics_summary: {
+        Args: { gallery_uuid: string }
+        Returns: {
+          popular_images: Json
+          recent_activity_days: number
+          total_views: number
+          unique_visitors_estimate: number
+        }[]
+      }
+      get_my_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          business_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          updated_at: string
+        }[]
+      }
       get_share_link_analytics: {
         Args: { gallery_id: string }
         Returns: Json
+      }
+      get_user_profile_secure: {
+        Args: { user_uuid: string }
+        Returns: {
+          business_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          updated_at: string
+          user_id: string
+        }[]
       }
       has_role: {
         Args: {
@@ -895,6 +988,10 @@ export type Database = {
       }
       hash_password_secure: {
         Args: { password: string }
+        Returns: string
+      }
+      hash_session_token: {
+        Args: { token: string }
         Returns: string
       }
       increment_gallery_views: {
@@ -969,6 +1066,10 @@ export type Database = {
           user_agent?: string
         }
         Returns: Json
+      }
+      validate_session_secure: {
+        Args: { gallery_uuid: string; raw_token: string }
+        Returns: boolean
       }
       verify_gallery_access: {
         Args: { gallery_id: string; provided_password: string }
