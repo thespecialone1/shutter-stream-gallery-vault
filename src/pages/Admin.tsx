@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, LogOut, User, BarChart3, RefreshCcw } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, LogOut, User, BarChart3, RefreshCcw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -94,10 +94,13 @@ export default function Admin() {
       
       // Only hash password if it's a private gallery
       if (!isPublicGallery && password) {
-        const { data: hashResult, error: hashError } = await supabase.rpc('hash_password', {
+        const { data: hashResult, error: hashError } = await supabase.rpc('hash_password_secure', {
           password: password
         });
-        if (hashError) throw hashError;
+        if (hashError) {
+          console.error('Password hashing error:', hashError);
+          throw new Error(`Password hashing failed: ${hashError.message}`);
+        }
         hashedPassword = hashResult;
       }
       
@@ -124,11 +127,22 @@ export default function Admin() {
         title: "Gallery created",
         description: `Gallery "${name}" has been created successfully`
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating gallery:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = "Failed to create gallery";
+      if (error?.message?.includes('permission')) {
+        errorMessage = "Permission denied. Please make sure you're logged in.";
+      } else if (error?.message?.includes('hash_password_secure')) {
+        errorMessage = "Password security function error. Please try a different password.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create gallery",
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -253,14 +267,7 @@ export default function Admin() {
         title: "Conversion Complete",
         description: `Successfully processed ${data.processed} DNG images (${data.successful} successful, ${data.errors} errors)`
       });
-
-      if (data.errors > 0) {
-        toast({
-          title: "Some Conversions Failed", 
-          description: `${data.errors} images failed to convert. Check the browser console for details.`,
-          variant: "destructive"
-        });
-      }
+      
     } catch (error) {
       console.error('DNG conversion error:', error);
       toast({
@@ -270,6 +277,67 @@ export default function Admin() {
       });
     } finally {
       setIsConvertingDng(false);
+    }
+  };
+  
+  // Test function to create a demo gallery
+  const createDemoGallery = async () => {
+    try {
+      setLoading(true);
+      
+      // Create a public demo gallery
+      const { data: publicGallery, error: publicError } = await supabase
+        .from('galleries')
+        .insert({
+          name: 'Demo Public Gallery',
+          description: 'A beautiful demo gallery showcasing our platform',
+          client_name: 'Demo Client',
+          password_hash: null,
+          photographer_id: user?.id,
+          is_public: true
+        })
+        .select()
+        .single();
+
+      if (publicError) throw publicError;
+
+      // Create a private demo gallery
+      const { data: hashResult, error: hashError } = await supabase.rpc('hash_password_secure', {
+        password: 'demo123'
+      });
+      if (hashError) throw hashError;
+
+      const { data: privateGallery, error: privateError } = await supabase
+        .from('galleries')
+        .insert({
+          name: 'Demo Private Gallery',
+          description: 'A password-protected demo gallery (password: demo123)',
+          client_name: 'Private Demo Client',
+          password_hash: hashResult,
+          photographer_id: user?.id,
+          is_public: false
+        })
+        .select()
+        .single();
+
+      if (privateError) throw privateError;
+
+      // Update galleries list
+      setGalleries(prev => [publicGallery, privateGallery, ...prev]);
+      
+      toast({
+        title: "Demo galleries created!",
+        description: `Created public and private demo galleries. Private gallery password: "demo123"`
+      });
+    } catch (error: any) {
+      console.error('Error creating demo galleries:', error);
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to create demo galleries",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -394,12 +462,18 @@ export default function Admin() {
             <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No galleries yet</h3>
             <p className="text-muted-foreground mb-4">
-              Create your first gallery to get started
+              Create your first gallery to get started or try our demo
             </p>
-            <Button onClick={() => setIsCreateGalleryOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Gallery
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setIsCreateGalleryOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Gallery
+              </Button>
+              <Button variant="outline" onClick={createDemoGallery}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Create Demo Galleries
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
