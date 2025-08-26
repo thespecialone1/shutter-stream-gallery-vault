@@ -113,18 +113,21 @@ export type Database = {
           gallery_id: string
           id: string
           image_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           gallery_id: string
           id?: string
           image_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           gallery_id?: string
           id?: string
           image_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
