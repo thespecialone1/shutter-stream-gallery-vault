@@ -998,6 +998,10 @@ export type Database = {
         Args: { gallery_id: string }
         Returns: undefined
       }
+      is_gallery_owner: {
+        Args: { gallery_id: string; user_id: string }
+        Returns: boolean
+      }
       is_password_compromised: {
         Args: { password: string }
         Returns: boolean
