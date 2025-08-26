@@ -32,10 +32,25 @@ serve(async (req) => {
 
     console.log(`Anonymous favorite ${action} for image ${imageId} in gallery ${galleryId}`)
 
-    // Get client IP from request headers
-    const clientIP = req.headers.get('x-forwarded-for') || 
-                    req.headers.get('x-real-ip') || 
-                    'unknown'
+    // Get client IP from request headers (handle comma-separated IPs)
+    const forwardedFor = req.headers.get('x-forwarded-for');
+    let clientIP = 'unknown';
+    
+    if (forwardedFor) {
+      // Take the first IP if comma-separated
+      const firstIP = forwardedFor.split(',')[0].trim();
+      // Basic validation to ensure it's a valid IP format
+      const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      const ipv6Regex = /^[0-9a-fA-F:]+$/;
+      if (ipv4Regex.test(firstIP) || ipv6Regex.test(firstIP)) {
+        clientIP = firstIP;
+      }
+    } else {
+      const realIP = req.headers.get('x-real-ip');
+      if (realIP && (realIP.includes('.') || realIP.includes(':'))) {
+        clientIP = realIP;
+      }
+    }
 
     if (action === 'toggle') {
       // Toggle favorite using the database function
@@ -43,7 +58,7 @@ serve(async (req) => {
         p_gallery_id: galleryId,
         p_image_id: imageId,
         p_session_token: sessionToken,
-        p_client_ip: clientIP
+        p_client_ip: clientIP === 'unknown' ? null : clientIP
       })
 
       if (error) {

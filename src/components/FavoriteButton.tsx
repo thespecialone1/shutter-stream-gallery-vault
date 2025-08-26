@@ -60,7 +60,8 @@ export const FavoriteButton = ({
           .from('favorites')
           .insert({
             gallery_id: galleryId,
-            image_id: imageId
+            image_id: imageId,
+            user_id: user?.id
           });
 
         if (error) throw error;
