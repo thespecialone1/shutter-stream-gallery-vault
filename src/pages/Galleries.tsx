@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Camera, Search, Calendar, User, Heart, ArrowRight, Sparkles, Eye } from "lucide-react";
+import { FavoritesAnalytics } from "@/components/FavoritesAnalytics";
+import { Camera, Search, Calendar, User, Heart, ArrowRight, Sparkles, Eye, BarChart3 } from "lucide-react";
 
 type Gallery = {
   id: string;
@@ -25,6 +27,7 @@ const Galleries = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showMyGalleries, setShowMyGalleries] = useState(false);
+  const [selectedGalleryForAnalytics, setSelectedGalleryForAnalytics] = useState<string | null>(null);
 
   useEffect(() => {
     loadGalleries();
@@ -217,48 +220,133 @@ const Galleries = () => {
               )}
             </div>
 
-            {/* Gallery Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredGalleries.map((gallery, index) => (
-                <Card key={gallery.id} className="card-premium group hover:scale-[1.02] transition-all duration-300" style={{ animationDelay: `${index * 100}ms` }}>
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Camera className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg font-serif truncate group-hover:text-primary transition-colors">
-                          {gallery.name}
+            {/* Gallery Content */}
+            {showMyGalleries && user ? (
+              <Tabs defaultValue="galleries" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="galleries">My Galleries</TabsTrigger>
+                  <TabsTrigger value="analytics">Favorites Analytics</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="galleries" className="space-y-8">
+                  {/* Gallery Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredGalleries.map((gallery, index) => (
+                      <Card key={gallery.id} className="card-premium group hover:scale-[1.02] transition-all duration-300" style={{ animationDelay: `${index * 100}ms` }}>
+                        <CardHeader className="pb-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <Camera className="h-6 w-6 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-lg font-serif truncate group-hover:text-primary transition-colors">
+                                {gallery.name}
+                              </CardTitle>
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                                <User className="h-3 w-3" />
+                                <span className="truncate">{gallery.client_name}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
+                            {gallery.description || "A beautiful collection of moments captured in time."}
+                          </p>
+                          
+                          <div className="flex items-center justify-between pt-2">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              <span>{formatDate(gallery.created_at)}</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedGalleryForAnalytics(gallery.id)}
+                                className="btn-premium-outline"
+                              >
+                                <BarChart3 className="h-4 w-4" />
+                              </Button>
+                              <Button asChild size="sm" className="btn-premium group/btn">
+                                <Link to={`/gallery/${gallery.id}`} className="flex items-center gap-2">
+                                  <Eye className="h-4 w-4" />
+                                  <span>View</span>
+                                  <ArrowRight className="h-3 w-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="analytics" className="space-y-6">
+                  {selectedGalleryForAnalytics ? (
+                    <FavoritesAnalytics galleryId={selectedGalleryForAnalytics} />
+                  ) : (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <BarChart3 className="w-5 h-5" />
+                          Favorites Analytics
                         </CardTitle>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                          <User className="h-3 w-3" />
-                          <span className="truncate">{gallery.client_name}</span>
+                        <CardContent>
+                          <p className="text-muted-foreground text-center py-8">
+                            Select a gallery from the "My Galleries" tab to view favorites analytics.
+                          </p>
+                        </CardContent>
+                      </CardHeader>
+                    </Card>
+                  )}
+                </TabsContent>
+              </Tabs>
+            ) : (
+              /* Public Gallery Grid */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredGalleries.map((gallery, index) => (
+                  <Card key={gallery.id} className="card-premium group hover:scale-[1.02] transition-all duration-300" style={{ animationDelay: `${index * 100}ms` }}>
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Camera className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg font-serif truncate group-hover:text-primary transition-colors">
+                            {gallery.name}
+                          </CardTitle>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                            <User className="h-3 w-3" />
+                            <span className="truncate">{gallery.client_name}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
-                      {gallery.description || "A beautiful collection of moments captured in time."}
-                    </p>
-                    
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span>{formatDate(gallery.created_at)}</span>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
+                        {gallery.description || "A beautiful collection of moments captured in time."}
+                      </p>
+                      
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          <span>{formatDate(gallery.created_at)}</span>
+                        </div>
+                        <Button asChild size="sm" className="btn-premium group/btn">
+                          <Link to={`/gallery/${gallery.id}`} className="flex items-center gap-2">
+                            <Eye className="h-4 w-4" />
+                            <span>View</span>
+                            <ArrowRight className="h-3 w-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                          </Link>
+                        </Button>
                       </div>
-                      <Button asChild size="sm" className="btn-premium group/btn">
-                        <Link to={`/gallery/${gallery.id}`} className="flex items-center gap-2">
-                          <Eye className="h-4 w-4" />
-                          <span>View</span>
-                          <ArrowRight className="h-3 w-3 group-hover/btn:translate-x-0.5 transition-transform" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             {/* Load More Button - for future pagination */}
             {filteredGalleries.length >= 50 && (
