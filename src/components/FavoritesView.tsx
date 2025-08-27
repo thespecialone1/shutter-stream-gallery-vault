@@ -50,7 +50,8 @@ export const FavoritesView = ({ galleryId }: FavoritesViewProps) => {
             upload_date
           )
         `)
-        .eq('gallery_id', galleryId);
+        .eq('gallery_id', galleryId)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
 
       if (error) throw error;
 

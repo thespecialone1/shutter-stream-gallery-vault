@@ -5,6 +5,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import weddingParty from "@/assets/wedding-party.jpg";
+import bridesmaids from "@/assets/bridesmaids.jpg";
+import groupSelfie from "@/assets/group-selfie.jpg";
+import couplePortrait from "@/assets/couple-portrait.jpg";
 const Index = () => {
   const { user, loading } = useAuth();
   const [featured, setFeatured] = useState<{ id: string; url: string; alt: string }[]>([]);
@@ -145,104 +149,94 @@ const Index = () => {
           </div>
         </section>
 
-{/* Gallery Styles Preview (Unique Section) */}
+{/* Wedding Photo Album Section */}
 <section className="container mx-auto px-6 py-16">
-  <div className="text-center mb-10">
-    <h2 className="heading-xl">Gallery Styles Preview</h2>
-    <p className="text-muted-foreground max-w-2xl mx-auto mt-3">
-      Explore three distinctive presentation styles to match your brand and clients.
-    </p>
-  </div>
-
-  <div className="grid md:grid-cols-3 gap-6">
-    {/* Cinematic */}
-    <div className="card-premium p-6 animate-fade-in group">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-accent/40 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <div className="font-medium">Cinematic</div>
-          <div className="text-xs text-muted-foreground">Bold and immersive</div>
-        </div>
+  <div className="max-w-5xl mx-auto">
+    {/* Top Row - 3 Images */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <img
+          src={weddingParty}
+          alt="Wedding party moments - beautiful group photo"
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        />
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {(featured.length ? featured.slice(0, 6) : Array.from({ length: 6 }).map((_, i) => ({ id: String(i), url: "/placeholder.svg", alt: "Cinematic preview" }))).map((img, i) => (
-          <img
-            key={img.id + "cin"}
-            src={img.url}
-            alt={`Cinematic gallery preview ${i + 1}`}
-            loading="lazy"
-            className="rounded-md object-cover w-full h-20 image-hover-effect"
-          />
-        ))}
+      <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <img
+          src={bridesmaids}
+          alt="Bridesmaids laughing together in pastel dresses"
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        />
       </div>
-      <p className="text-sm text-muted-foreground mb-4">
-        Gradient headers, dramatic spacing, and immersive viewing for storytelling.
-      </p>
-      <Button asChild className="btn-premium">
-        <Link to="/browse?style=cinematic">Preview Cinematic</Link>
-      </Button>
+      <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <img
+          src={groupSelfie}
+          alt="Group selfie with friends and family at wedding"
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        />
+      </div>
     </div>
 
-    {/* Minimal */}
-    <div className="card-premium p-6 animate-fade-in group" style={{ animationDelay: '0.05s' }}>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-accent/40 flex items-center justify-center">
-          <Image className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <div className="font-medium">Minimal</div>
-          <div className="text-xs text-muted-foreground">Clean and editorial</div>
-        </div>
+    {/* Bottom Section - Large Image + Text */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+      {/* Large Couple Image */}
+      <div className="aspect-[3/4] overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <img
+          src={couplePortrait}
+          alt="Romantic couple portrait outdoors - bride and groom"
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        />
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {(featured.length ? featured.slice(6, 12) : Array.from({ length: 6 }).map((_, i) => ({ id: String(i), url: "/placeholder.svg", alt: "Minimal preview" }))).map((img, i) => (
-          <img
-            key={img.id + "min"}
-            src={img.url}
-            alt={`Minimal gallery preview ${i + 1}`}
-            loading="lazy"
-            className="rounded-md object-cover w-full h-20 image-hover-effect"
-          />
-        ))}
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">
-        Understated typography and breathable layout that lets imagery shine.
-      </p>
-      <Button variant="outline" asChild className="btn-premium-outline">
-        <Link to="/browse?style=minimal">Preview Minimal</Link>
-      </Button>
-    </div>
 
-    {/* Classic */}
-    <div className="card-premium p-6 animate-fade-in group" style={{ animationDelay: '0.1s' }}>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-accent/40 flex items-center justify-center">
-          <Star className="w-5 h-5 text-primary" />
+      {/* Text Content */}
+      <div className="space-y-6 lg:pl-8">
+        <div className="space-y-4">
+          <h2 className="text-3xl lg:text-4xl font-serif text-foreground leading-tight">
+            We Made Collecting Your Wedding Photos Easy & Simple.
+          </h2>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Relive your big day through the eyes of your beloved ones.
+          </p>
         </div>
-        <div>
-          <div className="font-medium">Classic</div>
-          <div className="text-xs text-muted-foreground">Warm and timeless</div>
+
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            Transform your special moments into a beautiful, organized collection. 
+            Our elegant gallery system makes it effortless for you and your guests 
+            to share, favorite, and download precious memories.
+          </p>
+          
+          <ul className="space-y-2 text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              Secure, password-protected galleries
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              Easy photo sharing for guests
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              High-resolution downloads
+            </li>
+          </ul>
         </div>
+
+        <Button 
+          size="lg" 
+          asChild 
+          className="btn-premium text-base px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          <Link to="/auth" className="flex items-center gap-2">
+            Create Album
+            <ArrowRight className="h-5 w-5" />
+          </Link>
+        </Button>
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {(featured.length ? featured.slice(3, 9) : Array.from({ length: 6 }).map((_, i) => ({ id: String(i), url: "/placeholder.svg", alt: "Classic preview" }))).map((img, i) => (
-          <img
-            key={img.id + "cla"}
-            src={img.url}
-            alt={`Classic gallery preview ${i + 1}`}
-            loading="lazy"
-            className="rounded-md object-cover w-full h-20 image-hover-effect"
-          />
-        ))}
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">
-        Familiar, elegant structure with subtle accents and refined balance.
-      </p>
-      <Button asChild className="btn-premium">
-        <Link to="/browse?style=classic">Preview Classic</Link>
-      </Button>
     </div>
   </div>
 </section>
