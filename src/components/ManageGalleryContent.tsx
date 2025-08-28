@@ -16,6 +16,11 @@ interface Gallery {
   description: string;
   client_name: string;
   created_at: string;
+  updated_at?: string;
+  view_count?: number;
+  password_hash?: string;
+  photographer_id?: string;
+  is_public?: boolean;
 }
 
 interface GalleryImage {
@@ -80,7 +85,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
           client_name: editForm.client_name
         })
         .eq('id', gallery.id)
-        .select()
+        .select('id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id')
         .single();
 
       if (error) throw error;

@@ -12,10 +12,13 @@ import { Key, Eye, EyeOff, Globe, Lock } from 'lucide-react';
 interface Gallery {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   client_name: string;
   created_at: string;
-  password_hash: string;
+  updated_at?: string;
+  view_count?: number;
+  password_hash?: string;
+  photographer_id?: string;
   is_public?: boolean;
 }
 
@@ -54,7 +57,7 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
         .from('galleries')
         .update({ password_hash: hashedPassword })
         .eq('id', gallery.id)
-        .select()
+        .select('id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id')
         .single();
 
       if (error) throw error;
@@ -91,7 +94,7 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
         .from('galleries')
         .update(updateData)
         .eq('id', gallery.id)
-        .select()
+        .select('id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id')
         .single();
 
       if (error) throw error;

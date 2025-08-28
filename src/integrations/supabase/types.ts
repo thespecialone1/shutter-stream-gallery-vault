@@ -949,6 +949,14 @@ export type Database = {
           unique_visitors_estimate: number
         }[]
       }
+      get_gallery_safe_info: {
+        Args: { gallery_uuid: string }
+        Returns: Json
+      }
+      get_my_gallery_info: {
+        Args: { gallery_uuid: string }
+        Returns: Json
+      }
       get_my_profile: {
         Args: Record<PropertyKey, never>
         Returns: {

@@ -20,10 +20,13 @@ type Gallery = {
   id: string;
   name: string;
   description: string;
-  password_hash: string | null;
+  password_hash?: string | null;
   client_name: string;
   created_at: string;
+  updated_at?: string;
+  view_count?: number;
   is_public: boolean;
+  photographer_id?: string;
 };
 
 type GalleryImage = {
@@ -101,7 +104,7 @@ const Gallery = () => {
     try {
       const { data, error } = await supabase
         .from("galleries")
-        .select("*")
+        .select("id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id")
         .eq("id", id)
         .single();
 
