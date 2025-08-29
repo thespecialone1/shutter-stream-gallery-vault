@@ -182,14 +182,49 @@ const Index = () => {
 
     {/* Bottom Section - Large Image + Text */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-      {/* Large Couple Image */}
-      <div className="aspect-[3/4] overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-        <img
-          src={couplePortrait}
-          alt="Romantic couple portrait outdoors - bride and groom"
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
+      {/* Interactive Masonry Gallery */}
+      <div className="relative">
+        <div className="grid grid-cols-2 gap-4 auto-rows-max">
+          {/* Large focal image */}
+          <div className="col-span-2 aspect-[16/10] overflow-hidden rounded-2xl shadow-lg group cursor-pointer relative">
+            <img
+              src={couplePortrait}
+              alt="Romantic couple portrait"
+              className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700 group-hover:brightness-110"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="text-sm font-medium">Professional Quality</div>
+            </div>
+          </div>
+          
+          {/* Small animated cards */}
+          <div className="aspect-square overflow-hidden rounded-xl shadow-md group cursor-pointer animate-fade-in relative" style={{ animationDelay: '0.2s' }}>
+            <img
+              src={bridesmaids}
+              alt="Bridesmaids celebration"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+          
+          <div className="aspect-square overflow-hidden rounded-xl shadow-md group cursor-pointer animate-fade-in relative" style={{ animationDelay: '0.4s' }}>
+            <img
+              src={weddingParty}
+              alt="Wedding party group photo"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+        </div>
+        
+        {/* Floating interaction hint */}
+        <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full shadow-lg animate-pulse">
+          Interactive
+        </div>
       </div>
 
       {/* Text Content */}
