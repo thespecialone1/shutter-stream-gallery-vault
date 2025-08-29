@@ -20,7 +20,6 @@ type Gallery = {
   id: string;
   name: string;
   description: string;
-  password_hash?: string | null;
   client_name: string;
   created_at: string;
   updated_at?: string;

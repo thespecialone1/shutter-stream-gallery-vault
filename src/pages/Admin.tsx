@@ -20,6 +20,7 @@ import { Link } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
 import ShareLinksManager from '@/components/ShareLinksManager';
+import { validateGalleryName, validateClientName, validateDescription, globalRateLimit } from '@/utils/security';
 
 interface Gallery {
   id: string;
@@ -29,7 +30,6 @@ interface Gallery {
   created_at: string;
   updated_at?: string;
   view_count?: number;
-  password_hash?: string;
   photographer_id?: string;
   is_public?: boolean;
 }
@@ -77,15 +77,61 @@ export default function Admin() {
   };
 
   const createGallery = async (formData: FormData) => {
-    const name = formData.get('name') as string;
-    const description = formData.get('description') as string;
-    const clientName = formData.get('clientName') as string;
+    const rawName = formData.get('name') as string;
+    const rawDescription = formData.get('description') as string;
+    const rawClientName = formData.get('clientName') as string;
     const password = formData.get('password') as string;
 
-    if (!name || !clientName || (!isPublicGallery && !password)) {
+    // Validate and sanitize inputs
+    const nameValidation = validateGalleryName(rawName);
+    if (!nameValidation.valid) {
+      toast({
+        title: "Invalid Gallery Name",
+        description: nameValidation.error,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const clientNameValidation = validateClientName(rawClientName);
+    if (!clientNameValidation.valid) {
+      toast({
+        title: "Invalid Client Name",
+        description: clientNameValidation.error,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const descriptionValidation = validateDescription(rawDescription);
+    if (!descriptionValidation.valid) {
+      toast({
+        title: "Invalid Description",
+        description: descriptionValidation.error,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Rate limiting check
+    if (!globalRateLimit.checkLimit('gallery_creation', 3, 5 * 60 * 1000)) {
+      const remainingTime = Math.ceil(globalRateLimit.getRemainingTime('gallery_creation') / 1000 / 60);
+      toast({
+        title: "Rate Limit Exceeded",
+        description: `Please wait ${remainingTime} minutes before creating another gallery`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const name = nameValidation.sanitized;
+    const description = descriptionValidation.sanitized;
+    const clientName = clientNameValidation.sanitized;
+
+    if (!password && !isPublicGallery) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Password is required for private galleries",
         variant: "destructive"
       });
       return;

@@ -18,7 +18,6 @@ interface Gallery {
   created_at: string;
   updated_at?: string;
   view_count?: number;
-  password_hash?: string;
   photographer_id?: string;
   is_public?: boolean;
 }

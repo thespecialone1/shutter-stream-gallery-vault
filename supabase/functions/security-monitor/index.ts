@@ -55,7 +55,7 @@ serve(async (req) => {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-    // Check for brute force attempts
+    // Enhanced security monitoring with immediate blocking
     if (event.type === 'failed_auth' && event.clientIp) {
       const { data: recentFailures, error: queryError } = await supabase
         .from('security_audit')
@@ -65,18 +65,46 @@ serve(async (req) => {
         .gte('created_at', oneHourAgo.toISOString())
         .order('created_at', { ascending: false });
 
-      if (!queryError && recentFailures && recentFailures.length > 10) {
-        console.warn(`POTENTIAL BRUTE FORCE: ${event.clientIp} has ${recentFailures.length} failed auth attempts in the last hour`);
+      if (!queryError && recentFailures && recentFailures.length > 5) {
+        console.warn(`BRUTE FORCE DETECTED: ${event.clientIp} has ${recentFailures.length} failed auth attempts in the last hour`);
         
-        // Log escalated security event
+        // Block the IP immediately by updating rate limits
+        await supabase.from('auth_rate_limits').upsert({
+          identifier: event.clientIp,
+          attempt_type: 'gallery_auth',
+          attempts: recentFailures.length,
+          blocked_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Block for 24 hours
+          window_start: new Date().toISOString()
+        });
+        
+        // Log critical security event
         await supabase.rpc('log_security_event', {
-          event_type: 'brute_force_detected',
+          event_type: 'brute_force_blocked',
           severity: 'critical',
           details: {
             client_ip: event.clientIp,
             failure_count: recentFailures.length,
-            time_window: '1_hour'
+            time_window: '1_hour',
+            blocked_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
           }
+        });
+        
+        console.error(`CRITICAL: IP ${event.clientIp} has been automatically blocked for 24 hours due to brute force attack`);
+      }
+    }
+    
+    // Monitor for password hash exposure attempts
+    if (event.type === 'suspicious_activity' && event.details?.attempt_type === 'password_hash_access') {
+      console.error(`CRITICAL: Attempt to access password hash detected from IP: ${event.clientIp}`);
+      
+      // Immediately block this type of attack
+      if (event.clientIp) {
+        await supabase.from('auth_rate_limits').upsert({
+          identifier: event.clientIp,
+          attempt_type: 'data_breach_attempt',
+          attempts: 1,
+          blocked_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Block for 7 days
+          window_start: new Date().toISOString()
         });
       }
     }

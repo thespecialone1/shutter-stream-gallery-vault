@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
 import { Key, Eye, EyeOff, Globe, Lock } from 'lucide-react';
 
 interface Gallery {
@@ -17,7 +18,6 @@ interface Gallery {
   created_at: string;
   updated_at?: string;
   view_count?: number;
-  password_hash?: string;
   photographer_id?: string;
   is_public?: boolean;
 }
@@ -46,12 +46,21 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
 
     setIsUpdating(true);
     try {
-      // Use secure SHA256 hashing with salt
-      const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password', {
+      // Use secure password hashing with validation (the validation is done server-side)
+      const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password_secure', {
         password: newPassword
       });
 
-      if (hashError) throw hashError;
+      if (hashError) {
+        // Display user-friendly error for password validation failures
+        const errorMessage = hashError.message.includes('security requirements') 
+          ? 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
+          : hashError.message.includes('common or has been found in data breaches')
+          ? 'This password is too common. Please choose a more secure password'
+          : hashError.message;
+        
+        throw new Error(errorMessage);
+      }
       
       const { data, error } = await supabase
         .from('galleries')
