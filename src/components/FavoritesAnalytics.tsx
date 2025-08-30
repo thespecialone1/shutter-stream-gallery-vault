@@ -75,7 +75,8 @@ export const FavoritesAnalytics = ({ galleryId }: FavoritesAnalyticsProps) => {
         throw new Error(data.message || 'Failed to fetch analytics');
       }
     } catch (error) {
-      console.error('Error fetching favorites analytics:', error);
+      // Log error without exposing sensitive data
+      console.error('Favorites analytics fetch failed');
       toast({
         title: "Error",
         description: "Failed to load favorites analytics",

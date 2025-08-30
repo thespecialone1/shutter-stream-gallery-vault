@@ -42,10 +42,10 @@ export const GalleryAnalytics = ({ galleryId, galleryName }: GalleryAnalyticsPro
   const fetchAnalytics = async () => {
     setIsLoading(true);
     try {
-      // Fetch gallery analytics
+      // Fetch gallery analytics - explicitly exclude sensitive data
       const { data: analyticsData, error: analyticsError } = await supabase
         .from('gallery_analytics')
-        .select('*')
+        .select('action, created_at, image_id')
         .eq('gallery_id', galleryId);
 
       if (analyticsError) throw analyticsError;
@@ -61,7 +61,11 @@ export const GalleryAnalytics = ({ galleryId, galleryName }: GalleryAnalyticsPro
       // Process analytics data
       const viewActions = analyticsData?.filter(a => a.action === 'image_viewed') || [];
       const downloadActions = analyticsData?.filter(a => a.action === 'image_download') || [];
-      const uniqueIPs = new Set(analyticsData?.map(a => a.client_ip).filter(Boolean));
+      // Use secure analytics function instead of direct IP access
+      const { data: summaryData } = await supabase.rpc('get_gallery_analytics_summary', {
+        gallery_uuid: galleryId
+      });
+      const uniqueVisitors = summaryData?.[0]?.unique_visitors_estimate || 0;
 
       // Get recent activity (last 7 days)
       const sevenDaysAgo = new Date();
@@ -93,13 +97,14 @@ export const GalleryAnalytics = ({ galleryId, galleryName }: GalleryAnalyticsPro
         totalViews: viewActions.length,
         totalFavorites: favoritesData?.length || 0,
         totalDownloads: downloadActions.length,
-        uniqueVisitors: uniqueIPs.size,
+        uniqueVisitors: uniqueVisitors,
         recentActivity: recentActivity.slice(-7),
         popularImages: [] // Would need more complex query for image-specific stats
       });
 
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      // Log error without exposing sensitive data
+      console.error('Analytics fetch failed');
       toast({
         title: "Error",
         description: "Failed to load analytics data",

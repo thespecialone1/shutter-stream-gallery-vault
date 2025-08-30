@@ -67,26 +67,25 @@ const AnonymousFavoritesAnalytics = ({ galleryId }: AnonymousFavoritesAnalyticsP
       
       setFavoriteAnalytics(analytics);
 
-      // Fetch session statistics
-      const { data: sessionsData, error: sessionsError } = await supabase
-        .from('gallery_access_sessions')
-        .select('created_at')
-        .eq('gallery_id', galleryId);
-
-      if (sessionsError) throw sessionsError;
+      // Use secure function to get session count without exposing session data
+      const { data: sessionCountData } = await supabase
+        .rpc('get_gallery_analytics_summary', { gallery_uuid: galleryId });
+      
+      const sessionCount = sessionCountData?.[0]?.total_views || 0;
 
       const stats: SessionStats = {
-        total_sessions: sessionsData?.length || 0,
+        total_sessions: sessionCount,
         total_favorites: favoritesData?.length || 0,
         unique_images_favorited: favoriteMap.size,
-        most_recent_session: sessionsData?.length > 0 
-          ? sessionsData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at
+        most_recent_session: favoritesData?.length > 0 
+          ? favoritesData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at
           : ''
       };
 
       setSessionStats(stats);
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      // Log error without exposing sensitive data
+      console.error('Anonymous favorites analytics fetch failed');
     } finally {
       setIsLoading(false);
     }

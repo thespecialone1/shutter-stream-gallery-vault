@@ -59,6 +59,8 @@ const Auth = () => {
         });
       }
     } catch (error) {
+      // Log without exposing sensitive error details
+      console.error('Authentication error occurred');
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
