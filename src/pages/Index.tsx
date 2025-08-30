@@ -5,10 +5,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import weddingParty from "@/assets/wedding-party.jpg";
-import bridesmaids from "@/assets/bridesmaids.jpg";
-import groupSelfie from "@/assets/group-selfie.jpg";
-import couplePortrait from "@/assets/couple-portrait.jpg";
+import InteractiveGalleryDemo from "@/components/InteractiveGalleryDemo";
 const Index = () => {
   const { user, loading } = useAuth();
   const [featured, setFeatured] = useState<{ id: string; url: string; alt: string }[]>([]);
@@ -149,132 +146,7 @@ const Index = () => {
           </div>
         </section>
 
-{/* Wedding Photo Album Section */}
-<section className="container mx-auto px-6 py-16">
-  <div className="max-w-5xl mx-auto">
-    {/* Top Row - 3 Images */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-        <img
-          src={weddingParty}
-          alt="Wedding party moments - beautiful group photo"
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
-      </div>
-      <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-        <img
-          src={bridesmaids}
-          alt="Bridesmaids laughing together in pastel dresses"
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
-      </div>
-      <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-        <img
-          src={groupSelfie}
-          alt="Group selfie with friends and family at wedding"
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
-      </div>
-    </div>
-
-    {/* Bottom Section - Large Image + Text */}
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-      {/* Interactive Masonry Gallery */}
-      <div className="relative">
-        <div className="grid grid-cols-2 gap-4 auto-rows-max">
-          {/* Large focal image */}
-          <div className="col-span-2 aspect-[16/10] overflow-hidden rounded-2xl shadow-lg group cursor-pointer relative">
-            <img
-              src={couplePortrait}
-              alt="Romantic couple portrait"
-              className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700 group-hover:brightness-110"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              <div className="text-sm font-medium">Professional Quality</div>
-            </div>
-          </div>
-          
-          {/* Small animated cards */}
-          <div className="aspect-square overflow-hidden rounded-xl shadow-md group cursor-pointer animate-fade-in relative" style={{ animationDelay: '0.2s' }}>
-            <img
-              src={bridesmaids}
-              alt="Bridesmaids celebration"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </div>
-          
-          <div className="aspect-square overflow-hidden rounded-xl shadow-md group cursor-pointer animate-fade-in relative" style={{ animationDelay: '0.4s' }}>
-            <img
-              src={weddingParty}
-              alt="Wedding party group photo"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </div>
-        </div>
-        
-        {/* Floating interaction hint */}
-        <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full shadow-lg animate-pulse">
-          Interactive
-        </div>
-      </div>
-
-      {/* Text Content */}
-      <div className="space-y-6 lg:pl-8">
-        <div className="space-y-4">
-          <h2 className="text-3xl lg:text-4xl font-serif text-foreground leading-tight">
-            We Made Collecting Your Wedding Photos Easy & Simple.
-          </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Relive your big day through the eyes of your beloved ones.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <p className="text-muted-foreground">
-            Transform your special moments into a beautiful, organized collection. 
-            Our elegant gallery system makes it effortless for you and your guests 
-            to share, favorite, and download precious memories.
-          </p>
-          
-          <ul className="space-y-2 text-muted-foreground">
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-              Secure, password-protected galleries
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-              Easy photo sharing for guests
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-              High-resolution downloads
-            </li>
-          </ul>
-        </div>
-
-        <Button 
-          size="lg" 
-          asChild 
-          className="btn-premium text-base px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-        >
-          <Link to="/auth" className="flex items-center gap-2">
-            Create Album
-            <ArrowRight className="h-5 w-5" />
-          </Link>
-        </Button>
-      </div>
-    </div>
-  </div>
-</section>
+        <InteractiveGalleryDemo />
 
 {/* Features Section */}
         <section className="container mx-auto px-6 py-20">
