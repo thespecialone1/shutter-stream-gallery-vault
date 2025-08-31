@@ -877,6 +877,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_old_security_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_gallery_invite: {
         Args: {
           expires_in_days?: number

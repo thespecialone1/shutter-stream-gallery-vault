@@ -14,6 +14,7 @@ export const getCSPHeader = (): string => {
     "img-src 'self' data: https: blob:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com",
     "frame-src 'self' https://accounts.google.com",
+    "frame-ancestors 'self' https://*.lovableproject.com https://lovable.dev",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'"
@@ -46,10 +47,10 @@ export const setSecurityHeaders = (): void => {
   }
 
   // Add other security headers via meta tags where possible
+  // Note: X-Frame-Options removed to allow iframe embedding in Lovable
   const securityMetas = [
     { name: 'referrer', content: 'strict-origin-when-cross-origin' },
     { httpEquiv: 'X-Content-Type-Options', content: 'nosniff' },
-    { httpEquiv: 'X-Frame-Options', content: 'DENY' },
     { httpEquiv: 'X-XSS-Protection', content: '1; mode=block' }
   ];
 
