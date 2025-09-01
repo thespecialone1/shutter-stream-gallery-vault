@@ -760,61 +760,6 @@ export type Database = {
         }
         Relationships: []
       }
-      gallery_sessions_safe: {
-        Row: {
-          client_ip_masked: string | null
-          created_at: string | null
-          expires_at: string | null
-          gallery_id: string | null
-          id: string | null
-          last_accessed: string | null
-          session_token_status: string | null
-          user_agent_partial: string | null
-        }
-        Insert: {
-          client_ip_masked?: never
-          created_at?: string | null
-          expires_at?: string | null
-          gallery_id?: string | null
-          id?: string | null
-          last_accessed?: string | null
-          session_token_status?: never
-          user_agent_partial?: never
-        }
-        Update: {
-          client_ip_masked?: never
-          created_at?: string | null
-          expires_at?: string | null
-          gallery_id?: string | null
-          id?: string | null
-          last_accessed?: string | null
-          session_token_status?: never
-          user_agent_partial?: never
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
-            columns: ["gallery_id"]
-            isOneToOne: false
-            referencedRelation: "galleries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
-            columns: ["gallery_id"]
-            isOneToOne: false
-            referencedRelation: "galleries_public_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
-            columns: ["gallery_id"]
-            isOneToOne: false
-            referencedRelation: "gallery_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       images_public_view: {
         Row: {
           filename: string | null
