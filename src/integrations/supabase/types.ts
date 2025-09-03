@@ -1072,6 +1072,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_unauthorized_access_attempt: {
+        Args: { attempted_action: string; details?: Json; table_name: string }
+        Returns: undefined
+      }
       rotate_gallery_session: {
         Args: { gallery_id: string; old_session_token: string }
         Returns: Json
