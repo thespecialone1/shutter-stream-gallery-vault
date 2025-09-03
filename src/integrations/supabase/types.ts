@@ -760,6 +760,61 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_sessions_safe: {
+        Row: {
+          client_ip_masked: string | null
+          created_at: string | null
+          expires_at: string | null
+          gallery_id: string | null
+          id: string | null
+          last_accessed: string | null
+          session_status: string | null
+          user_agent_partial: string | null
+        }
+        Insert: {
+          client_ip_masked?: never
+          created_at?: string | null
+          expires_at?: string | null
+          gallery_id?: string | null
+          id?: string | null
+          last_accessed?: string | null
+          session_status?: never
+          user_agent_partial?: never
+        }
+        Update: {
+          client_ip_masked?: never
+          created_at?: string | null
+          expires_at?: string | null
+          gallery_id?: string | null
+          id?: string | null
+          last_accessed?: string | null
+          session_status?: never
+          user_agent_partial?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       images_public_view: {
         Row: {
           filename: string | null
@@ -918,6 +973,18 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_my_profile_secure: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          business_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          updated_at: string
+        }[]
+      }
       get_share_link_analytics: {
         Args: { gallery_id: string }
         Returns: Json
@@ -1002,6 +1069,15 @@ export type Database = {
           p_gallery_id: string
           p_image_id: string
           p_session_token: string
+        }
+        Returns: Json
+      }
+      update_my_profile_secure: {
+        Args: {
+          p_business_name?: string
+          p_email: string
+          p_full_name: string
+          p_phone?: string
         }
         Returns: Json
       }
