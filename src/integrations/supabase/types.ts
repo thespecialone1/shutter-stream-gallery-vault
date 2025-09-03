@@ -881,6 +881,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_sensitive_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_gallery_invite: {
         Args: {
           expires_in_days?: number
@@ -1057,6 +1061,15 @@ export type Database = {
       }
       log_security_event: {
         Args: { details?: Json; event_type: string; severity?: string }
+        Returns: undefined
+      }
+      log_security_event_enhanced: {
+        Args: {
+          auto_block?: boolean
+          details?: Json
+          event_type: string
+          severity?: string
+        }
         Returns: undefined
       }
       rotate_gallery_session: {
