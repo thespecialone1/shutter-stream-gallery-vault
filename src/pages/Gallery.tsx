@@ -620,6 +620,19 @@ const Gallery = () => {
                 sessionToken={sessionToken}
                 images={images}
               />
+            ) : gallery?.is_public ? (
+              <div className="text-center py-20 fade-in">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center mx-auto mb-8">
+                  <Heart className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="heading-lg mb-4">Sign In Required</h3>
+                <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                  To save favorites, please sign in to your account. Your favorites will be preserved across sessions.
+                </p>
+                <Button asChild className="btn-premium">
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+              </div>
             ) : (
               <FavoritesView galleryId={gallery!.id} />
             )}
