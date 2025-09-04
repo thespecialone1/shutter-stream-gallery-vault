@@ -9,10 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Camera, Lock, ArrowLeft, Eye, EyeOff, Heart, Star, Calendar, User, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { FavoriteButton } from "@/components/FavoriteButton";
-import { FavoritesView } from "@/components/FavoritesView";
-import AnonymousFavoriteButton from "@/components/AnonymousFavoriteButton";
-import AnonymousFavoritesView from "@/components/AnonymousFavoritesView";
+import { useAuth } from "@/hooks/useAuth";
+import { UnifiedFavoritesView } from "@/components/UnifiedFavoritesView";
 import { MasonryGallery } from "@/components/MasonryGallery";
 import { ImageGridSkeleton, SectionTabsSkeleton, FavoritesViewSkeleton } from "@/components/SkeletonLoader";
 
@@ -48,6 +46,7 @@ type Section = {
 const Gallery = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -614,27 +613,16 @@ const Gallery = () => {
           <TabsContent value="favorites" className="mt-8 fade-in">
             {contentLoading ? (
               <FavoritesViewSkeleton />
-            ) : sessionToken ? (
-              <AnonymousFavoritesView 
-                galleryId={gallery!.id} 
-                sessionToken={sessionToken}
-                images={images}
-              />
-            ) : gallery?.is_public ? (
-              <div className="text-center py-20 fade-in">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/5 to-accent/5 flex items-center justify-center mx-auto mb-8">
-                  <Heart className="h-12 w-12 text-muted-foreground" />
-                </div>
-                <h3 className="heading-lg mb-4">Sign In Required</h3>
-                <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                  To save favorites, please sign in to your account. Your favorites will be preserved across sessions.
-                </p>
-                <Button asChild className="btn-premium">
-                  <Link to="/auth">Sign In</Link>
-                </Button>
-              </div>
             ) : (
-              <FavoritesView galleryId={gallery!.id} />
+              <UnifiedFavoritesView
+                galleryId={gallery!.id}
+                isPublicGallery={gallery!.is_public}
+                sessionToken={sessionToken}
+                user={user}
+                images={images}
+                favoriteImageIds={favoriteImageIds}
+                onFavoriteChange={handleFavoriteChange}
+              />
             )}
           </TabsContent>
         </Tabs>
