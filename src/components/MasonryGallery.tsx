@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Download, Eye, Square, CheckSquare, Heart, X, ArrowLeft, ArrowRight, FileImage } from 'lucide-react';
-import { UnifiedFavoriteButton } from './UnifiedFavoriteButton';
+import { FavoriteButton } from './FavoriteButton';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -367,11 +367,9 @@ const publicUrl = (path: string) => `${supabase.storage.from('gallery-images').g
 
             {/* Premium Favorite Button */}
             <div className={`favorite-btn ${favoriteImageIds.has(image.id) ? 'active' : ''}`}>
-              <UnifiedFavoriteButton
+              <FavoriteButton
                 galleryId={galleryId}
                 imageId={image.id}
-                isPublicGallery={isPublicGallery}
-                sessionToken={sessionToken}
                 user={user}
                 isFavorited={favoriteImageIds.has(image.id)}
                 onFavoriteChange={onFavoriteChange}
@@ -462,11 +460,9 @@ const publicUrl = (path: string) => `${supabase.storage.from('gallery-images').g
               
               {/* Favorite Button */}
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                <UnifiedFavoriteButton
+                <FavoriteButton
                   galleryId={galleryId}
                   imageId={lightboxImage.id}
-                  isPublicGallery={isPublicGallery}
-                  sessionToken={sessionToken}
                   user={user}
                   isFavorited={favoriteImageIds.has(lightboxImage.id)}
                   onFavoriteChange={onFavoriteChange}

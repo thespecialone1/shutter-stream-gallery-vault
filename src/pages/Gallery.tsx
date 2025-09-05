@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Camera, Lock, ArrowLeft, Eye, EyeOff, Heart, Star, Calendar, User, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { UnifiedFavoritesView } from "@/components/UnifiedFavoritesView";
+import { FavoritesManagement } from "@/components/FavoritesManagement";
 import { MasonryGallery } from "@/components/MasonryGallery";
 import { ImageGridSkeleton, SectionTabsSkeleton, FavoritesViewSkeleton } from "@/components/SkeletonLoader";
 
@@ -614,15 +614,23 @@ const Gallery = () => {
             {contentLoading ? (
               <FavoritesViewSkeleton />
             ) : (
-              <UnifiedFavoritesView
-                galleryId={gallery!.id}
-                isPublicGallery={gallery!.is_public}
-                sessionToken={sessionToken}
-                user={user}
-                images={images}
-                favoriteImageIds={favoriteImageIds}
-                onFavoriteChange={handleFavoriteChange}
-              />
+              user ? (
+                <FavoritesManagement />
+              ) : (
+                <div className="text-center py-12">
+                  <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Sign in to view favorites</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Sign in with Google to save and view your favorite images
+                  </p>
+                  <Link to="/auth">
+                    <Button>
+                      <User className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </Link>
+                </div>
+              )
             )}
           </TabsContent>
         </Tabs>

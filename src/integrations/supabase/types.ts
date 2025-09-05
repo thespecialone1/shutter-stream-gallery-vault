@@ -14,33 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      anonymous_favorites: {
-        Row: {
-          client_ip: unknown | null
-          created_at: string
-          gallery_id: string
-          id: string
-          image_id: string
-          session_token: string
-        }
-        Insert: {
-          client_ip?: unknown | null
-          created_at?: string
-          gallery_id: string
-          id?: string
-          image_id: string
-          session_token: string
-        }
-        Update: {
-          client_ip?: unknown | null
-          created_at?: string
-          gallery_id?: string
-          id?: string
-          image_id?: string
-          session_token?: string
-        }
-        Relationships: []
-      }
       audit_logs: {
         Row: {
           action: string
@@ -113,21 +86,21 @@ export type Database = {
           gallery_id: string
           id: string
           image_id: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
           gallery_id: string
           id?: string
           image_id: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
           gallery_id?: string
           id?: string
           image_id?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -937,13 +910,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      get_anonymous_favorites: {
-        Args: { p_gallery_id: string; p_session_token: string }
-        Returns: {
-          created_at: string
-          image_id: string
-        }[]
-      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -955,6 +921,15 @@ export type Database = {
           recent_activity_days: number
           total_views: number
           unique_visitors_estimate: number
+        }[]
+      }
+      get_gallery_favorites_analytics: {
+        Args: { gallery_uuid: string }
+        Returns: {
+          most_favorited_images: Json
+          recent_favorites: Json
+          total_favorites: number
+          unique_users: number
         }[]
       }
       get_gallery_safe_info: {
@@ -992,6 +967,23 @@ export type Database = {
       get_share_link_analytics: {
         Args: { gallery_id: string }
         Returns: Json
+      }
+      get_user_favorites: {
+        Args: { user_uuid?: string }
+        Returns: {
+          favorite_id: string
+          favorited_at: string
+          gallery_client_name: string
+          gallery_id: string
+          gallery_name: string
+          image_filename: string
+          image_full_path: string
+          image_height: number
+          image_id: string
+          image_original_filename: string
+          image_thumbnail_path: string
+          image_width: number
+        }[]
       }
       get_user_profile_secure: {
         Args: { user_uuid: string }
@@ -1078,15 +1070,6 @@ export type Database = {
       }
       rotate_gallery_session: {
         Args: { gallery_id: string; old_session_token: string }
-        Returns: Json
-      }
-      toggle_anonymous_favorite: {
-        Args: {
-          p_client_ip?: unknown
-          p_gallery_id: string
-          p_image_id: string
-          p_session_token: string
-        }
         Returns: Json
       }
       update_my_profile_secure: {
