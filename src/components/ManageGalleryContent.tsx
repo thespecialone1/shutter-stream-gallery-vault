@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Plus, Image } from 'lucide-react';
+import { Trash2, Edit, Plus, Image, Eye } from 'lucide-react';
 import { DeleteGalleryDialog } from './DeleteGalleryDialog';
+import { ImageLightbox } from './ImageLightbox';
 
 interface Gallery {
   id: string;
@@ -41,6 +42,8 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [editForm, setEditForm] = useState({
     name: gallery.name,
     description: gallery.description || '',
@@ -156,6 +159,50 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
     return `${supabase.storage.from("gallery-images").getPublicUrl(imagePath).data.publicUrl}`;
   };
 
+  const openLightbox = (image: GalleryImage) => {
+    setLightboxImage(image);
+    setCurrentImageIndex(images.findIndex(img => img.id === image.id));
+  };
+
+  const navigateImage = (direction: 'next' | 'prev') => {
+    const newIndex = direction === 'next' 
+      ? (currentImageIndex + 1) % images.length
+      : (currentImageIndex - 1 + images.length) % images.length;
+    
+    setCurrentImageIndex(newIndex);
+    setLightboxImage(images[newIndex]);
+  };
+
+  const downloadImage = async (image: GalleryImage) => {
+    try {
+      const imageUrl = getImageUrl(image.full_path);
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = image.filename;
+      document.body.appendChild(link);
+      link.click();
+      
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Download started",
+        description: `Downloading ${image.filename}`
+      });
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast({
+        title: "Download failed",
+        description: "Could not download the image",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -253,21 +300,37 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {images.map((image) => (
                 <div key={image.id} className="group relative">
-                  <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                  <div 
+                    className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer"
+                    onClick={() => openLightbox(image)}
+                  >
                     <img
                       src={getImageUrl(image.thumbnail_path || image.full_path)}
                       alt={image.filename}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      loading="lazy"
                     />
                   </div>
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openLightbox(image);
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDeleteImage(image.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteImage(image.id);
+                      }}
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                   <div className="absolute bottom-2 left-2 right-2 bg-black/80 text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
@@ -280,6 +343,23 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
           )}
         </CardContent>
       </Card>
+
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <ImageLightbox
+          isOpen={!!lightboxImage}
+          onClose={() => setLightboxImage(null)}
+          imageUrl={getImageUrl(lightboxImage.full_path)}
+          thumbnailUrl={lightboxImage.thumbnail_path ? getImageUrl(lightboxImage.thumbnail_path) : undefined}
+          alt={lightboxImage.filename}
+          filename={lightboxImage.filename}
+          onDownload={() => downloadImage(lightboxImage)}
+          onNext={() => navigateImage('next')}
+          onPrevious={() => navigateImage('prev')}
+          hasNext={currentImageIndex < images.length - 1}
+          hasPrevious={currentImageIndex > 0}
+        />
+      )}
     </div>
   );
 }

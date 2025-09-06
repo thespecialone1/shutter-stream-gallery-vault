@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
+import { ImageLightbox } from './ImageLightbox';
 
 interface FavoriteImage {
   favorite_id: string;
@@ -26,6 +27,8 @@ interface FavoriteImage {
 export const FavoritesManagement = () => {
   const [favorites, setFavorites] = useState<FavoriteImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightboxImage, setLightboxImage] = useState<FavoriteImage | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -37,7 +40,9 @@ export const FavoritesManagement = () => {
 
   const fetchFavorites = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_user_favorites');
+      const { data, error } = await supabase.rpc('get_user_favorites', {
+        user_uuid: user?.id
+      });
       
       if (error) throw error;
       
@@ -111,6 +116,26 @@ export const FavoritesManagement = () => {
 
   const getImageUrl = (imagePath: string) => {
     return `${supabase.storage.from("gallery-images").getPublicUrl(imagePath).data.publicUrl}`;
+  };
+
+  const openLightbox = (image: FavoriteImage, galleryImages: FavoriteImage[]) => {
+    setLightboxImage(image);
+    setCurrentImageIndex(galleryImages.findIndex(img => img.favorite_id === image.favorite_id));
+  };
+
+  const getCurrentGalleryImages = () => {
+    if (!lightboxImage) return [];
+    return favorites.filter(fav => fav.gallery_id === lightboxImage.gallery_id);
+  };
+
+  const navigateImage = (direction: 'next' | 'prev') => {
+    const galleryImages = getCurrentGalleryImages();
+    const newIndex = direction === 'next' 
+      ? (currentImageIndex + 1) % galleryImages.length
+      : (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+    
+    setCurrentImageIndex(newIndex);
+    setLightboxImage(galleryImages[newIndex]);
   };
 
   const groupFavoritesByGallery = () => {
@@ -211,11 +236,15 @@ export const FavoritesManagement = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {gallery.images.map((favorite) => (
                 <div key={favorite.favorite_id} className="group relative">
-                  <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                  <div 
+                    className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer"
+                    onClick={() => openLightbox(favorite, gallery.images)}
+                  >
                     <img
                       src={getImageUrl(favorite.image_thumbnail_path || favorite.image_full_path)}
                       alt={favorite.image_original_filename}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      loading="lazy"
                     />
                   </div>
                   
@@ -224,14 +253,30 @@ export const FavoritesManagement = () => {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => downloadImage(favorite)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openLightbox(favorite, gallery.images);
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadImage(favorite);
+                      }}
                     >
                       <Download className="w-4 h-4" />
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => removeFavorite(favorite.favorite_id, favorite.image_id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFavorite(favorite.favorite_id, favorite.image_id);
+                      }}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -252,6 +297,23 @@ export const FavoritesManagement = () => {
           </CardContent>
         </Card>
       ))}
+
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <ImageLightbox
+          isOpen={!!lightboxImage}
+          onClose={() => setLightboxImage(null)}
+          imageUrl={getImageUrl(lightboxImage.image_full_path)}
+          thumbnailUrl={lightboxImage.image_thumbnail_path ? getImageUrl(lightboxImage.image_thumbnail_path) : undefined}
+          alt={lightboxImage.image_original_filename}
+          filename={lightboxImage.image_original_filename}
+          onDownload={() => downloadImage(lightboxImage)}
+          onNext={() => navigateImage('next')}
+          onPrevious={() => navigateImage('prev')}
+          hasNext={currentImageIndex < getCurrentGalleryImages().length - 1}
+          hasPrevious={currentImageIndex > 0}
+        />
+      )}
     </div>
   );
 };
