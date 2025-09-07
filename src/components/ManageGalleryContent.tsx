@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Trash2, Edit, Plus, Image, Eye } from 'lucide-react';
 import { DeleteGalleryDialog } from './DeleteGalleryDialog';
 import { ImageLightbox } from './ImageLightbox';
+import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
 
 interface Gallery {
   id: string;
@@ -287,10 +288,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-              <p className="text-sm text-muted-foreground">Loading images...</p>
-            </div>
+            <MasonrySkeletonLoader count={6} />
           ) : images.length === 0 ? (
             <div className="text-center py-8">
               <Image className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

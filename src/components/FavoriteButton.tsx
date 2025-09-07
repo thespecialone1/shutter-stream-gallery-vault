@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
+import { HeartParticles } from './HeartParticles';
 
 interface FavoriteButtonProps {
   galleryId: string;
@@ -22,18 +23,13 @@ export const FavoriteButton = ({
   onFavoriteChange 
 }: FavoriteButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showParticles, setShowParticles] = useState(false);
   const navigate = useNavigate();
 
   const toggleFavorite = async () => {
     if (!user) {
       toast.error('Please sign in to save favorites');
       navigate('/auth');
-      return;
-    }
-
-    // Check if already favorited to prevent duplicates
-    if (isFavorited) {
-      toast.info('This image is already in your favorites');
       return;
     }
 
@@ -73,6 +69,7 @@ export const FavoriteButton = ({
         }
         
         onFavoriteChange(imageId, true);
+        setShowParticles(true);
         toast.success('Added to favorites');
       }
     } catch (error) {
@@ -89,14 +86,20 @@ export const FavoriteButton = ({
       size="sm"
       onClick={toggleFavorite}
       disabled={isLoading}
-      className={`h-9 w-9 p-0 transition-colors ${
+      className={`favorite-button-enhanced h-9 w-9 p-0 transition-all duration-300 group relative ${
         isFavorited 
-          ? 'text-red-500 hover:text-red-600' 
+          ? 'text-red-500 hover:text-red-600 scale-110' 
           : 'text-muted-foreground hover:text-red-500'
       }`}
     >
       <Heart 
-        className={`h-4 w-4 ${isFavorited ? 'fill-current' : ''}`} 
+        className={`h-4 w-4 transition-all duration-300 ${
+          isFavorited ? 'fill-current animate-pulse' : 'group-hover:scale-110'
+        }`} 
+      />
+      <HeartParticles 
+        trigger={showParticles} 
+        onComplete={() => setShowParticles(false)} 
       />
     </Button>
   );

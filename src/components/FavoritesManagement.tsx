@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { ImageLightbox } from './ImageLightbox';
+import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
 
 interface FavoriteImage {
   favorite_id: string;
@@ -165,9 +166,7 @@ export const FavoritesManagement = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
+          <MasonrySkeletonLoader count={9} />
         </CardContent>
       </Card>
     );
@@ -234,8 +233,8 @@ export const FavoritesManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {gallery.images.map((favorite) => (
-                <div key={favorite.favorite_id} className="group relative">
+              {gallery.images.map((favorite, index) => (
+                <div key={favorite.favorite_id} className="group relative staggered-item magnetic-hover">
                   <div 
                     className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer"
                     onClick={() => openLightbox(favorite, gallery.images)}
@@ -243,43 +242,48 @@ export const FavoritesManagement = () => {
                     <img
                       src={getImageUrl(favorite.image_thumbnail_path || favorite.image_full_path)}
                       alt={favorite.image_original_filename}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
                   </div>
                   
-                  {/* Overlay with actions */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openLightbox(favorite, gallery.images);
-                      }}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        downloadImage(favorite);
-                      }}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeFavorite(favorite.favorite_id, favorite.image_id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  {/* Enhanced overlay with actions */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg flex items-end justify-center p-3">
+                    <div className="flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openLightbox(favorite, gallery.images);
+                        }}
+                        className="bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadImage(favorite);
+                        }}
+                        className="bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFavorite(favorite.favorite_id, favorite.image_id);
+                        }}
+                        className="bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Image info */}
