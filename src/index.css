@@ -488,4 +488,42 @@
       transform: translateY(0);
     }
   }
+
+  /* Enhanced button animations */
+  .btn-premium {
+    @apply bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary;
+    @apply transform transition-all duration-300 hover:scale-105 hover:shadow-elegant;
+    @apply relative overflow-hidden;
+  }
+
+  .btn-premium::before {
+    content: '';
+    @apply absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full transition-transform duration-500;
+  }
+
+  .btn-premium:hover::before {
+    @apply translate-x-full;
+  }
+
+  .btn-premium-outline {
+    @apply border border-primary/30 hover:border-primary;
+    @apply bg-transparent hover:bg-primary/10;
+    @apply transform transition-all duration-300 hover:scale-105;
+  }
+
+  /* Fast image loading optimization */
+  img {
+    @apply transition-opacity duration-300;
+    image-rendering: optimizeSpeed;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  img[loading="lazy"] {
+    @apply opacity-0;
+  }
+
+  img[loading="lazy"].loaded {
+    @apply opacity-100;
+  }
 }

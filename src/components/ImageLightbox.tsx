@@ -161,8 +161,8 @@ export const ImageLightbox = ({
             </Button>
           )}
 
-          {/* Image container - Fixed aspect ratio preservation */}
-          <div className="flex-1 flex items-center justify-center p-4 sm:p-8 md:p-16 relative min-h-0">
+          {/* Image container - Properly sized without cropping */}
+          <div className="flex-1 flex items-center justify-center relative" style={{ minHeight: '60vh', maxHeight: '85vh' }}>
             {!isImageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="loading-skeleton w-16 h-16 rounded-full"></div>
@@ -170,27 +170,25 @@ export const ImageLightbox = ({
             )}
             
             {/* Progressive loading: thumbnail first, then full resolution */}
-            <div className="relative w-full h-full flex items-center justify-center">
+            <div className="relative flex items-center justify-center max-w-full max-h-full">
               {thumbnailUrl && !showFullRes && (
                 <img
                   src={thumbnailUrl}
                   alt={alt}
-                  className="max-w-full max-h-full object-contain blur-sm transition-all duration-300"
+                  className="max-w-[90vw] max-h-[85vh] object-contain blur-sm transition-all duration-300"
                   onLoad={handleImageLoad}
-                  style={{ maxWidth: '100%', maxHeight: '100%' }}
                 />
               )}
               <img
                 src={showFullRes ? imageUrl : (thumbnailUrl || imageUrl)}
                 alt={alt}
-                className={`max-w-full max-h-full object-contain transition-all duration-500 progressive-reveal ${
+                className={`max-w-[90vw] max-h-[85vh] object-contain transition-all duration-500 progressive-reveal ${
                   showFullRes ? 'opacity-100' : 'opacity-0 absolute inset-0'
                 }`}
                 onLoad={() => {
                   if (!thumbnailUrl) handleImageLoad();
                   if (showFullRes) setIsImageLoaded(true);
                 }}
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
               />
             </div>
           </div>

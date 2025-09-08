@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Plus, Image, Eye } from 'lucide-react';
+import { Trash2, Edit, Plus, Image, Eye, Download } from 'lucide-react';
 import { DeleteGalleryDialog } from './DeleteGalleryDialog';
 import { ImageLightbox } from './ImageLightbox';
 import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
+import { useImageCache } from '@/hooks/useImageCache';
 
 interface Gallery {
   id: string;
@@ -51,10 +52,37 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
     client_name: gallery.client_name
   });
   const { toast } = useToast();
+  const { preloadImage, preloadMultiple, getCachedUrl } = useImageCache();
 
   useEffect(() => {
     loadImages();
   }, [gallery.id]);
+
+  // Preload images for performance
+  useEffect(() => {
+    if (images.length > 0) {
+      // Preload first 10 thumbnails and full images immediately
+      const firstBatch = images.slice(0, 10);
+      const thumbnailUrls = firstBatch.map(img => 
+        img.thumbnail_path ? getImageUrl(img.thumbnail_path) : getImageUrl(img.full_path)
+      );
+      const fullUrls = firstBatch.map(img => getImageUrl(img.full_path));
+      
+      preloadMultiple([...thumbnailUrls, ...fullUrls]);
+
+      // Preload remaining images in background
+      if (images.length > 10) {
+        setTimeout(() => {
+          const remainingImages = images.slice(10);
+          const remainingUrls = remainingImages.flatMap(img => [
+            img.thumbnail_path ? getImageUrl(img.thumbnail_path) : getImageUrl(img.full_path),
+            getImageUrl(img.full_path)
+          ]);
+          preloadMultiple(remainingUrls);
+        }, 2000);
+      }
+    }
+  }, [images, preloadMultiple]);
 
   const loadImages = async () => {
     try {
@@ -303,33 +331,50 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                     onClick={() => openLightbox(image)}
                   >
                     <img
-                      src={getImageUrl(image.thumbnail_path || image.full_path)}
+                      src={getCachedUrl(getImageUrl(image.thumbnail_path || image.full_path))}
                       alt={image.filename}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"
                     />
                   </div>
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openLightbox(image);
-                      }}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteImage(image.id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  
+                  {/* Fixed positioned overlay with actions */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openLightbox(image);
+                        }}
+                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          downloadImage(image);
+                        }}
+                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteImage(image.id);
+                        }}
+                        className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="absolute bottom-2 left-2 right-2 bg-black/80 text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                     <p className="truncate">{image.filename}</p>
@@ -347,8 +392,8 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
         <ImageLightbox
           isOpen={!!lightboxImage}
           onClose={() => setLightboxImage(null)}
-          imageUrl={getImageUrl(lightboxImage.full_path)}
-          thumbnailUrl={lightboxImage.thumbnail_path ? getImageUrl(lightboxImage.thumbnail_path) : undefined}
+          imageUrl={getCachedUrl(getImageUrl(lightboxImage.full_path))}
+          thumbnailUrl={lightboxImage.thumbnail_path ? getCachedUrl(getImageUrl(lightboxImage.thumbnail_path)) : undefined}
           alt={lightboxImage.filename}
           filename={lightboxImage.filename}
           onDownload={() => downloadImage(lightboxImage)}
