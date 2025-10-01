@@ -491,9 +491,14 @@
 
   /* Enhanced button animations */
   .btn-premium {
-    @apply bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary;
-    @apply transform transition-all duration-300 hover:scale-105 hover:shadow-elegant;
+    @apply bg-primary hover:bg-primary/90;
+    @apply transform transition-all duration-300 hover:scale-105;
     @apply relative overflow-hidden;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .btn-premium:hover {
+    box-shadow: var(--shadow-medium);
   }
 
   .btn-premium::before {
