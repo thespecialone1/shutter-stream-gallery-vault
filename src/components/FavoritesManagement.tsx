@@ -7,7 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
-import { ImageLightbox } from './ImageLightbox';
+import { EnhancedImageLightbox } from './EnhancedImageLightbox';
+import { DownloadOptionsDialog } from './DownloadOptionsDialog';
 import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
 
 interface FavoriteImage {
@@ -30,6 +31,7 @@ export const FavoritesManagement = () => {
   const [loading, setLoading] = useState(true);
   const [lightboxImage, setLightboxImage] = useState<FavoriteImage | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -302,21 +304,29 @@ export const FavoritesManagement = () => {
         </Card>
       ))}
 
-      {/* Image Lightbox */}
+      {/* Enhanced Image Lightbox */}
       {lightboxImage && (
-        <ImageLightbox
-          isOpen={!!lightboxImage}
-          onClose={() => setLightboxImage(null)}
-          imageUrl={getImageUrl(lightboxImage.image_full_path)}
-          thumbnailUrl={lightboxImage.image_thumbnail_path ? getImageUrl(lightboxImage.image_thumbnail_path) : undefined}
-          alt={lightboxImage.image_original_filename}
-          filename={lightboxImage.image_original_filename}
-          onDownload={() => downloadImage(lightboxImage)}
-          onNext={() => navigateImage('next')}
-          onPrevious={() => navigateImage('prev')}
-          hasNext={currentImageIndex < getCurrentGalleryImages().length - 1}
-          hasPrevious={currentImageIndex > 0}
-        />
+        <>
+          <EnhancedImageLightbox
+            isOpen={!!lightboxImage}
+            onClose={() => setLightboxImage(null)}
+            thumbnailUrl={lightboxImage.image_thumbnail_path ? getImageUrl(lightboxImage.image_thumbnail_path) : getImageUrl(lightboxImage.image_full_path)}
+            fullUrl={getImageUrl(lightboxImage.image_full_path)}
+            alt={lightboxImage.image_original_filename}
+            filename={lightboxImage.image_original_filename}
+            onNext={currentImageIndex < getCurrentGalleryImages().length - 1 ? () => navigateImage('next') : undefined}
+            onPrevious={currentImageIndex > 0 ? () => navigateImage('prev') : undefined}
+            hasNext={currentImageIndex < getCurrentGalleryImages().length - 1}
+            hasPrevious={currentImageIndex > 0}
+          />
+          
+          <DownloadOptionsDialog
+            isOpen={showDownloadDialog}
+            onClose={() => setShowDownloadDialog(false)}
+            imageUrl={getImageUrl(lightboxImage.image_full_path)}
+            filename={lightboxImage.image_original_filename}
+          />
+        </>
       )}
     </div>
   );

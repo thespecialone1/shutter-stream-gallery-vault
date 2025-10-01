@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getDisplayImageUrl, isSupportedFormat, getFormatName } from '@/utils/imageUtils';
+import { EnhancedImageLightbox } from './EnhancedImageLightbox';
+import { DownloadOptionsDialog } from './DownloadOptionsDialog';
 
 type GalleryImage = {
   id: string;
@@ -47,7 +49,8 @@ export const MasonryGallery: React.FC<MasonryGalleryProps> = ({
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-const { toast } = useToast();
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const { toast } = useToast();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const [heicFallback, setHeicFallback] = useState<Set<string>>(new Set());
 
@@ -340,26 +343,30 @@ const publicUrl = (path: string) => `${supabase.storage.from('gallery-images').g
               )}
               
               {/* Premium Hover Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               
-              {/* Premium Action Buttons */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <div className="flex gap-3">
+              {/* Premium Action Buttons - Fixed at bottom */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                <div className="flex gap-2 justify-center pointer-events-auto">
                   <Button
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       downloadImage(image);
                     }}
-                    className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white text-primary border-0 shadow-lg hover:scale-110 transition-all duration-300"
+                    className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white text-black border-0 shadow-lg hover:scale-110 transition-all duration-200 flex items-center justify-center"
                   >
-                    <Download className="w-5 h-5" />
+                    <Download className="w-4 h-4" />
                   </Button>
                   <Button
                     size="sm"
-                    className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white text-primary border-0 shadow-lg hover:scale-110 transition-all duration-300"
+                    className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white text-black border-0 shadow-lg hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openLightbox(image, index);
+                    }}
                   >
-                    <Eye className="w-5 h-5" />
+                    <Eye className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -379,106 +386,34 @@ const publicUrl = (path: string) => `${supabase.storage.from('gallery-images').g
         ))}
       </div>
 
-      {/* Premium Lightbox */}
+      {/* Enhanced Lightbox with Progressive Loading */}
       {lightboxImage && (
-        <div className="lightbox-overlay fade-in">
-          <div className="relative max-w-7xl max-h-full flex items-center justify-center">
-            {/* Navigation Arrows */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateLightbox('prev')}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-0"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateLightbox('next')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-0"
-            >
-              <ArrowRight className="w-6 h-6" />
-            </Button>
-
-            {/* Main Image */}
-            {isSupportedFormat(lightboxImage.filename) ? (
-              <img
-                src={getFullUrl(lightboxImage)}
-                alt={lightboxImage.original_filename}
-                className="max-w-[90vw] max-h-[80vh] w-auto h-auto object-contain rounded-lg"
-                onClick={(e) => e.stopPropagation()}
-              />
-            ) : (
-              <div className="max-w-2xl bg-card rounded-lg p-12 text-center">
-                <FileImage className="w-24 h-24 text-muted-foreground mx-auto mb-6" />
-                <Badge variant="secondary" className="mb-4 text-lg px-4 py-2">
-                  {getFormatName(lightboxImage.filename)}
-                </Badge>
-                <h3 className="text-xl font-semibold mb-2">{lightboxImage.original_filename}</h3>
-                <p className="text-muted-foreground mb-6">
-                  This format cannot be previewed in the browser, but you can download the original file.
-                </p>
-                <Button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    downloadImage(lightboxImage);
-                  }}
-                  className="btn-premium"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Original File
-                </Button>
-              </div>
-            )}
-            
-            {/* Control Bar */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/20 backdrop-blur-md rounded-full px-6 py-3">
-              {/* Close Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closeLightbox}
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white border-0"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-              
-              {/* Download Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  downloadImage(lightboxImage);
-                }}
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white border-0"
-              >
-                <Download className="w-5 h-5" />
-              </Button>
-              
-              {/* Favorite Button */}
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                <FavoriteButton
-                  galleryId={galleryId}
-                  imageId={lightboxImage.id}
-                  user={user}
-                  isFavorited={favoriteImageIds.has(lightboxImage.id)}
-                  onFavoriteChange={onFavoriteChange}
-                />
-              </div>
-
-              {/* Image Counter */}
-              <div className="px-4 py-2 bg-white/10 rounded-full">
-                <span className="text-white text-sm font-medium">
-                  {lightboxIndex + 1} of {images.length}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <EnhancedImageLightbox
+          isOpen={!!lightboxImage}
+          onClose={closeLightbox}
+          thumbnailUrl={getThumbUrl(lightboxImage)}
+          fullUrl={getFullUrl(lightboxImage)}
+          alt={lightboxImage.original_filename}
+          filename={lightboxImage.original_filename}
+          onNext={lightboxIndex < images.length - 1 ? () => navigateLightbox('next') : undefined}
+          onPrevious={lightboxIndex > 0 ? () => navigateLightbox('prev') : undefined}
+          onFavorite={() => {
+            const newFavorited = !favoriteImageIds.has(lightboxImage.id);
+            onFavoriteChange(lightboxImage.id, newFavorited);
+          }}
+          isFavorited={favoriteImageIds.has(lightboxImage.id)}
+          hasNext={lightboxIndex < images.length - 1}
+          hasPrevious={lightboxIndex > 0}
+        />
       )}
+
+      {/* Download Options Dialog */}
+      <DownloadOptionsDialog
+        isOpen={showDownloadDialog}
+        onClose={() => setShowDownloadDialog(false)}
+        imageUrl={lightboxImage ? getFullUrl(lightboxImage) : ''}
+        filename={lightboxImage?.original_filename || ''}
+      />
     </div>
   );
 };

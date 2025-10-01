@@ -391,6 +391,54 @@ export type Database = {
           },
         ]
       }
+      image_quality_variants: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          file_size: number
+          height: number | null
+          id: string
+          image_id: string
+          quality_level: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          file_size: number
+          height?: number | null
+          id?: string
+          image_id: string
+          quality_level: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          file_size?: number
+          height?: number | null
+          id?: string
+          image_id?: string
+          quality_level?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_quality_variants_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_quality_variants_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       image_variants: {
         Row: {
           created_at: string
@@ -972,7 +1020,7 @@ export type Database = {
         Returns: Json
       }
       get_user_favorites: {
-        Args: { user_uuid?: string }
+        Args: { user_uuid: string }
         Returns: {
           favorite_id: string
           favorited_at: string

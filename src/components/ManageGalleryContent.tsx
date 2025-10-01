@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Trash2, Edit, Plus, Image, Eye, Download } from 'lucide-react';
 import { DeleteGalleryDialog } from './DeleteGalleryDialog';
-import { ImageLightbox } from './ImageLightbox';
+import { EnhancedImageLightbox } from './EnhancedImageLightbox';
+import { DownloadOptionsDialog } from './DownloadOptionsDialog';
 import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
 import { useImageCache } from '@/hooks/useImageCache';
 
@@ -46,6 +46,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
   const [isEditing, setIsEditing] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [editForm, setEditForm] = useState({
     name: gallery.name,
     description: gallery.description || '',
@@ -333,7 +334,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                     <img
                       src={getCachedUrl(getImageUrl(image.thumbnail_path || image.full_path))}
                       alt={image.filename}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      className="w-full h-full object-contain transition-transform group-hover:scale-105"
                       loading="lazy"
                     />
                   </div>
@@ -387,21 +388,29 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
         </CardContent>
       </Card>
 
-      {/* Image Lightbox */}
+      {/* Enhanced Image Lightbox */}
       {lightboxImage && (
-        <ImageLightbox
-          isOpen={!!lightboxImage}
-          onClose={() => setLightboxImage(null)}
-          imageUrl={getCachedUrl(getImageUrl(lightboxImage.full_path))}
-          thumbnailUrl={lightboxImage.thumbnail_path ? getCachedUrl(getImageUrl(lightboxImage.thumbnail_path)) : undefined}
-          alt={lightboxImage.filename}
-          filename={lightboxImage.filename}
-          onDownload={() => downloadImage(lightboxImage)}
-          onNext={() => navigateImage('next')}
-          onPrevious={() => navigateImage('prev')}
-          hasNext={currentImageIndex < images.length - 1}
-          hasPrevious={currentImageIndex > 0}
-        />
+        <>
+          <EnhancedImageLightbox
+            isOpen={!!lightboxImage}
+            onClose={() => setLightboxImage(null)}
+            thumbnailUrl={getCachedUrl(getImageUrl(lightboxImage.thumbnail_path || lightboxImage.full_path))}
+            fullUrl={getCachedUrl(getImageUrl(lightboxImage.full_path))}
+            alt={lightboxImage.filename}
+            filename={lightboxImage.filename}
+            onNext={currentImageIndex < images.length - 1 ? () => navigateImage('next') : undefined}
+            onPrevious={currentImageIndex > 0 ? () => navigateImage('prev') : undefined}
+            hasNext={currentImageIndex < images.length - 1}
+            hasPrevious={currentImageIndex > 0}
+          />
+          
+          <DownloadOptionsDialog
+            isOpen={showDownloadDialog}
+            onClose={() => setShowDownloadDialog(false)}
+            imageUrl={getCachedUrl(getImageUrl(lightboxImage.full_path))}
+            filename={lightboxImage.filename}
+          />
+        </>
       )}
     </div>
   );
