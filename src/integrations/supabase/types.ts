@@ -685,6 +685,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string | null
+          is_public: boolean | null
           name: string | null
           view_count: number | null
         }
@@ -693,6 +694,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string | null
+          is_public?: boolean | null
           name?: string | null
           view_count?: number | null
         }
@@ -701,6 +703,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string | null
+          is_public?: boolean | null
           name?: string | null
           view_count?: number | null
         }
