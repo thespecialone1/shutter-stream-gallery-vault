@@ -74,14 +74,13 @@ serve(async (req) => {
       )
     }
 
-    // Get anonymous favorites with session and IP details
+    // Get favorites with user details
     const { data: favorites, error: favError } = await supabase
-      .from('anonymous_favorites')
+      .from('favorites')
       .select(`
         image_id,
+        user_id,
         created_at,
-        client_ip,
-        session_token,
         images!inner(filename, original_filename)
       `)
       .eq('gallery_id', galleryId)
@@ -98,36 +97,14 @@ serve(async (req) => {
       )
     }
 
-    // Get session information for better user tracking
-    const sessionTokens = [...new Set(favorites?.map(f => f.session_token) || [])]
-    const { data: sessions, error: sessionError } = await supabase
-      .from('gallery_access_sessions')
-      .select('session_token, created_at, client_ip, user_agent')
-      .in('session_token', sessionTokens)
-      .eq('gallery_id', galleryId)
-
-    if (sessionError) {
-      console.error('Error fetching sessions:', sessionError)
-    }
-
-    // Create a map of session details
-    const sessionMap = new Map()
-    sessions?.forEach(session => {
-      sessionMap.set(session.session_token, session)
-    })
-
-    // Group favorites by user/session for better analytics
+    // Group favorites by user for better analytics
     const userFavorites = new Map()
     favorites?.forEach(favorite => {
-      const sessionInfo = sessionMap.get(favorite.session_token)
-      const userKey = `${favorite.session_token}_${favorite.client_ip || 'unknown'}`
+      const userKey = favorite.user_id
       
       if (!userFavorites.has(userKey)) {
         userFavorites.set(userKey, {
-          sessionToken: favorite.session_token,
-          clientIP: favorite.client_ip,
-          userAgent: sessionInfo?.user_agent || 'Unknown',
-          sessionCreated: sessionInfo?.created_at,
+          userId: favorite.user_id,
           favorites: [],
           totalFavorites: 0
         })
