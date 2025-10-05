@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -25,17 +25,40 @@ export const FavoriteButton = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
   const navigate = useNavigate();
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingActionRef = useRef<boolean | null>(null);
 
   const toggleFavorite = async () => {
+    // Clear any pending debounced action
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Store the intended state
+    const targetState = !isFavorited;
+    pendingActionRef.current = targetState;
+
+    // Optimistically update UI
+    onFavoriteChange(imageId, targetState);
+
+    // Debounce the actual API call
+    debounceTimerRef.current = setTimeout(async () => {
+      await performFavoriteAction(targetState);
+    }, 300);
+  };
+
+  const performFavoriteAction = async (shouldBeFavorited: boolean) => {
     if (!user) {
       toast.error('Please sign in to save favorites');
       navigate('/auth');
+      // Revert optimistic update
+      onFavoriteChange(imageId, !shouldBeFavorited);
       return;
     }
 
     setIsLoading(true);
     try {
-      if (isFavorited) {
+      if (!shouldBeFavorited) {
         // Remove from favorites
         const { error } = await supabase
           .from('favorites')
@@ -46,7 +69,6 @@ export const FavoriteButton = ({
 
         if (error) throw error;
         
-        onFavoriteChange(imageId, false);
         toast.success('Removed from favorites');
       } else {
         // Add to favorites
@@ -62,21 +84,22 @@ export const FavoriteButton = ({
           // Handle duplicate favorite error gracefully
           if (error.code === '23505') {
             toast.info('This image is already in your favorites');
-            onFavoriteChange(imageId, true);
             return;
           }
           throw error;
         }
         
-        onFavoriteChange(imageId, true);
         setShowParticles(true);
         toast.success('Added to favorites');
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
       toast.error('Failed to update favorites');
+      // Revert optimistic update on error
+      onFavoriteChange(imageId, !shouldBeFavorited);
     } finally {
       setIsLoading(false);
+      pendingActionRef.current = null;
     }
   };
 
