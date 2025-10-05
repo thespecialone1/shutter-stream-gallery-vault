@@ -330,21 +330,23 @@ export default function BrowseGalleries() {
                       {gallery.description || "A beautiful collection of moments captured in time."}
                     </p>
                     
-                    <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center justify-between pt-2 min-h-[32px]">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span>{formatDate(gallery.created_at)}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         {showMyGalleries && user && gallery.photographer_id === user.id && (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               setSelectedGalleryId(gallery.id);
                               setGeneratedInvite(null);
-                              setInviteDialogOpen(true);
+                              setTimeout(() => setInviteDialogOpen(true), 0);
                             }}
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 shrink-0"
                           >
                             <Share2 className="h-4 w-4" />
                             Invite
