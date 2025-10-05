@@ -94,7 +94,7 @@ export const FavoriteButton = ({
     >
       <Heart 
         className={`h-4 w-4 transition-all duration-300 ${
-          isFavorited ? 'fill-current animate-pulse' : 'group-hover:scale-110'
+          isFavorited ? 'fill-current' : 'group-hover:scale-110'
         }`} 
       />
       <HeartParticles 

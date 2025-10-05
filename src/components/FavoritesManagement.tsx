@@ -250,8 +250,8 @@ export const FavoritesManagement = () => {
                   </div>
                   
                   {/* Fixed positioned overlay with actions */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg">
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg pointer-events-none">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 pointer-events-auto">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -259,7 +259,7 @@ export const FavoritesManagement = () => {
                           e.stopPropagation();
                           openLightbox(favorite, gallery.images);
                         }}
-                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -270,7 +270,7 @@ export const FavoritesManagement = () => {
                           e.stopPropagation();
                           downloadImage(favorite);
                         }}
-                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
                       >
                         <Download className="w-4 h-4" />
                       </Button>
@@ -281,7 +281,7 @@ export const FavoritesManagement = () => {
                           e.stopPropagation();
                           removeFavorite(favorite.favorite_id, favorite.image_id);
                         }}
-                        className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                        className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

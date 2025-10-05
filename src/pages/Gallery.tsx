@@ -161,10 +161,9 @@ const Gallery = () => {
         setImages(data.images || []);
         setSections(data.sections || []);
         
-        // Initialize favorites from server
-        if (data.favorites && sessionToken) {
-          const favIds = new Set((data.favorites as any[]).map((fav: any) => fav.image_id));
-          setFavoriteImageIds(favIds);
+        // Load user favorites if authenticated
+        if (user && id) {
+          loadUserFavorites();
         }
       } else {
         console.error("Error loading gallery content:", data.message);
@@ -179,6 +178,29 @@ const Gallery = () => {
       console.error("Error loading gallery content:", error);
     } finally {
       setContentLoading(false);
+    }
+  };
+
+  const loadUserFavorites = async () => {
+    if (!user || !id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('image_id')
+        .eq('user_id', user.id)
+        .eq('gallery_id', id);
+      
+      if (error) {
+        console.error('Error loading favorites:', error);
+        return;
+      }
+      
+      if (data) {
+        setFavoriteImageIds(new Set(data.map(f => f.image_id)));
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
     }
   };
 
