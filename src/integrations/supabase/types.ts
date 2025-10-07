@@ -140,6 +140,84 @@ export type Database = {
           },
         ]
       }
+      feed_posts: {
+        Row: {
+          caption: string | null
+          comment_count: number
+          created_at: string
+          gallery_id: string
+          id: string
+          image_id: string
+          is_active: boolean
+          like_count: number
+          updated_at: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          caption?: string | null
+          comment_count?: number
+          created_at?: string
+          gallery_id: string
+          id?: string
+          image_id: string
+          is_active?: boolean
+          like_count?: number
+          updated_at?: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          caption?: string | null
+          comment_count?: number
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          image_id?: string
+          is_active?: boolean
+          like_count?: number
+          updated_at?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_posts_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_posts_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_posts_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_posts_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_posts_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "images_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       galleries: {
         Row: {
           client_name: string
@@ -567,10 +645,90 @@ export type Database = {
           },
         ]
       }
+      post_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          id: string
+          image_url: string | null
+          parent_comment_id: string | null
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          parent_comment_id?: string | null
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          parent_comment_id?: string | null
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
           business_name: string | null
           created_at: string
+          display_name: string | null
           email: string
           full_name: string
           id: string
@@ -579,8 +737,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
           business_name?: string | null
           created_at?: string
+          display_name?: string | null
           email: string
           full_name: string
           id?: string
@@ -589,8 +750,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
           business_name?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string
           full_name?: string
           id?: string
@@ -957,6 +1121,10 @@ export type Database = {
             }
         Returns: Json
       }
+      generate_feed_posts_for_gallery: {
+        Args: { p_gallery_id: string }
+        Returns: number
+      }
       generate_secure_gallery_password: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1015,6 +1183,26 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_personalized_feed: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id?: string }
+        Returns: {
+          caption: string
+          comment_count: number
+          created_at: string
+          gallery_id: string
+          gallery_name: string
+          image_id: string
+          image_url: string
+          like_count: number
+          photographer_avatar: string
+          photographer_name: string
+          post_id: string
+          thumbnail_url: string
+          user_has_liked: boolean
+          user_id: string
+          view_count: number
+        }[]
+      }
       get_share_link_analytics: {
         Args: { gallery_id: string }
         Returns: Json
@@ -1070,6 +1258,10 @@ export type Database = {
       }
       increment_gallery_views: {
         Args: { gallery_id: string }
+        Returns: undefined
+      }
+      increment_post_views: {
+        Args: { post_id: string }
         Returns: undefined
       }
       is_gallery_owner: {
