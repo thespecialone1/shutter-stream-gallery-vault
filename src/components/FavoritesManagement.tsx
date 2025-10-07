@@ -288,14 +288,16 @@ export const FavoritesManagement = () => {
                     </div>
                   </div>
 
-                  {/* Image info */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 rounded-b-lg">
-                    <p className="text-white text-xs truncate font-medium">
-                      {favorite.image_original_filename}
-                    </p>
-                    <p className="text-white/70 text-xs">
-                      Favorited {new Date(favorite.favorited_at).toLocaleDateString()}
-                    </p>
+                  {/* Image info - only visible on hover */}
+                  <div className="absolute top-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                    <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+                      <p className="text-white text-xs truncate font-medium">
+                        {favorite.image_original_filename}
+                      </p>
+                      <p className="text-white/70 text-xs">
+                        Favorited {new Date(favorite.favorited_at).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -2,37 +2,19 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2, Image as ImageIcon } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
 interface DownloadOption {
   label: string;
   description: string;
-  quality: 'social' | 'web' | 'original';
-  maxDimension?: number;
-  icon: string;
+  quality: 'original';
 }
 
 const downloadOptions: DownloadOption[] = [
   {
-    label: 'Social Media',
-    description: 'Optimized for Instagram, Facebook (1080p)',
-    quality: 'social',
-    maxDimension: 1080,
-    icon: '📱'
-  },
-  {
-    label: 'Web Quality',
-    description: 'High quality for websites (2K)',
-    quality: 'web',
-    maxDimension: 2048,
-    icon: '💻'
-  },
-  {
-    label: 'Original',
-    description: 'Full resolution, uncompressed',
-    quality: 'original',
-    icon: '🖼️'
+    label: 'High Quality',
+    description: 'Full resolution, original quality',
+    quality: 'original'
   }
 ];
 
@@ -87,10 +69,10 @@ export const DownloadOptionsDialog = ({ isOpen, onClose, imageUrl, filename }: D
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Download className="w-5 h-5" />
-            Choose Download Quality
+            Download Image
           </DialogTitle>
           <DialogDescription>
-            Select the image quality that best fits your needs
+            Download the image in high quality
           </DialogDescription>
         </DialogHeader>
         
@@ -99,20 +81,15 @@ export const DownloadOptionsDialog = ({ isOpen, onClose, imageUrl, filename }: D
             <Button
               key={option.quality}
               variant="outline"
-              className="w-full h-auto p-4 flex items-start justify-between hover:bg-accent/50 transition-all"
+              className="w-full h-auto p-4 flex items-center justify-between hover:bg-accent transition-all"
               onClick={() => handleDownload(option)}
               disabled={downloading !== null}
             >
-              <div className="flex items-start gap-3 text-left">
-                <span className="text-2xl">{option.icon}</span>
+              <div className="flex items-center gap-3 text-left">
+                <ImageIcon className="w-5 h-5 text-muted-foreground" />
                 <div className="flex-1">
-                  <div className="font-semibold flex items-center gap-2">
+                  <div className="font-semibold">
                     {option.label}
-                    {option.maxDimension && (
-                      <Badge variant="secondary" className="text-xs">
-                        {option.maxDimension}px
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
                     {option.description}
@@ -122,7 +99,7 @@ export const DownloadOptionsDialog = ({ isOpen, onClose, imageUrl, filename }: D
               {downloading === option.quality ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <Download className="w-5 h-5 opacity-50" />
+                <Download className="w-5 h-5 text-muted-foreground" />
               )}
             </Button>
           ))}

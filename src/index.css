@@ -88,81 +88,81 @@
 }
 
 @layer components {
-  /* Premium masonry grid with minimal spacing */
+  /* Premium masonry grid with enhanced spacing */
   .masonry-grid {
     column-count: 1;
-    column-gap: 4px;
+    column-gap: 8px;
     width: 100%;
   }
 
   @media (min-width: 640px) {
     .masonry-grid {
       column-count: 2;
-      column-gap: 6px;
+      column-gap: 12px;
     }
   }
 
   @media (min-width: 768px) {
     .masonry-grid {
       column-count: 3;
-      column-gap: 8px;
+      column-gap: 14px;
     }
   }
 
   @media (min-width: 1024px) {
     .masonry-grid {
       column-count: 4;
-      column-gap: 10px;
+      column-gap: 16px;
     }
   }
 
   @media (min-width: 1280px) {
     .masonry-grid {
       column-count: 5;
-      column-gap: 12px;
+      column-gap: 16px;
     }
   }
 
   .masonry-item {
     break-inside: avoid;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
     display: inline-block;
     width: 100%;
   }
 
   @media (min-width: 640px) {
     .masonry-item {
-      margin-bottom: 6px;
+      margin-bottom: 12px;
     }
   }
 
   @media (min-width: 768px) {
     .masonry-item {
-      margin-bottom: 8px;
+      margin-bottom: 14px;
     }
   }
 
   @media (min-width: 1024px) {
     .masonry-item {
-      margin-bottom: 10px;
+      margin-bottom: 16px;
     }
   }
 
   @media (min-width: 1280px) {
     .masonry-item {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
   }
 
-  /* Premium image hover effects */
+  /* Enhanced image hover effects */
   .image-hover-effect {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
   }
 
   .image-hover-effect:hover {
-    transform: scale(1.02);
+    transform: translateY(-2px);
   }
 
   .image-hover-effect::after {
@@ -172,9 +172,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 100%);
+    background: linear-gradient(135deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 100%);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
   }
 
   .image-hover-effect:hover::after {
@@ -279,17 +279,19 @@
     }
   }
 
-  /* Premium favorite button */
+  /* Premium favorite button - always visible when favorited */
   .favorite-btn {
     @apply absolute top-3 right-3 z-10 flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     opacity: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .favorite-btn:hover {
     background: rgba(255, 255, 255, 1);
     transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .group:hover .favorite-btn {
@@ -298,8 +300,7 @@
 
   .favorite-btn.active {
     opacity: 1;
-    background: rgba(239, 68, 68, 0.1);
-    color: rgb(239, 68, 68);
+    background: rgba(255, 255, 255, 0.95);
   }
 
   /* Premium lightbox */

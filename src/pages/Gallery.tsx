@@ -61,7 +61,6 @@ const Gallery = () => {
   const [contentLoading, setContentLoading] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [anonymousFavorites, setAnonymousFavorites] = useState<Set<string>>(new Set());
-  const [isFavoritesLoaded, setIsFavoritesLoaded] = useState(false);
 
 
   useEffect(() => {
@@ -183,7 +182,7 @@ const Gallery = () => {
   };
 
   const loadUserFavorites = async () => {
-    if (!user || !id || isFavoritesLoaded) return;
+    if (!user || !id) return;
     
     try {
       const { data, error } = await supabase
@@ -199,7 +198,6 @@ const Gallery = () => {
       
       if (data) {
         setFavoriteImageIds(new Set(data.map(f => f.image_id)));
-        setIsFavoritesLoaded(true);
       }
     } catch (error) {
       console.error('Error loading favorites:', error);
