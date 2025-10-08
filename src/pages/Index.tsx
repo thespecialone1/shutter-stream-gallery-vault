@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import InteractiveGalleryDemo from "@/components/InteractiveGalleryDemo";
+import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 const Index = () => {
   const { user, loading } = useAuth();
   const [featured, setFeatured] = useState<{ id: string; url: string; alt: string }[]>([]);
@@ -78,15 +79,18 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground -mt-1 hidden sm:block">Secure Galleries</p>
               </div>
             </div>
-            <div className="flex gap-2 sm:gap-4">
+            <div className="flex gap-2 sm:gap-4 items-center">
               <Button variant="ghost" asChild className="hidden md:flex text-muted-foreground hover:text-foreground">
                 <Link to="/browse">Browse Galleries</Link>
               </Button>
               {!loading && (
                 user ? (
-                  <Button asChild className="btn-premium text-sm sm:text-base px-3 sm:px-4">
-                    <Link to="/admin">Admin Panel</Link>
-                  </Button>
+                  <>
+                    <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+                      <Link to="/admin">Admin Panel</Link>
+                    </Button>
+                    <UserProfileDropdown />
+                  </>
                 ) : (
                   <Button asChild className="btn-premium text-sm sm:text-base px-3 sm:px-4">
                     <Link to="/auth">Log In</Link>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, LogOut, User, BarChart3, RefreshCcw, Sparkles, Heart } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, BarChart3, RefreshCcw, Sparkles, Heart, Camera } from 'lucide-react';
+import { UserProfileDropdown } from '@/components/UserProfileDropdown';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -161,30 +162,24 @@ export default function Admin() {
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto py-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="min-h-screen bg-background">
+        <header className="border-b bg-card sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2">
+              <Camera className="h-6 w-6" />
+              <span className="text-xl font-serif">Pixie Studio</span>
+            </Link>
+            <UserProfileDropdown />
+          </div>
+        </header>
+        
+        <div className="container mx-auto py-8 space-y-8">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">Gallery Admin</h1>
               <p className="text-muted-foreground">Manage your photo galleries</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mr-4">
-              <User className="w-4 h-4" />
-              {user?.email}
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={signOut}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
         
         <Tabs defaultValue="galleries" className="w-full">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
@@ -338,6 +333,7 @@ export default function Admin() {
             <FavoritesManagement />
           </TabsContent>
         </Tabs>
+      </div>
       </div>
     </ProtectedRoute>
   );

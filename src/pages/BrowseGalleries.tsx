@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Eye, Users, Camera, Sparkles, ArrowRight, Share2, Copy, CheckCircle, User } from "lucide-react";
+import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -167,9 +168,12 @@ export default function BrowseGalleries() {
             </Link>
             <div className="flex items-center gap-4">
               {user ? (
-                <Button variant="outline" asChild className="btn-premium-outline">
-                  <Link to="/admin">Admin Panel</Link>
-                </Button>
+                <>
+                  <Button variant="outline" asChild className="btn-premium-outline">
+                    <Link to="/admin">Admin Panel</Link>
+                  </Button>
+                  <UserProfileDropdown />
+                </>
               ) : (
                 <Button asChild className="btn-premium">
                   <Link to="/auth">Sign In</Link>
