@@ -52,10 +52,16 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
         display_name: data.display_name || '',
         business_name: data.business_name || '',
         bio: data.bio || '',
-        email: data.email || '',
+        email: data.email || user.email || '',
         phone: data.phone || '',
         avatar_url: data.avatar_url || ''
       });
+    } else if (!data && user.email) {
+      // If profile doesn't exist yet, use user data
+      setProfile(prev => ({
+        ...prev,
+        email: user.email || ''
+      }));
     }
   };
 

@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const UserProfileDropdown = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ avatar_url?: string; display_name?: string } | null>(null);
+  const [profile, setProfile] = useState<{ avatar_url?: string; display_name?: string; full_name?: string } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -29,7 +29,7 @@ export const UserProfileDropdown = () => {
     
     const { data, error } = await supabase
       .from('profiles')
-      .select('avatar_url, display_name')
+      .select('avatar_url, display_name, full_name')
       .eq('user_id', user.id)
       .single();
     
@@ -37,6 +37,36 @@ export const UserProfileDropdown = () => {
       setProfile(data);
     }
   };
+
+  // Subscribe to real-time profile updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const updated = payload.new as { avatar_url?: string; display_name?: string; full_name?: string };
+          setProfile({
+            avatar_url: updated.avatar_url,
+            display_name: updated.display_name,
+            full_name: updated.full_name
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -49,7 +79,7 @@ export const UserProfileDropdown = () => {
     ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl 
     : undefined;
 
-  const displayName = profile?.display_name || user.email?.split('@')[0] || 'User';
+  const displayName = profile?.display_name || profile?.full_name || user.email?.split('@')[0] || 'User';
   const initials = displayName.substring(0, 2).toUpperCase();
 
   return (
