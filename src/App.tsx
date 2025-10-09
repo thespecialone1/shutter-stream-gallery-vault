@@ -13,6 +13,7 @@ import BrowseGalleries from "./pages/BrowseGalleries";
 import NotFound from "./pages/NotFound";
 import ShareLink from "./pages/ShareLink";
 import UserProfile from "./pages/UserProfile";
+import Feed from "./pages/Feed";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/gallery/:id" element={<Gallery />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
+            <Route path="/feed" element={<Feed />} />
             <Route path="/s/:alias" element={<ShareLink />} />
             <Route path="/share" element={<ShareLink />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

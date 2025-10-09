@@ -1,15 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Shield, Heart, Sparkles, Image, Users, Download, Eye, Lock, Star, ArrowRight, Play } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import InteractiveGalleryDemo from "@/components/InteractiveGalleryDemo";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
 const Index = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [featured, setFeatured] = useState<{ id: string; url: string; alt: string }[]>([]);
+  const [showFeed, setShowFeed] = useState(false);
 
   useEffect(() => {
     // SEO basics
@@ -104,6 +109,28 @@ const Index = () => {
 
       {/* Hero Section */}
       <main className="pt-24">
+        {/* Feed Toggle */}
+        <div className="container mx-auto px-6 pt-8 pb-4">
+          <div className="flex items-center justify-center gap-3">
+            <Label htmlFor="feed-toggle" className={!showFeed ? "font-medium" : "text-muted-foreground"}>
+              Galleries
+            </Label>
+            <Switch
+              id="feed-toggle"
+              checked={showFeed}
+              onCheckedChange={(checked) => {
+                setShowFeed(checked);
+                if (checked) {
+                  navigate('/feed');
+                }
+              }}
+            />
+            <Label htmlFor="feed-toggle" className={showFeed ? "font-medium" : "text-muted-foreground"}>
+              Feed
+            </Label>
+          </div>
+        </div>
+
         <section className="container mx-auto px-6 py-20 text-center">
           <div className="max-w-4xl mx-auto fade-in-up">
             <div className="inline-flex items-center gap-2 mb-8 px-6 py-3 rounded-full bg-accent/50 border border-border">
