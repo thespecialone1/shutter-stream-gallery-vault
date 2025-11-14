@@ -93,22 +93,21 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const fileName = `avatars/${user.id}-${Date.now()}.${fileExt}`;
 
-      // Upload to Supabase Storage
+      // Upload to gallery-images bucket (reuse existing bucket)
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .from('gallery-images')
+        .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       // Update profile with new avatar URL
-      setProfile(prev => ({ ...prev, avatar_url: filePath }));
+      setProfile(prev => ({ ...prev, avatar_url: fileName }));
 
       toast({
         title: "Avatar uploaded",
-        description: "Your profile picture has been updated"
+        description: "Your profile picture has been updated. Click Save to apply changes."
       });
     } catch (error) {
       console.error('Error uploading avatar:', error);
@@ -135,6 +134,15 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
       return;
     }
 
+    if (!profile.email.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (profile.bio && profile.bio.length > 500) {
       toast({
         title: "Bio too long",
@@ -153,6 +161,7 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
           display_name: profile.display_name.trim() || null,
           business_name: profile.business_name.trim() || null,
           bio: profile.bio.trim() || null,
+          email: profile.email.trim(),
           phone: profile.phone.trim() || null,
           avatar_url: profile.avatar_url || null,
           updated_at: new Date().toISOString()
@@ -180,8 +189,11 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
     }
   };
 
+  // Get avatar URL - handle both avatars bucket and gallery-images bucket
   const avatarUrl = profile.avatar_url 
-    ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl 
+    ? (profile.avatar_url.startsWith('http') 
+        ? profile.avatar_url 
+        : supabase.storage.from('gallery-images').getPublicUrl(profile.avatar_url).data.publicUrl)
     : undefined;
 
   return (

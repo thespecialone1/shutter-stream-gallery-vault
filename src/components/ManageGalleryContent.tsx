@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Plus, Image, Eye, Download } from 'lucide-react';
+import { Trash2, Edit, Plus, Image, Eye, Download, Share2 } from 'lucide-react';
 import { DeleteGalleryDialog } from './DeleteGalleryDialog';
 import { EnhancedImageLightbox } from './EnhancedImageLightbox';
 import { DownloadOptionsDialog } from './DownloadOptionsDialog';
 import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
 import { useImageCache } from '@/hooks/useImageCache';
+import { ShareToFeedDialog } from './ShareToFeedDialog';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Gallery {
   id: string;
@@ -47,12 +49,14 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [shareToFeedImage, setShareToFeedImage] = useState<GalleryImage | null>(null);
   const [editForm, setEditForm] = useState({
     name: gallery.name,
     description: gallery.description || '',
     client_name: gallery.client_name
   });
   const { toast } = useToast();
+  const { user } = useAuth();
   const { preloadImage, preloadMultiple, getCachedUrl } = useImageCache();
 
   useEffect(() => {
@@ -363,6 +367,17 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                         className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
                       >
                         <Download className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShareToFeedImage(image);
+                        }}
+                        className="w-10 h-10 rounded-full bg-primary/95 hover:bg-primary text-primary-foreground backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                      >
+                        <Share2 className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="destructive"
