@@ -17,7 +17,7 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
-          client_ip: unknown | null
+          client_ip: unknown
           created_at: string
           id: string
           metadata: Json | null
@@ -28,7 +28,7 @@ export type Database = {
         }
         Insert: {
           action: string
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           id?: string
           metadata?: Json | null
@@ -39,7 +39,7 @@ export type Database = {
         }
         Update: {
           action?: string
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           id?: string
           metadata?: Json | null
@@ -259,7 +259,7 @@ export type Database = {
       }
       gallery_access_sessions: {
         Row: {
-          client_ip: unknown | null
+          client_ip: unknown
           created_at: string
           expires_at: string
           gallery_id: string
@@ -269,7 +269,7 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           expires_at: string
           gallery_id: string
@@ -279,7 +279,7 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           expires_at?: string
           gallery_id?: string
@@ -315,7 +315,7 @@ export type Database = {
       gallery_analytics: {
         Row: {
           action: string
-          client_ip: unknown | null
+          client_ip: unknown
           created_at: string
           gallery_id: string
           id: string
@@ -325,7 +325,7 @@ export type Database = {
         }
         Insert: {
           action: string
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           gallery_id: string
           id?: string
@@ -335,7 +335,7 @@ export type Database = {
         }
         Update: {
           action?: string
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           gallery_id?: string
           id?: string
@@ -396,7 +396,7 @@ export type Database = {
           ip_restrictions: unknown[] | null
           is_active: boolean
           last_used_at: string | null
-          last_used_ip: unknown | null
+          last_used_ip: unknown
           last_used_user_agent: string | null
           link_type: string | null
           max_uses: number | null
@@ -417,7 +417,7 @@ export type Database = {
           ip_restrictions?: unknown[] | null
           is_active?: boolean
           last_used_at?: string | null
-          last_used_ip?: unknown | null
+          last_used_ip?: unknown
           last_used_user_agent?: string | null
           link_type?: string | null
           max_uses?: number | null
@@ -438,7 +438,7 @@ export type Database = {
           ip_restrictions?: unknown[] | null
           is_active?: boolean
           last_used_at?: string | null
-          last_used_ip?: unknown | null
+          last_used_ip?: unknown
           last_used_user_agent?: string | null
           link_type?: string | null
           max_uses?: number | null
@@ -812,7 +812,7 @@ export type Database = {
       }
       security_audit: {
         Row: {
-          client_ip: unknown | null
+          client_ip: unknown
           created_at: string
           details: Json | null
           event_type: string
@@ -823,7 +823,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           details?: Json | null
           event_type: string
@@ -834,7 +834,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          client_ip?: unknown | null
+          client_ip?: unknown
           created_at?: string
           details?: Json | null
           event_type?: string
@@ -1048,10 +1048,7 @@ export type Database = {
       }
     }
     Functions: {
-      anonymize_ip_address: {
-        Args: { ip_addr: unknown }
-        Returns: string
-      }
+      anonymize_ip_address: { Args: { ip_addr: unknown }; Returns: string }
       check_rate_limit: {
         Args: {
           attempt_type: string
@@ -1061,18 +1058,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_expired_sessions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_old_security_logs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_sensitive_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_sessions: { Args: never; Returns: undefined }
+      cleanup_old_security_logs: { Args: never; Returns: undefined }
+      cleanup_sensitive_data: { Args: never; Returns: undefined }
       create_gallery_invite: {
         Args: {
           expires_in_days?: number
@@ -1104,33 +1092,33 @@ export type Database = {
         }
         Returns: Json
       }
-      create_session_from_share_link: {
-        Args:
-          | {
+      create_session_from_share_link:
+        | {
+            Args: {
+              alias?: string
+              client_ip?: unknown
+              invite_token?: string
+              user_agent?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
               alias?: string
               client_ip?: unknown
               gallery_password?: string
               invite_token?: string
               user_agent?: string
             }
-          | {
-              alias?: string
-              client_ip?: unknown
-              invite_token?: string
-              user_agent?: string
-            }
-        Returns: Json
-      }
+            Returns: Json
+          }
       generate_feed_posts_for_gallery: {
         Args: { p_gallery_id: string }
         Returns: number
       }
-      generate_secure_gallery_password: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_secure_gallery_password: { Args: never; Returns: string }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_gallery_analytics_summary: {
@@ -1151,16 +1139,10 @@ export type Database = {
           unique_users: number
         }[]
       }
-      get_gallery_safe_info: {
-        Args: { gallery_uuid: string }
-        Returns: Json
-      }
-      get_my_gallery_info: {
-        Args: { gallery_uuid: string }
-        Returns: Json
-      }
+      get_gallery_safe_info: { Args: { gallery_uuid: string }; Returns: Json }
+      get_my_gallery_info: { Args: { gallery_uuid: string }; Returns: Json }
       get_my_profile: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           business_name: string
           created_at: string
@@ -1172,7 +1154,7 @@ export type Database = {
         }[]
       }
       get_my_profile_secure: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           business_name: string
           created_at: string
@@ -1203,10 +1185,7 @@ export type Database = {
           view_count: number
         }[]
       }
-      get_share_link_analytics: {
-        Args: { gallery_id: string }
-        Returns: Json
-      }
+      get_share_link_analytics: { Args: { gallery_id: string }; Returns: Json }
       get_user_favorites: {
         Args: { user_uuid: string }
         Returns: {
@@ -1244,34 +1223,19 @@ export type Database = {
         }
         Returns: boolean
       }
-      hash_password: {
-        Args: { password: string }
-        Returns: string
-      }
-      hash_password_secure: {
-        Args: { password: string }
-        Returns: string
-      }
-      hash_session_token: {
-        Args: { token: string }
-        Returns: string
-      }
+      hash_password: { Args: { password: string }; Returns: string }
+      hash_password_secure: { Args: { password: string }; Returns: string }
+      hash_session_token: { Args: { token: string }; Returns: string }
       increment_gallery_views: {
         Args: { gallery_id: string }
         Returns: undefined
       }
-      increment_post_views: {
-        Args: { post_id: string }
-        Returns: undefined
-      }
+      increment_post_views: { Args: { post_id: string }; Returns: undefined }
       is_gallery_owner: {
         Args: { gallery_id: string; user_id: string }
         Returns: boolean
       }
-      is_password_compromised: {
-        Args: { password: string }
-        Returns: boolean
-      }
+      is_password_compromised: { Args: { password: string }; Returns: boolean }
       is_valid_gallery_session: {
         Args: { gallery_id: string; session_token: string }
         Returns: boolean
@@ -1324,10 +1288,7 @@ export type Database = {
         }
         Returns: Json
       }
-      validate_gallery_invite: {
-        Args: { invite_token: string }
-        Returns: Json
-      }
+      validate_gallery_invite: { Args: { invite_token: string }; Returns: Json }
       validate_gallery_session: {
         Args: {
           action_type?: string

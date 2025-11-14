@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, BarChart3, RefreshCcw, Sparkles, Heart, Camera } from 'lucide-react';
+import { Plus, FolderOpen, Upload, Settings, ExternalLink, Eye, BarChart3, RefreshCcw, Sparkles, Heart, Camera, Rss } from 'lucide-react';
 import { UserProfileDropdown } from '@/components/UserProfileDropdown';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { GallerySettings } from '@/components/GallerySettings';
 import { GalleryAnalytics } from '@/components/GalleryAnalytics';
 import { GalleryFavoritesAnalytics } from '@/components/GalleryFavoritesAnalytics';
 import { FavoritesManagement } from '@/components/FavoritesManagement';
+import { FeedPostsManager } from '@/components/FeedPostsManager';
 import { Link } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
@@ -293,11 +294,12 @@ export default function Admin() {
 
             {selectedGallery && (
               <Tabs defaultValue="analytics" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="analytics">Analytics</TabsTrigger>
                   <TabsTrigger value="favorites">Favorites</TabsTrigger>
                   <TabsTrigger value="upload">Upload</TabsTrigger>
                   <TabsTrigger value="manage">Manage</TabsTrigger>
+                  <TabsTrigger value="feed">Feed Posts</TabsTrigger>
                   <TabsTrigger value="settings">Settings</TabsTrigger>
                 </TabsList>
 
@@ -319,6 +321,10 @@ export default function Admin() {
                     onGalleryDeleted={handleGalleryDeleted}
                     onGalleryUpdated={handleGalleryUpdated}
                   />
+                </TabsContent>
+
+                <TabsContent value="feed">
+                  <FeedPostsManager galleryId={selectedGallery.id} />
                 </TabsContent>
 
                 <TabsContent value="settings">
