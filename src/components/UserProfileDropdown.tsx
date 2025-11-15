@@ -76,7 +76,9 @@ export const UserProfileDropdown = () => {
   if (!user) return null;
 
   const avatarUrl = profile?.avatar_url 
-    ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl 
+    ? (profile.avatar_url.startsWith('http') 
+        ? profile.avatar_url 
+        : supabase.storage.from('gallery-images').getPublicUrl(profile.avatar_url).data.publicUrl)
     : undefined;
 
   const displayName = profile?.display_name || profile?.full_name || user.email?.split('@')[0] || 'User';

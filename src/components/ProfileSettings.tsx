@@ -161,7 +161,6 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
           display_name: profile.display_name.trim() || null,
           business_name: profile.business_name.trim() || null,
           bio: profile.bio.trim() || null,
-          email: profile.email.trim(),
           phone: profile.phone.trim() || null,
           avatar_url: profile.avatar_url || null,
           updated_at: new Date().toISOString()
