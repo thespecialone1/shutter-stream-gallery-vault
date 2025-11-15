@@ -338,14 +338,14 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                     <img
                       src={getCachedUrl(getImageUrl(image.thumbnail_path || image.full_path))}
                       alt={image.filename}
-                      className="w-full h-full object-contain transition-transform group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"
                     />
                   </div>
                   
                   {/* Fixed positioned overlay with actions */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg">
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg pointer-events-none">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 pointer-events-auto z-10">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -353,7 +353,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                           e.stopPropagation();
                           openLightbox(image);
                         }}
-                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -364,7 +364,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                           e.stopPropagation();
                           downloadImage(image);
                         }}
-                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
                       >
                         <Download className="w-4 h-4" />
                       </Button>
@@ -375,7 +375,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                           e.stopPropagation();
                           setShareToFeedImage(image);
                         }}
-                        className="w-10 h-10 rounded-full bg-primary/95 hover:bg-primary text-primary-foreground backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                        className="w-10 h-10 rounded-full bg-primary/95 hover:bg-primary text-primary-foreground backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
                       >
                         <Share2 className="w-4 h-4" />
                       </Button>
@@ -386,7 +386,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                           e.stopPropagation();
                           handleDeleteImage(image.id);
                         }}
-                        className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                        className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
