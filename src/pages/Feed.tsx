@@ -200,7 +200,7 @@ export default function Feed() {
       </header>
 
       {/* Feed Content */}
-      <main className="container mx-auto px-4 py-6 max-w-2xl">
+      <main className="container mx-auto px-4 pt-28 pb-6 max-w-2xl">
         <div className="space-y-6">
           {loading ? (
             Array(3).fill(0).map((_, i) => (

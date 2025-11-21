@@ -115,7 +115,7 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCar
         <img 
           src={post.image_url} 
           alt={post.caption || 'Feed post'}
-          className="w-full h-auto object-cover"
+          className="w-full max-h-[600px] object-contain"
           loading="lazy"
         />
       </div>
