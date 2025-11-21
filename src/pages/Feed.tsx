@@ -120,7 +120,7 @@ export default function Feed() {
           user_id: post.user_id,
           user_name: profile?.display_name || profile?.full_name || 'User',
           user_avatar: profile?.avatar_url
-            ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl
+            ? supabase.storage.from('gallery-images').getPublicUrl(profile.avatar_url).data.publicUrl
             : undefined,
           created_at: post.created_at
         };
@@ -171,14 +171,30 @@ export default function Feed() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b">
-        <div className="container mx-auto px-4 py-3">
+      <header className="nav-premium fixed top-0 left-0 right-0 z-50">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <nav className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <Camera className="h-6 w-6" />
-              <span className="text-xl font-serif">Pixie Studio</span>
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Camera className="h-4 w-4 sm:h-6 sm:w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <span className="text-lg sm:text-2xl font-serif font-medium text-foreground">Pixie Studio</span>
+                <p className="text-xs text-muted-foreground -mt-1 hidden sm:block">Social Feed</p>
+              </div>
             </Link>
-            <UserProfileDropdown />
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = '/'}
+                className="hidden sm:flex"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Back to Galleries
+              </Button>
+              <UserProfileDropdown />
+            </div>
           </nav>
         </div>
       </header>

@@ -108,30 +108,35 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="pt-24">
-        {/* Feed Toggle */}
-        <div className="container mx-auto px-6 pt-8 pb-4">
-          <div className="flex items-center justify-center gap-3">
-            <Label htmlFor="feed-toggle" className={!showFeed ? "font-medium" : "text-muted-foreground"}>
+      <main className="pt-20">
+        {/* Feed Toggle - Improved UI */}
+        <div className="container mx-auto px-6 pt-6 pb-2">
+          <div className="flex items-center justify-center gap-2 p-1 bg-accent/30 rounded-full w-fit mx-auto">
+            <Button
+              variant={!showFeed ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setShowFeed(false)}
+              className="rounded-full px-6 transition-all"
+            >
+              <Camera className="h-4 w-4 mr-2" />
               Galleries
-            </Label>
-            <Switch
-              id="feed-toggle"
-              checked={showFeed}
-              onCheckedChange={(checked) => {
-                setShowFeed(checked);
-                if (checked) {
-                  navigate('/feed');
-                }
+            </Button>
+            <Button
+              variant={showFeed ? "default" : "ghost"}
+              size="sm"
+              onClick={() => {
+                setShowFeed(true);
+                navigate('/feed');
               }}
-            />
-            <Label htmlFor="feed-toggle" className={showFeed ? "font-medium" : "text-muted-foreground"}>
+              className="rounded-full px-6 transition-all"
+            >
+              <Users className="h-4 w-4 mr-2" />
               Feed
-            </Label>
+            </Button>
           </div>
         </div>
 
-        <section className="container mx-auto px-6 py-20 text-center">
+        <section className="container mx-auto px-6 py-12 text-center">
           <div className="max-w-4xl mx-auto fade-in-up">
             <div className="inline-flex items-center gap-2 mb-8 px-6 py-3 rounded-full bg-accent/50 border border-border">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -179,8 +184,8 @@ const Index = () => {
 
         <InteractiveGalleryDemo />
 
-{/* Features Section */}
-        <section className="container mx-auto px-6 py-20">
+        {/* Features Section */}
+        <section className="container mx-auto px-6 py-16">
           <div className="text-center mb-16 fade-in">
             <h2 className="heading-xl mb-6">Crafted for Photographers</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -259,7 +264,7 @@ const Index = () => {
         </section>
 
         {/* How It Works */}
-        <section className="bg-accent/20 py-20">
+        <section className="bg-accent/20 py-16">
           <div className="container mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="heading-xl mb-6">Simple. Elegant. Professional.</h2>
@@ -307,7 +312,7 @@ const Index = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="container mx-auto px-6 py-20">
+        <section className="container mx-auto px-6 py-16">
           <div className="max-w-4xl mx-auto text-center">
             <div className="card-premium p-12 bg-gradient-to-br from-background via-accent/10 to-background">
               <h2 className="heading-xl mb-6">Ready to Elevate Your Client Experience?</h2>
