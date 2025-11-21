@@ -73,7 +73,7 @@ export const CommentDrawer = ({ postId, isOpen, onClose }: CommentDrawerProps) =
                    profileMap.get(comment.user_id)?.full_name || 
                    'User',
         user_avatar: profileMap.get(comment.user_id)?.avatar_url
-          ? supabase.storage.from('avatars').getPublicUrl(profileMap.get(comment.user_id)!.avatar_url).data.publicUrl
+          ? supabase.storage.from('gallery-images').getPublicUrl(profileMap.get(comment.user_id)!.avatar_url).data.publicUrl
           : undefined
       })) || [];
 
@@ -131,8 +131,11 @@ export const CommentDrawer = ({ postId, isOpen, onClose }: CommentDrawerProps) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="fixed inset-x-0 bottom-0 z-50 h-[80vh] bg-background rounded-t-3xl border-t shadow-xl">
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" onClick={onClose}>
+      <div 
+        className="fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[400px] bg-background border-l shadow-xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold text-lg">Comments</h3>
@@ -142,7 +145,7 @@ export const CommentDrawer = ({ postId, isOpen, onClose }: CommentDrawerProps) =
         </div>
 
         {/* Comments List */}
-        <ScrollArea className="h-[calc(80vh-140px)] p-4">
+        <ScrollArea className="flex-1 p-4">
           {loading ? (
             <div className="text-center text-muted-foreground py-8">
               Loading comments...
@@ -185,7 +188,7 @@ export const CommentDrawer = ({ postId, isOpen, onClose }: CommentDrawerProps) =
 
         {/* Comment Input */}
         {user && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
+          <div className="p-4 border-t bg-background shrink-0">
             <div className="flex gap-2">
               <Textarea
                 value={newComment}
