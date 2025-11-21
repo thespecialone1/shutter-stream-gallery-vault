@@ -134,15 +134,6 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
       return;
     }
 
-    if (!profile.email.trim()) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (profile.bio && profile.bio.length > 500) {
       toast({
         title: "Bio too long",
@@ -154,7 +145,16 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      console.log('Updating profile with:', {
+        full_name: profile.full_name.trim(),
+        display_name: profile.display_name.trim() || null,
+        business_name: profile.business_name.trim() || null,
+        bio: profile.bio.trim() || null,
+        phone: profile.phone.trim() || null,
+        avatar_url: profile.avatar_url || null,
+      });
+
+      const { data, error } = await supabase
         .from('profiles')
         .update({
           full_name: profile.full_name.trim(),
@@ -165,9 +165,15 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
           avatar_url: profile.avatar_url || null,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Profile updated successfully:', data);
 
       toast({
         title: "Profile updated",
@@ -180,7 +186,7 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
       console.error('Error updating profile:', error);
       toast({
         title: "Update failed",
-        description: "Failed to update profile. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
         variant: "destructive"
       });
     } finally {
