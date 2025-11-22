@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Camera, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export default function Feed() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const { cachedData, setCache } = useFeedCache<FeedPost[]>('feed-posts');
+  const postRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Load cached data immediately
   useEffect(() => {
@@ -45,14 +46,26 @@ export default function Feed() {
     loadFeed();
   }, []);
 
-  // Track scroll for "scroll to top" button
+  // Track scroll for "scroll to top" button and auto-close comments
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 500);
+      
+      // Auto-close comments when scrolling past the post
+      if (selectedPostId) {
+        const postElement = postRefs.current.get(selectedPostId);
+        if (postElement) {
+          const rect = postElement.getBoundingClientRect();
+          // Close if post is completely out of view (above or below viewport)
+          if (rect.bottom < 0 || rect.top > window.innerHeight) {
+            setSelectedPostId(null);
+          }
+        }
+      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [selectedPostId]);
 
   const loadFeed = async () => {
     try {
@@ -85,10 +98,16 @@ export default function Feed() {
 
       // Get image data
       const imageIds = feedPosts.map(p => p.image_id);
-      const { data: images } = await supabase
+      const { data: images, error: imagesError } = await supabase
         .from('images')
         .select('id, full_path, thumbnail_path')
         .in('id', imageIds);
+      
+      if (imagesError) {
+        console.error('Error fetching images:', imagesError);
+      }
+      
+      console.log('Loaded images:', images);
 
       // Get user profiles
       const userIds = [...new Set(feedPosts.map(p => p.user_id))];
@@ -105,14 +124,18 @@ export default function Feed() {
       const enrichedPosts: FeedPost[] = feedPosts.map(post => {
         const image = imageMap.get(post.image_id);
         const profile = profileMap.get(post.user_id);
-        const imagePath = image?.thumbnail_path || image?.full_path;
+        const imagePath = image?.full_path || image?.thumbnail_path;
+        
+        const imageUrl = imagePath 
+          ? supabase.storage.from('gallery-images').getPublicUrl(imagePath).data.publicUrl 
+          : '';
+        
+        console.log('Post:', post.id, 'Image path:', imagePath, 'URL:', imageUrl);
         
         return {
           id: post.id,
           image_id: post.image_id,
-          image_url: imagePath 
-            ? supabase.storage.from('gallery-images').getPublicUrl(imagePath).data.publicUrl 
-            : '',
+          image_url: imageUrl,
           caption: post.caption || undefined,
           like_count: post.like_count,
           comment_count: post.comment_count,
@@ -225,12 +248,19 @@ export default function Feed() {
             </div>
           ) : (
             posts.map((post, index) => (
-              <FeedPostCard
+              <div 
                 key={post.id}
-                post={post}
-                onCommentClick={() => setSelectedPostId(post.id)}
-                onImageClick={() => handleImageClick(index)}
-              />
+                ref={(el) => {
+                  if (el) postRefs.current.set(post.id, el);
+                  else postRefs.current.delete(post.id);
+                }}
+              >
+                <FeedPostCard
+                  post={post}
+                  onCommentClick={() => setSelectedPostId(post.id)}
+                  onImageClick={() => handleImageClick(index)}
+                />
+              </div>
             ))
           )}
         </div>

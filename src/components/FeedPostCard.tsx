@@ -109,14 +109,18 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCar
 
       {/* Image */}
       <div 
-        className="relative w-full cursor-pointer bg-muted"
+        className="relative w-full cursor-pointer bg-muted flex items-center justify-center"
         onClick={onImageClick}
       >
         <img 
           src={post.image_url} 
           alt={post.caption || 'Feed post'}
-          className="w-full max-h-[600px] object-contain"
+          className="w-full max-h-[70vh] object-contain"
           loading="lazy"
+          onError={(e) => {
+            console.error('Failed to load image:', post.image_url);
+            e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="%23ddd" width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23999">Image failed to load</text></svg>';
+          }}
         />
       </div>
 

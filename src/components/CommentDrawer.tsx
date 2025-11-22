@@ -131,9 +131,9 @@ export const CommentDrawer = ({ postId, isOpen, onClose }: CommentDrawerProps) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div 
-        className="fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[400px] bg-background border-l shadow-xl flex flex-col"
+        className="relative w-full max-w-lg bg-background rounded-2xl shadow-2xl flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
