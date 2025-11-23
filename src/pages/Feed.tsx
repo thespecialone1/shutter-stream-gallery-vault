@@ -10,6 +10,32 @@ import { ImageLightbox } from "@/components/ImageLightbox";
 import { useFeedCache } from "@/hooks/useFeedCache";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Intersection Observer hook for view tracking
+const useInView = (callback: () => void, options?: IntersectionObserverInit) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [hasBeenViewed, setHasBeenViewed] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current || hasBeenViewed) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasBeenViewed) {
+          setHasBeenViewed(true);
+          callback();
+        }
+      },
+      { threshold: 0.5, ...options }
+    );
+
+    observer.observe(ref.current);
+
+    return () => observer.disconnect();
+  }, [callback, hasBeenViewed, options]);
+
+  return ref;
+};
+
 interface FeedPost {
   id: string;
   image_id: string;
@@ -163,7 +189,15 @@ export default function Feed() {
 
   const incrementPostView = useCallback(async (postId: string) => {
     try {
-      await supabase.rpc('increment_post_views', { post_id: postId });
+      const { error } = await supabase.rpc('increment_post_views', { post_id: postId });
+      if (error) {
+        console.error('Error incrementing view:', error);
+      } else {
+        // Update local state to reflect the new view count
+        setPosts(prev => prev.map(post => 
+          post.id === postId ? { ...post, view_count: post.view_count + 1 } : post
+        ));
+      }
     } catch (error) {
       console.error('Error incrementing view:', error);
     }
@@ -250,21 +284,35 @@ export default function Feed() {
               </p>
             </div>
           ) : (
-            posts.map((post, index) => (
-              <div 
-                key={post.id}
-                ref={(el) => {
-                  if (el) postRefs.current.set(post.id, el);
-                  else postRefs.current.delete(post.id);
-                }}
-              >
-                <FeedPostCard
-                  post={post}
-                  onCommentClick={() => setSelectedPostId(post.id)}
-                  onImageClick={() => handleImageClick(index)}
-                />
-              </div>
-            ))
+            posts.map((post, index) => {
+              // Component to track views with intersection observer
+              const PostItem = ({ post, index }: { post: FeedPost; index: number }) => {
+                const postRef = useInView(() => incrementPostView(post.id), { threshold: 0.5 });
+                
+                useEffect(() => {
+                  // Also store ref for comments auto-close
+                  const element = postRef.current;
+                  if (element) {
+                    postRefs.current.set(post.id, element);
+                    return () => {
+                      postRefs.current.delete(post.id);
+                    };
+                  }
+                }, []);
+
+                return (
+                  <div ref={postRef}>
+                    <FeedPostCard
+                      post={post}
+                      onCommentClick={() => setSelectedPostId(post.id)}
+                      onImageClick={() => handleImageClick(index)}
+                    />
+                  </div>
+                );
+              };
+
+              return <PostItem key={post.id} post={post} index={index} />;
+            })
           )}
         </div>
       </main>
