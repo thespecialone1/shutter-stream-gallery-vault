@@ -126,11 +126,14 @@ export default function Feed() {
         const profile = profileMap.get(post.user_id);
         const imagePath = image?.full_path || image?.thumbnail_path;
         
-        const imageUrl = imagePath 
-          ? supabase.storage.from('gallery-images').getPublicUrl(imagePath).data.publicUrl 
-          : '';
+        // Get public URL - bucket is public so this should work
+        let imageUrl = '';
+        if (imagePath) {
+          const { data } = supabase.storage.from('gallery-images').getPublicUrl(imagePath);
+          imageUrl = data.publicUrl;
+        }
         
-        console.log('Post:', post.id, 'Image path:', imagePath, 'URL:', imageUrl);
+        console.log('Post:', post.id, 'Image:', imagePath, 'URL:', imageUrl);
         
         return {
           id: post.id,
