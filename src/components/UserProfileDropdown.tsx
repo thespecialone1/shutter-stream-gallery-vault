@@ -32,8 +32,20 @@ export const UserProfileDropdown = () => {
       .select('avatar_url, display_name, full_name')
       .eq('user_id', user.id)
       .single();
-    
-    if (data && !error) {
+
+    if (error) {
+      console.error('Error loading profile in dropdown:', error);
+      // Set default fallback profile if query fails
+      setProfile({
+        avatar_url: user?.user_metadata?.avatar_url || undefined,
+        display_name: undefined,
+        full_name: user?.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
+      });
+      return;
+    }
+
+    if (data) {
+      console.log('Profile loaded in dropdown:', data);
       setProfile(data);
     }
   };
