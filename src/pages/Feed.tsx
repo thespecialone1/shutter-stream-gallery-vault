@@ -137,10 +137,16 @@ export default function Feed() {
 
       // Get user profiles
       const userIds = [...new Set(feedPosts.map(p => p.user_id))];
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, display_name, full_name, avatar_url')
         .in('user_id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+      
+      console.log('Loaded profiles:', profiles);
 
       // Create lookup maps
       const imageMap = new Map(images?.map(img => [img.id, img]) || []);
