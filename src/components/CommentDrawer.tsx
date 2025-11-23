@@ -131,9 +131,15 @@ export const CommentDrawer = ({ postId, isOpen, onClose }: CommentDrawerProps) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200" onClick={onClose} />
+      
+      {/* Drawer */}
       <div 
-        className="relative w-full max-w-lg bg-background rounded-2xl shadow-2xl flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-200"
+        className={`fixed right-0 top-0 bottom-0 w-full max-w-md bg-background shadow-2xl border-l border-border z-50 transition-transform duration-300 flex flex-col ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -210,6 +216,6 @@ export const CommentDrawer = ({ postId, isOpen, onClose }: CommentDrawerProps) =
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };

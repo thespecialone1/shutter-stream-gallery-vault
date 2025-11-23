@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, Eye } from "lucide-react";
+import { ArrowBigUp, ArrowBigDown, MessageCircle, Eye } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,32 +28,65 @@ interface FeedPostCardProps {
 export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.like_count);
-  const [isLiking, setIsLiking] = useState(false);
+  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
+  const [voteCount, setVoteCount] = useState(post.like_count);
+  const [isVoting, setIsVoting] = useState(false);
 
-  const handleLike = async () => {
+  // Load user's current vote
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadUserVote = async () => {
+      const { data } = await supabase
+        .from('post_likes')
+        .select('id')
+        .eq('post_id', post.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      setUserVote(data ? 'up' : null);
+    };
+    
+    loadUserVote();
+  }, [user, post.id]);
+
+  const handleVote = async (voteType: 'up' | 'down') => {
     if (!user) {
       toast({
         title: "Login required",
-        description: "Please log in to like posts",
+        description: "Please log in to vote",
         variant: "destructive"
       });
       return;
     }
 
-    if (isLiking) return;
+    if (isVoting) return;
 
-    setIsLiking(true);
-    const newIsLiked = !isLiked;
-    const optimisticCount = newIsLiked ? likeCount + 1 : likeCount - 1;
+    setIsVoting(true);
+    const previousVote = userVote;
+    const previousCount = voteCount;
 
     // Optimistic update
-    setIsLiked(newIsLiked);
-    setLikeCount(optimisticCount);
+    let newCount = voteCount;
+    let newVote: 'up' | 'down' | null = voteType;
+
+    if (userVote === voteType) {
+      // Unvote
+      newVote = null;
+      newCount = voteCount - 1;
+    } else if (userVote === null) {
+      // New upvote
+      newCount = voteCount + 1;
+    } else {
+      // Switch vote (down to up or up to down)
+      newCount = voteCount; // For now, just track upvotes
+    }
+
+    setUserVote(newVote);
+    setVoteCount(newCount);
 
     try {
-      if (newIsLiked) {
+      if (newVote === 'up') {
         const { error } = await supabase
           .from('post_likes')
           .insert({ post_id: post.id, user_id: user.id });
@@ -70,16 +103,16 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCar
       }
     } catch (error) {
       // Revert on error
-      setIsLiked(!newIsLiked);
-      setLikeCount(post.like_count);
-      console.error('Error liking post:', error);
+      setUserVote(previousVote);
+      setVoteCount(previousCount);
+      console.error('Error voting:', error);
       toast({
         title: "Error",
-        description: "Failed to update like",
+        description: "Failed to update vote",
         variant: "destructive"
       });
     } finally {
-      setIsLiking(false);
+      setIsVoting(false);
     }
   };
 
@@ -109,49 +142,70 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCar
 
       {/* Image */}
       <div 
-        className="relative w-full cursor-pointer bg-muted flex items-center justify-center"
+        className="relative w-full cursor-pointer bg-muted/30 flex items-center justify-center min-h-[400px]"
         onClick={onImageClick}
       >
         <img 
           src={post.image_url} 
           alt={post.caption || 'Feed post'}
-          className="w-full max-h-[70vh] object-contain"
-          loading="lazy"
+          className="w-full max-h-[600px] object-contain"
+          loading="eager"
+          onLoad={(e) => {
+            console.log('Image loaded successfully:', post.image_url);
+          }}
           onError={(e) => {
             console.error('Failed to load image:', post.image_url);
-            e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="%23ddd" width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23999">Image failed to load</text></svg>';
+            console.error('Image element:', e.currentTarget);
           }}
         />
       </div>
 
       {/* Actions */}
       <div className="p-4 space-y-3">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLike}
-            disabled={isLiking}
-            className="gap-2 px-2"
-          >
-            <Heart 
-              className={`h-5 w-5 transition-colors ${
-                isLiked ? 'fill-destructive text-destructive' : ''
-              }`} 
-            />
-            <span className="text-sm">{likeCount}</span>
-          </Button>
+        <div className="flex items-center gap-2">
+          {/* Upvote/Downvote */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleVote('up')}
+              disabled={isVoting}
+              className="h-8 w-8 p-0 hover:text-primary"
+            >
+              <ArrowBigUp 
+                className={`h-6 w-6 transition-colors ${
+                  userVote === 'up' ? 'fill-primary text-primary' : ''
+                }`} 
+              />
+            </Button>
+            <span className="text-sm font-medium min-w-[2ch] text-center">{voteCount}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleVote('down')}
+              disabled={isVoting}
+              className="h-8 w-8 p-0 hover:text-destructive"
+            >
+              <ArrowBigDown 
+                className={`h-6 w-6 transition-colors ${
+                  userVote === 'down' ? 'fill-destructive text-destructive' : ''
+                }`} 
+              />
+            </Button>
+          </div>
           
+          {/* Comments */}
           <Button
             variant="ghost"
             size="sm"
             onClick={onCommentClick}
-            className="gap-2 px-2"
+            className="gap-1.5 px-2 h-8"
           >
             <MessageCircle className="h-5 w-5" />
             <span className="text-sm">{post.comment_count}</span>
           </Button>
 
+          {/* Views */}
           <div className="flex items-center gap-1 ml-auto text-muted-foreground">
             <Eye className="h-4 w-4" />
             <span className="text-xs">{post.view_count}</span>
