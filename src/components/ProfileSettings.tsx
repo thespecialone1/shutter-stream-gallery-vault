@@ -145,43 +145,75 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
 
     setLoading(true);
     try {
-      console.log('Updating profile with:', {
+      const updateData = {
         full_name: profile.full_name.trim(),
         display_name: profile.display_name.trim() || null,
         business_name: profile.business_name.trim() || null,
         bio: profile.bio.trim() || null,
         phone: profile.phone.trim() || null,
         avatar_url: profile.avatar_url || null,
-      });
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('Attempting to update profile for user:', user.id);
+      console.log('Update data:', updateData);
 
-      const { data, error } = await supabase
+      // First check if profile exists
+      const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
-        .update({
-          full_name: profile.full_name.trim(),
-          display_name: profile.display_name.trim() || null,
-          business_name: profile.business_name.trim() || null,
-          bio: profile.bio.trim() || null,
-          phone: profile.phone.trim() || null,
-          avatar_url: profile.avatar_url || null,
-          updated_at: new Date().toISOString()
-        })
+        .select('id')
         .eq('user_id', user.id)
-        .select();
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking profile:', checkError);
+        throw checkError;
+      }
+
+      let result;
+      if (!existingProfile) {
+        // Profile doesn't exist, insert it
+        console.log('Profile does not exist, creating new profile');
+        result = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            email: user.email || '',
+            ...updateData
+          })
+          .select();
+      } else {
+        // Profile exists, update it
+        console.log('Profile exists, updating');
+        result = await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('user_id', user.id)
+          .select();
+      }
+
+      const { data, error } = result;
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase update/insert error:', error);
         throw error;
       }
 
-      console.log('Profile updated successfully:', data);
+      console.log('Profile saved successfully:', data);
 
       toast({
         title: "Profile updated",
-        description: "Your profile has been saved successfully"
+        description: "Your profile has been saved successfully. Refreshing..."
       });
 
+      // Force reload the profile data
+      await loadProfile();
       onProfileUpdated?.();
-      onOpenChange(false);
+      
+      // Small delay to ensure real-time updates propagate
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 500);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
