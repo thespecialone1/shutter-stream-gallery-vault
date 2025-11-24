@@ -72,6 +72,42 @@ export default function Feed() {
     loadFeed();
   }, []);
 
+  // Subscribe to real-time updates for new posts and profile changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('feed-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'feed_posts'
+        },
+        () => {
+          console.log('Feed posts changed, reloading...');
+          loadFeed();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Profile updated:', payload);
+          // Reload feed to get updated profile info
+          loadFeed();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // Track scroll for "scroll to top" button and auto-close comments
   useEffect(() => {
     const handleScroll = () => {
