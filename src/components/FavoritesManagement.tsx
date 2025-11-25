@@ -246,6 +246,10 @@ export const FavoritesManagement = () => {
                       alt={favorite.image_original_filename}
                       className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                       loading="lazy"
+                      onError={(e) => {
+                        console.error('Image failed to load:', favorite.image_full_path);
+                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E';
+                      }}
                     />
                   </div>
                   

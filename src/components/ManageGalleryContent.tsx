@@ -6,13 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit, Plus, Image, Eye, Download, Share2 } from 'lucide-react';
+import { Trash2, Edit, Plus, Image, Eye, Download } from 'lucide-react';
 import { DeleteGalleryDialog } from './DeleteGalleryDialog';
 import { EnhancedImageLightbox } from './EnhancedImageLightbox';
 import { DownloadOptionsDialog } from './DownloadOptionsDialog';
 import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
 import { useImageCache } from '@/hooks/useImageCache';
-import { ShareToFeedDialog } from './ShareToFeedDialog';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Gallery {
@@ -49,7 +48,6 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
-  const [shareToFeedImage, setShareToFeedImage] = useState<GalleryImage | null>(null);
   const [editForm, setEditForm] = useState({
     name: gallery.name,
     description: gallery.description || '',
@@ -340,6 +338,10 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                       alt={image.filename}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       loading="lazy"
+                      onError={(e) => {
+                        console.error('Image failed to load:', image.full_path);
+                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E';
+                      }}
                     />
                   </div>
                   
@@ -367,17 +369,6 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                         className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
                       >
                         <Download className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShareToFeedImage(image);
-                        }}
-                        className="w-10 h-10 rounded-full bg-primary/95 hover:bg-primary text-primary-foreground backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
-                      >
-                        <Share2 className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="destructive"
