@@ -50,6 +50,52 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCar
     loadLikeStatus();
   }, [user, post.id]);
 
+  // Subscribe to real-time like updates
+  useEffect(() => {
+    const channel = supabase
+      .channel(`post-likes-${post.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'post_likes',
+          filter: `post_id=eq.${post.id}`
+        },
+        () => {
+          // Reload like count from feed_posts table
+          supabase
+            .from('feed_posts')
+            .select('like_count')
+            .eq('id', post.id)
+            .single()
+            .then(({ data }) => {
+              if (data) {
+                setLikeCount(data.like_count);
+              }
+            });
+
+          // Reload user's like status
+          if (user) {
+            supabase
+              .from('post_likes')
+              .select('id')
+              .eq('post_id', post.id)
+              .eq('user_id', user.id)
+              .maybeSingle()
+              .then(({ data }) => {
+                setIsLiked(!!data);
+              });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [post.id, user]);
+
   const handleLike = async () => {
     if (!user) {
       toast({

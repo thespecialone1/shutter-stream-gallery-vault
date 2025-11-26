@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { EnhancedImageLightbox } from './EnhancedImageLightbox';
 import { DownloadOptionsDialog } from './DownloadOptionsDialog';
 import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
+import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 
 interface FavoriteImage {
   favorite_id: string;
@@ -235,23 +236,36 @@ export const FavoritesManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {gallery.images.map((favorite, index) => (
-                <div key={favorite.favorite_id} className="group relative staggered-item magnetic-hover">
-                  <div 
-                    className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer"
-                    onClick={() => openLightbox(favorite, gallery.images)}
-                  >
-                    <img
-                      src={getImageUrl(favorite.image_thumbnail_path || favorite.image_full_path)}
-                      alt={favorite.image_original_filename}
-                      className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
-                      loading="lazy"
-                      onError={(e) => {
-                        console.error('Image failed to load:', favorite.image_full_path);
-                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E';
-                      }}
-                    />
-                  </div>
+              {gallery.images.map((favorite, index) => {
+                const FavoriteImageItem = () => {
+                  const { src, isLoading } = useProgressiveImage({
+                    thumbnailUrl: getImageUrl(favorite.image_thumbnail_path || favorite.image_full_path),
+                    fullUrl: getImageUrl(favorite.image_full_path),
+                    enabled: true
+                  });
+
+                  return (
+                    <div key={favorite.favorite_id} className="group relative staggered-item magnetic-hover">
+                      <div 
+                        className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer relative"
+                        onClick={() => openLightbox(favorite, gallery.images)}
+                      >
+                        {isLoading && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                            <EnhancedSkeletonLoader variant="image" className="w-full h-full" />
+                          </div>
+                        )}
+                        <img
+                          src={src}
+                          alt={favorite.image_original_filename}
+                          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                          loading="lazy"
+                          onError={(e) => {
+                            console.error('Image failed to load:', favorite.image_full_path);
+                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E';
+                          }}
+                        />
+                      </div>
                   
                   {/* Fixed positioned overlay with actions */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg pointer-events-none">
@@ -303,8 +317,12 @@ export const FavoritesManagement = () => {
                       </p>
                     </div>
                   </div>
-                </div>
-              ))}
+                    </div>
+                  );
+                };
+                
+                return <FavoriteImageItem key={favorite.favorite_id} />;
+              })}
             </div>
           </CardContent>
         </Card>
