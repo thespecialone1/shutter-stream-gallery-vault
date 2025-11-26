@@ -95,6 +95,9 @@ const Galleries = () => {
               </div>
             </Link>
             <div className="flex items-center gap-4">
+              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+                <Link to="/feed">Feed</Link>
+              </Button>
               <Button variant="outline" asChild className="btn-premium-outline">
                 <Link to="/admin">Admin Panel</Link>
               </Button>

@@ -170,7 +170,15 @@ export default function Admin() {
               <Camera className="h-6 w-6" />
               <span className="text-xl font-serif">Pixie Studio</span>
             </Link>
-            <UserProfileDropdown />
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+                <Link to="/galleries">Browse</Link>
+              </Button>
+              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+                <Link to="/feed">Feed</Link>
+              </Button>
+              <UserProfileDropdown />
+            </div>
           </div>
         </header>
         
