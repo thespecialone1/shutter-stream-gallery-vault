@@ -1185,6 +1185,20 @@ export type Database = {
           view_count: number
         }[]
       }
+      get_public_profile: {
+        Args: { profile_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          business_name: string
+          created_at: string
+          display_name: string
+          full_name: string
+          id: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_share_link_analytics: { Args: { gallery_id: string }; Returns: Json }
       get_user_favorites: {
         Args: { user_uuid: string }

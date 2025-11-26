@@ -16,7 +16,7 @@ interface Profile {
   user_id: string;
   full_name: string;
   business_name?: string;
-  email: string;
+  email?: string; // Optional - only available for own profile
   avatar_url?: string;
   bio?: string;
   display_name?: string;
@@ -54,14 +54,25 @@ export default function UserProfile() {
   const loadProfile = async () => {
     if (!targetUserId) return;
     
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', targetUserId)
-      .single();
-    
-    if (data && !error) {
-      setProfile(data);
+    if (isOwnProfile) {
+      // For own profile, query directly (includes email and phone)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .single();
+      
+      if (data && !error) {
+        setProfile(data);
+      }
+    } else {
+      // For other users' profiles, use secure function (safe fields only)
+      const { data, error } = await supabase
+        .rpc('get_public_profile', { profile_user_id: targetUserId });
+      
+      if (data && data.length > 0 && !error) {
+        setProfile(data[0] as Profile);
+      }
     }
     setLoading(false);
   };
