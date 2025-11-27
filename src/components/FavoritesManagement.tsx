@@ -27,6 +27,103 @@ interface FavoriteImage {
   favorited_at: string;
 }
 
+// Separate component for favorite image item to properly use hooks
+const FavoriteImageItem = ({ 
+  favorite, 
+  onView, 
+  onDownload, 
+  onRemove,
+  getImageUrl 
+}: { 
+  favorite: FavoriteImage;
+  onView: () => void;
+  onDownload: () => void;
+  onRemove: () => void;
+  getImageUrl: (path: string) => string;
+}) => {
+  const { src, isLoading } = useProgressiveImage({
+    thumbnailUrl: getImageUrl(favorite.image_thumbnail_path || favorite.image_full_path),
+    fullUrl: getImageUrl(favorite.image_full_path),
+    enabled: true
+  });
+
+  return (
+    <div className="group relative staggered-item magnetic-hover">
+      <div 
+        className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer relative"
+        onClick={onView}
+      >
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted">
+            <EnhancedSkeletonLoader variant="image" className="w-full h-full" />
+          </div>
+        )}
+        <img
+          src={src}
+          alt={favorite.image_original_filename}
+          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+          loading="lazy"
+          onError={(e) => {
+            console.error('Image failed to load:', favorite.image_full_path);
+            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E';
+          }}
+        />
+      </div>
+  
+      {/* Fixed positioned overlay with actions */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg pointer-events-none">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 pointer-events-auto z-10">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+            className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownload();
+            }}
+            className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Image info - only visible on hover */}
+      <div className="absolute top-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+          <p className="text-white text-xs truncate font-medium">
+            {favorite.image_original_filename}
+          </p>
+          <p className="text-white/70 text-xs">
+            Favorited {new Date(favorite.favorited_at).toLocaleDateString()}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const FavoritesManagement = () => {
   const [favorites, setFavorites] = useState<FavoriteImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -236,93 +333,16 @@ export const FavoritesManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {gallery.images.map((favorite, index) => {
-                const FavoriteImageItem = () => {
-                  const { src, isLoading } = useProgressiveImage({
-                    thumbnailUrl: getImageUrl(favorite.image_thumbnail_path || favorite.image_full_path),
-                    fullUrl: getImageUrl(favorite.image_full_path),
-                    enabled: true
-                  });
-
-                  return (
-                    <div key={favorite.favorite_id} className="group relative staggered-item magnetic-hover">
-                      <div 
-                        className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer relative"
-                        onClick={() => openLightbox(favorite, gallery.images)}
-                      >
-                        {isLoading && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                            <EnhancedSkeletonLoader variant="image" className="w-full h-full" />
-                          </div>
-                        )}
-                        <img
-                          src={src}
-                          alt={favorite.image_original_filename}
-                          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
-                          loading="lazy"
-                          onError={(e) => {
-                            console.error('Image failed to load:', favorite.image_full_path);
-                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E';
-                          }}
-                        />
-                      </div>
-                  
-                  {/* Fixed positioned overlay with actions */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg pointer-events-none">
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 pointer-events-auto z-10">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openLightbox(favorite, gallery.images);
-                        }}
-                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          downloadImage(favorite);
-                        }}
-                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeFavorite(favorite.favorite_id, favorite.image_id);
-                        }}
-                        className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg z-10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Image info - only visible on hover */}
-                  <div className="absolute top-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
-                      <p className="text-white text-xs truncate font-medium">
-                        {favorite.image_original_filename}
-                      </p>
-                      <p className="text-white/70 text-xs">
-                        Favorited {new Date(favorite.favorited_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                    </div>
-                  );
-                };
-                
-                return <FavoriteImageItem key={favorite.favorite_id} />;
-              })}
+              {gallery.images.map((favorite) => (
+                <FavoriteImageItem
+                  key={favorite.favorite_id}
+                  favorite={favorite}
+                  onView={() => openLightbox(favorite, gallery.images)}
+                  onDownload={() => downloadImage(favorite)}
+                  onRemove={() => removeFavorite(favorite.favorite_id, favorite.image_id)}
+                  getImageUrl={getImageUrl}
+                />
+              ))}
             </div>
           </CardContent>
         </Card>
