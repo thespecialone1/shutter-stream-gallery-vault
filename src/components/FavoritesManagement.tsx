@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { EnhancedImageLightbox } from './EnhancedImageLightbox';
 import { DownloadOptionsDialog } from './DownloadOptionsDialog';
-import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
+import { MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
 
 
 interface FavoriteImage {
@@ -41,8 +41,7 @@ const FavoriteImageItem = ({
   onRemove: () => void;
   getImageUrl: (path: string) => string;
 }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const imageUrl = getImageUrl(favorite.image_thumbnail_path || favorite.image_full_path);
 
   return (
@@ -51,24 +50,18 @@ const FavoriteImageItem = ({
         className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer relative"
         onClick={onView}
       >
-        {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <EnhancedSkeletonLoader variant="image" className="w-full h-full" />
+        {hasError ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground text-sm">
+            Image unavailable
           </div>
+        ) : (
+          <img
+            src={imageUrl}
+            alt={favorite.image_original_filename}
+            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+            onError={() => setHasError(true)}
+          />
         )}
-        <img
-          src={imageUrl}
-          alt={favorite.image_original_filename}
-          className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${!imageLoaded ? 'opacity-0' : 'opacity-100'}`}
-          loading="lazy"
-          onLoad={() => setImageLoaded(true)}
-          onError={(e) => {
-            console.error('Image failed to load:', favorite.image_full_path, imageUrl);
-            setImageError(true);
-            setImageLoaded(true);
-            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E';
-          }}
-        />
       </div>
   
       {/* Fixed positioned overlay with actions */}
