@@ -56,15 +56,24 @@ export const CommentDrawer = ({ postId, isOpen, onClose }: CommentDrawerProps) =
 
       if (error) throw error;
 
-      // Fetch user profiles for comments
+      // Fetch user profiles for comments using secure RPC function
       const userIds = [...new Set(commentsData?.map(c => c.user_id) || [])];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, full_name, avatar_url')
-        .in('user_id', userIds);
+      const profileResults = await Promise.all(
+        userIds.map(async (userId) => {
+          const { data, error } = await supabase.rpc('get_public_profile', { 
+            profile_user_id: userId 
+          });
+          if (error) {
+            console.error('Error fetching profile:', error);
+            return null;
+          }
+          return data?.[0] || null;
+        })
+      );
 
+      const profiles = profileResults.filter(Boolean);
       const profileMap = new Map(
-        profiles?.map(p => [p.user_id, p]) || []
+        profiles?.map((p: any) => [p.user_id, p]) || []
       );
 
       const enrichedComments = commentsData?.map(comment => ({

@@ -204,22 +204,27 @@ export default function Feed() {
       
       console.log('Loaded images:', images);
 
-      // Get user profiles
+      // Get user profiles using secure RPC function
       const userIds = [...new Set(feedPosts.map(p => p.user_id))];
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, full_name, avatar_url')
-        .in('user_id', userIds);
+      const profileResults = await Promise.all(
+        userIds.map(async (userId) => {
+          const { data, error } = await supabase.rpc('get_public_profile', { 
+            profile_user_id: userId 
+          });
+          if (error) {
+            console.error('Error fetching profile for', userId, ':', error);
+            return null;
+          }
+          return data?.[0] || null;
+        })
+      );
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-      }
-      
+      const profiles = profileResults.filter(Boolean);
       console.log('Loaded profiles:', profiles);
 
       // Create lookup maps
       const imageMap = new Map(images?.map(img => [img.id, img]) || []);
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
 
       // Enrich posts with image URLs and user data
       const enrichedPosts: FeedPost[] = feedPosts.map(post => {
