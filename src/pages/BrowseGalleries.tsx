@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Eye, Users, Camera, Sparkles, ArrowRight, Share2, Copy, CheckCircle, User } from "lucide-react";
+import { Search, Eye, Camera, ArrowRight, Share2, Copy, CheckCircle, User } from "lucide-react";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
@@ -153,29 +153,27 @@ export default function BrowseGalleries() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Premium Header */}
+      {/* Compact Header */}
       <header className="nav-premium">
-        <div className="container mx-auto px-6 py-6">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Camera className="h-7 w-7 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif font-medium text-foreground">Pixie Studio</h1>
-                <p className="text-sm text-muted-foreground -mt-1">Browse Public Galleries</p>
-              </div>
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Camera className="h-6 w-6 text-foreground" />
+              <span className="text-xl font-serif font-medium text-foreground">Pixie</span>
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {user ? (
                 <>
-                  <Button variant="outline" asChild className="btn-premium-outline">
-                    <Link to="/admin">Admin Panel</Link>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/admin">Dashboard</Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/feed">Feed</Link>
                   </Button>
                   <UserProfileDropdown />
                 </>
               ) : (
-                <Button asChild className="btn-premium">
+                <Button asChild size="sm">
                   <Link to="/auth">Sign In</Link>
                 </Button>
               )}
@@ -184,51 +182,46 @@ export default function BrowseGalleries() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-accent/10 to-background">
-        <div className="container mx-auto px-6 text-center">
-          <div className="max-w-3xl mx-auto fade-in-up">
-            <div className="inline-flex items-center gap-2 mb-6 px-6 py-3 rounded-full bg-primary/5 border border-primary/10">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Discover Beautiful Memories</span>
-            </div>
-            
-            <h2 className="heading-hero mb-6">
+      {/* Hero Section - Compact */}
+      <section className="py-10 bg-gradient-to-b from-accent/10 to-background">
+        <div className="container mx-auto px-4 text-center">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-serif mb-3">
               {showMyGalleries ? "My Galleries" : "Browse Galleries"}
             </h2>
             
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-muted-foreground mb-6">
               {showMyGalleries 
-                ? "Manage and share your beautiful photography collections"
-                : "Discover stunning photography collections shared by photographers worldwide"
+                ? "Manage your photography collections"
+                : "Discover stunning photos from photographers worldwide"
               }
             </p>
 
             {/* Toggle Switch */}
             {user && (
-              <div className="flex items-center justify-center gap-3 mb-8">
-                <Label htmlFor="gallery-toggle" className="text-sm font-medium">
-                  Public Galleries
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Label htmlFor="gallery-toggle" className="text-sm">
+                  Public
                 </Label>
                 <Switch
                   id="gallery-toggle"
                   checked={showMyGalleries}
                   onCheckedChange={setShowMyGalleries}
                 />
-                <Label htmlFor="gallery-toggle" className="text-sm font-medium">
-                  My Galleries
+                <Label htmlFor="gallery-toggle" className="text-sm">
+                  Mine
                 </Label>
               </div>
             )}
 
-            {/* Premium Search */}
+            {/* Search */}
             <div className="relative max-w-md mx-auto">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search galleries or photographers..."
+                placeholder="Search galleries..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 rounded-full border-border/50 focus:border-primary bg-background/80 backdrop-blur-sm"
+                className="pl-10 h-10 rounded-full"
               />
             </div>
           </div>

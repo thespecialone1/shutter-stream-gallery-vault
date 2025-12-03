@@ -176,23 +176,16 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCar
         </div>
       </div>
 
-      {/* Image */}
+      {/* Image - Instagram-style sizing */}
       <div 
-        className="relative w-full cursor-pointer bg-muted/30 flex items-center justify-center min-h-[400px]"
+        className="relative w-full cursor-pointer bg-muted/30"
         onClick={onImageClick}
       >
         <img 
           src={post.image_url} 
           alt={post.caption || 'Feed post'}
-          className="w-full max-h-[600px] object-contain"
+          className="w-full aspect-square object-cover"
           loading="eager"
-          onLoad={(e) => {
-            console.log('Image loaded successfully:', post.image_url);
-          }}
-          onError={(e) => {
-            console.error('Failed to load image:', post.image_url);
-            console.error('Image element:', e.currentTarget);
-          }}
         />
       </div>
 

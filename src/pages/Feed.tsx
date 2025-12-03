@@ -89,6 +89,8 @@ export default function Feed() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
+  const lastScrollY = useRef(0);
   const { cachedData, setCache } = useFeedCache<FeedPost[]>('feed-posts');
   const postRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -141,24 +143,33 @@ export default function Feed() {
     };
   }, []);
 
-  // Track scroll for "scroll to top" button and auto-close comments
+  // Track scroll for header hide/show, scroll-to-top button, and auto-close comments
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 500);
+      const currentScrollY = window.scrollY;
+      
+      // Hide header on scroll down, show on scroll up
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setShowHeader(false);
+      } else {
+        setShowHeader(true);
+      }
+      lastScrollY.current = currentScrollY;
+      
+      setShowScrollTop(currentScrollY > 500);
       
       // Auto-close comments when scrolling past the post
       if (selectedPostId) {
         const postElement = postRefs.current.get(selectedPostId);
         if (postElement) {
           const rect = postElement.getBoundingClientRect();
-          // Close if post is completely out of view (above or below viewport)
           if (rect.bottom < 0 || rect.top > window.innerHeight) {
             setSelectedPostId(null);
           }
         }
       }
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [selectedPostId]);
 
@@ -311,28 +322,23 @@ export default function Feed() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="nav-premium fixed top-0 left-0 right-0 z-50">
-        <div className="container mx-auto px-4 sm:px-6 py-4">
+      {/* Header - hides on scroll down */}
+      <header className={`nav-premium fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${showHeader ? 'translate-y-0' : '-translate-y-full'}`}>
+        <div className="container mx-auto px-4 sm:px-6 py-3">
           <nav className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Camera className="h-4 w-4 sm:h-6 sm:w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <span className="text-lg sm:text-2xl font-serif font-medium text-foreground">Pixie Studio</span>
-                <p className="text-xs text-muted-foreground -mt-1 hidden sm:block">Social Feed</p>
-              </div>
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Camera className="h-6 w-6 text-foreground" />
+              <span className="text-lg font-serif font-medium text-foreground">Pixie</span>
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => window.location.href = '/'}
-                className="hidden sm:flex"
+                className="text-sm"
               >
-                <Camera className="h-4 w-4 mr-2" />
-                Back to Galleries
+                <Camera className="h-4 w-4 mr-1" />
+                Galleries
               </Button>
               <UserProfileDropdown />
             </div>
@@ -341,8 +347,8 @@ export default function Feed() {
       </header>
 
       {/* Feed Content */}
-      <main className="container mx-auto px-4 pt-28 pb-6 max-w-2xl">
-        <div className="space-y-6">
+      <main className="container mx-auto px-4 pt-16 pb-6 max-w-lg">
+        <div className="space-y-4">
           {loading ? (
             Array(3).fill(0).map((_, i) => (
               <div key={i} className="bg-background rounded-2xl border p-4">

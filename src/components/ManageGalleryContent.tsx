@@ -10,10 +10,9 @@ import { Trash2, Edit, Plus, Image, Eye, Download } from 'lucide-react';
 import { DeleteGalleryDialog } from './DeleteGalleryDialog';
 import { EnhancedImageLightbox } from './EnhancedImageLightbox';
 import { DownloadOptionsDialog } from './DownloadOptionsDialog';
-import { EnhancedSkeletonLoader, MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
+import { MasonrySkeletonLoader } from './EnhancedSkeletonLoader';
 import { useImageCache } from '@/hooks/useImageCache';
 import { useAuth } from '@/hooks/useAuth';
-import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 
 interface Gallery {
   id: string;
@@ -329,83 +328,68 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {images.map((image) => {
-                const ManageImageItem = () => {
-                  const { src, isLoading } = useProgressiveImage({
-                    thumbnailUrl: getCachedUrl(getImageUrl(image.thumbnail_path || image.full_path)),
-                    fullUrl: getCachedUrl(getImageUrl(image.full_path)),
-                    enabled: true
-                  });
-
-                  return (
-                    <div key={image.id} className="group relative">
-                      <div 
-                        className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer relative"
-                        onClick={() => openLightbox(image)}
-                      >
-                        {isLoading && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                            <EnhancedSkeletonLoader variant="image" className="w-full h-full" />
-                          </div>
-                        )}
-                        <img
-                          src={src}
-                          alt={image.filename}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                          loading="lazy"
-                          onError={(e) => {
-                            console.error('Image failed to load:', image.full_path);
-                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E';
-                          }}
-                        />
-                      </div>
-                  
-                  {/* Fixed positioned overlay with actions */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg pointer-events-none">
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 pointer-events-auto z-10">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openLightbox(image);
-                        }}
-                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          downloadImage(image);
-                        }}
-                        className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteImage(image.id);
-                        }}
-                        className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-2 left-2 right-2 bg-black/80 text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="truncate">{image.filename}</p>
-                    <p>{formatFileSize(image.file_size)}</p>
-                  </div>
-                    </div>
-                  );
-                };
+                const imageUrl = getImageUrl(image.thumbnail_path || image.full_path);
                 
-                return <ManageImageItem key={image.id} />;
+                return (
+                  <div key={image.id} className="group relative">
+                    <div 
+                      className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer relative"
+                      onClick={() => openLightbox(image)}
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={image.filename}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        onError={(e) => {
+                          e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Image unavailable</div>';
+                        }}
+                      />
+                    </div>
+                
+                    {/* Fixed positioned overlay with actions */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-lg pointer-events-none">
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 pointer-events-auto z-10">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openLightbox(image);
+                          }}
+                          className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadImage(image);
+                          }}
+                          className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-black backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteImage(image.id);
+                          }}
+                          className="w-10 h-10 rounded-full bg-red-500/95 hover:bg-red-500 text-white backdrop-blur-sm border-0 hover:scale-110 transition-all duration-200 flex items-center justify-center shadow-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-2 left-2 right-2 bg-black/80 text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="truncate">{image.filename}</p>
+                      <p>{formatFileSize(image.file_size)}</p>
+                    </div>
+                  </div>
+                );
               })}
             </div>
           )}
