@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { Camera, Lock, Heart, Image, Users, Download, Eye, ArrowRight, Sparkles } from "lucide-react";
+import { Camera, Lock, Heart, Image, Download, Eye } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
+import { OnboardingGalleryCreator } from "@/components/OnboardingGalleryCreator";
 
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [featured, setFeatured] = useState<{ id: string; url: string; alt: string }[]>([]);
-  const [showFeed, setShowFeed] = useState(false);
 
   useEffect(() => {
     document.title = "Pixie - Share Your Photos";
@@ -23,7 +23,6 @@ const Index = () => {
     }
     meta.content = metaDesc;
 
-    // Load featured images from public galleries
     (async () => {
       try {
         const { data: galleries } = await supabase
@@ -40,7 +39,7 @@ const Index = () => {
           .select('id, thumbnail_path, full_path, original_filename, gallery_id')
           .in('gallery_id', ids)
           .order('upload_date', { ascending: false })
-          .limit(12);
+          .limit(6);
 
         const mapped = (imgs || []).map((img: any) => {
           const path = img.thumbnail_path || img.full_path;
@@ -56,7 +55,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Compact Header */}
+      {/* Header */}
       <header className="nav-premium fixed top-0 left-0 right-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <nav className="flex items-center justify-between">
@@ -69,7 +68,7 @@ const Index = () => {
                 user ? (
                   <>
                     <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
-                      <Link to="/browse">Browse</Link>
+                      <Link to="/feed">Feed</Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
                       <Link to="/admin">Dashboard</Link>
@@ -87,115 +86,65 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="pt-16">
-        {/* Hero - Compact and Photo-Focused */}
-        <section className="container mx-auto px-4 py-8">
-          {/* Navigation Toggle */}
-          <div className="flex justify-center mb-6">
-            <div className="flex items-center gap-1 p-1 bg-muted rounded-full">
-              <Button
-                variant={!showFeed ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setShowFeed(false)}
-                className="rounded-full px-4 h-8"
-              >
-                <Camera className="h-4 w-4 mr-1.5" />
-                Galleries
-              </Button>
-              <Button
-                variant={showFeed ? "default" : "ghost"}
-                size="sm"
-                onClick={() => navigate('/feed')}
-                className="rounded-full px-4 h-8"
-              >
-                <Users className="h-4 w-4 mr-1.5" />
-                Feed
-              </Button>
-            </div>
-          </div>
-
-          {/* Hero Content */}
-          <div className="max-w-2xl mx-auto text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl font-serif font-medium mb-3 text-foreground">
-              Share Your Photos
-            </h1>
-            <p className="text-muted-foreground mb-6">
-              Create beautiful galleries and share them with the world
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {!loading && (
-                user ? (
-                  <Button asChild>
-                    <Link to="/admin">
-                      Create Gallery
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button asChild>
-                    <Link to="/auth">
-                      Get Started
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                )
-              )}
-              <Button variant="outline" asChild>
-                <Link to="/feed">
-                  <Eye className="mr-2 h-4 w-4" />
-                  Explore Feed
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          {/* Featured Photos Grid */}
-          {featured.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 max-w-4xl mx-auto">
-              {featured.slice(0, 8).map((img, idx) => (
-                <div 
-                  key={img.id} 
-                  className={`relative overflow-hidden rounded-lg bg-muted aspect-square group cursor-pointer ${
-                    idx === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
-                  }`}
-                  onClick={() => navigate('/feed')}
-                >
-                  <img
-                    src={img.url}
-                    alt={img.alt}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Empty state when no featured images */}
-          {featured.length === 0 && (
-            <div className="max-w-4xl mx-auto">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
-                {Array(8).fill(0).map((_, idx) => (
-                  <div 
-                    key={idx}
-                    className={`bg-muted rounded-lg aspect-square flex items-center justify-center ${
-                      idx === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
-                    }`}
-                  >
-                    <Camera className="h-8 w-8 text-muted-foreground/50" />
-                  </div>
-                ))}
-              </div>
-              <p className="text-center text-muted-foreground mt-4 text-sm">
-                Be the first to share your photos
+      <main className="pt-20">
+        {/* Hero Section */}
+        <section className="container mx-auto px-4 py-8 md:py-12">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            {/* Left: Text + CTA */}
+            <div className="text-center lg:text-left">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-medium mb-4 text-foreground">
+                Share Your Photos<br />With the World
+              </h1>
+              <p className="text-muted-foreground text-lg mb-6 max-w-md mx-auto lg:mx-0">
+                Create beautiful galleries and share them instantly. Your photos deserve to be seen.
               </p>
+              
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-8">
+                <Button variant="outline" asChild>
+                  <Link to="/feed">
+                    <Eye className="mr-2 h-4 w-4" />
+                    Explore Feed
+                  </Link>
+                </Button>
+                {user && (
+                  <Button variant="ghost" asChild>
+                    <Link to="/admin">Go to Dashboard</Link>
+                  </Button>
+                )}
+              </div>
+
+              {/* Featured Photos Preview - Desktop */}
+              {featured.length > 0 && (
+                <div className="hidden lg:block">
+                  <p className="text-sm text-muted-foreground mb-3">Recently shared</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {featured.slice(0, 6).map((img) => (
+                      <div 
+                        key={img.id}
+                        className="aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => navigate('/feed')}
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.alt}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Right: Onboarding Creator */}
+            <div>
+              <OnboardingGalleryCreator />
+            </div>
+          </div>
         </section>
 
-        {/* Features - Compact */}
+        {/* Features */}
         <section className="bg-muted/30 py-12">
           <div className="container mx-auto px-4">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
@@ -234,34 +183,31 @@ const Index = () => {
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="container mx-auto px-4 py-12">
-          <div className="max-w-xl mx-auto text-center">
-            <h2 className="text-2xl font-serif mb-3">Ready to share?</h2>
-            <p className="text-muted-foreground mb-6">
-              Join photographers sharing their best work
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {!loading && (
-                user ? (
-                  <Button asChild>
-                    <Link to="/admin">Go to Dashboard</Link>
-                  </Button>
-                ) : (
-                  <Button asChild>
-                    <Link to="/auth">Create Free Account</Link>
-                  </Button>
-                )
-              )}
-              <Button variant="outline" asChild>
-                <Link to="/browse">Browse Galleries</Link>
-              </Button>
+        {/* Mobile Featured Photos */}
+        {featured.length > 0 && (
+          <section className="lg:hidden container mx-auto px-4 py-8">
+            <p className="text-sm text-muted-foreground mb-3 text-center">Recently shared photos</p>
+            <div className="grid grid-cols-3 gap-2 max-w-sm mx-auto">
+              {featured.slice(0, 6).map((img) => (
+                <div 
+                  key={img.id}
+                  className="aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer"
+                  onClick={() => navigate('/feed')}
+                >
+                  <img
+                    src={img.url}
+                    alt={img.alt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
 
-      {/* Minimal Footer */}
+      {/* Footer */}
       <footer className="border-t border-border py-6">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
