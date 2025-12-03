@@ -165,16 +165,16 @@ export default function Admin() {
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
         <header className="border-b bg-card sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <Camera className="h-6 w-6" />
-              <span className="text-xl font-serif">Pixie Studio</span>
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Camera className="h-6 w-6 text-foreground" />
+              <span className="text-xl font-serif">Pixie</span>
             </Link>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
-                <Link to="/galleries">Browse</Link>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/browse">Browse</Link>
               </Button>
-              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="sm" asChild>
                 <Link to="/feed">Feed</Link>
               </Button>
               <UserProfileDropdown />
