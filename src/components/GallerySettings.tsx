@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
-import { Key, Eye, EyeOff, Globe, Lock } from 'lucide-react';
+import { Key, Eye, EyeOff, Globe, Lock, Image, Check } from 'lucide-react';
 
 interface Gallery {
   id: string;
@@ -20,6 +19,14 @@ interface Gallery {
   view_count?: number;
   photographer_id?: string;
   is_public?: boolean;
+  cover_image_id?: string | null;
+}
+
+interface GalleryImage {
+  id: string;
+  thumbnail_path: string | null;
+  full_path: string;
+  original_filename: string;
 }
 
 interface GallerySettingsProps {
@@ -32,7 +39,68 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
   const [showPassword, setShowPassword] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
+  const [isUpdatingCover, setIsUpdatingCover] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadGalleryImages();
+  }, [gallery.id]);
+
+  const loadGalleryImages = async () => {
+    setLoadingImages(true);
+    try {
+      const { data, error } = await supabase
+        .from('images')
+        .select('id, thumbnail_path, full_path, original_filename')
+        .eq('gallery_id', gallery.id)
+        .order('upload_date', { ascending: true })
+        .limit(20);
+
+      if (error) throw error;
+      setGalleryImages(data || []);
+    } catch (error) {
+      console.error('Error loading images:', error);
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  const getImageUrl = (img: GalleryImage) => {
+    const path = img.thumbnail_path || img.full_path;
+    const { data } = supabase.storage.from('gallery-images').getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const handleCoverSelect = async (imageId: string) => {
+    setIsUpdatingCover(true);
+    try {
+      const { data, error } = await supabase
+        .from('galleries')
+        .update({ cover_image_id: imageId })
+        .eq('id', gallery.id)
+        .select('id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id, cover_image_id')
+        .single();
+
+      if (error) throw error;
+
+      onGalleryUpdated(data);
+      toast({
+        title: "Cover updated",
+        description: "Gallery cover image has been updated"
+      });
+    } catch (error) {
+      console.error('Error updating cover:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update cover image",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingCover(false);
+    }
+  };
 
   const handlePasswordUpdate = async () => {
     if (!newPassword) {
@@ -46,13 +114,11 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
 
     setIsUpdating(true);
     try {
-      // Use secure password hashing with validation (the validation is done server-side)
       const { data: hashedPassword, error: hashError } = await supabase.rpc('hash_password_secure', {
         password: newPassword
       });
 
       if (hashError) {
-        // Display user-friendly error for password validation failures
         const errorMessage = hashError.message.includes('security requirements') 
           ? 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
           : hashError.message.includes('common or has been found in data breaches')
@@ -66,7 +132,7 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
         .from('galleries')
         .update({ password_hash: hashedPassword })
         .eq('id', gallery.id)
-        .select('id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id')
+        .select('id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id, cover_image_id')
         .single();
 
       if (error) throw error;
@@ -94,7 +160,6 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
     try {
       let updateData: any = { is_public: isPublic };
       
-      // If switching to public, clear the password hash
       if (isPublic) {
         updateData.password_hash = null;
       }
@@ -103,7 +168,7 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
         .from('galleries')
         .update(updateData)
         .eq('id', gallery.id)
-        .select('id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id')
+        .select('id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id, cover_image_id')
         .single();
 
       if (error) throw error;
@@ -127,6 +192,58 @@ export function GallerySettings({ gallery, onGalleryUpdated }: GallerySettingsPr
 
   return (
     <div className="space-y-6">
+      {/* Cover Image Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Image className="w-5 h-5" />
+            Cover Image
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            Select an image to use as the gallery cover in browse and previews
+          </p>
+          {loadingImages ? (
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+              {Array(6).fill(0).map((_, i) => (
+                <div key={i} className="aspect-square bg-muted animate-pulse rounded-lg" />
+              ))}
+            </div>
+          ) : galleryImages.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No images uploaded yet</p>
+          ) : (
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+              {galleryImages.map((img) => (
+                <button
+                  key={img.id}
+                  onClick={() => handleCoverSelect(img.id)}
+                  disabled={isUpdatingCover}
+                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                    gallery.cover_image_id === img.id 
+                      ? 'border-primary ring-2 ring-primary/30' 
+                      : 'border-transparent hover:border-muted-foreground/30'
+                  }`}
+                >
+                  <img
+                    src={getImageUrl(img)}
+                    alt={img.original_filename}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                  />
+                  {gallery.cover_image_id === img.id && (
+                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                      <Check className="h-6 w-6 text-primary" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Privacy Settings */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
