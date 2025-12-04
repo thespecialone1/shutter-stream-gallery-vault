@@ -146,7 +146,7 @@ const Index = () => {
                   onClick={() => navigate('/browse')}
                 >
                   {imageErrors.has(img.id) ? (
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center bg-muted">
                       <Camera className="h-8 w-8 text-muted-foreground/50" />
                     </div>
                   ) : (
@@ -154,7 +154,7 @@ const Index = () => {
                       src={img.url}
                       alt={img.alt}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
+                      loading="eager"
                       onError={() => handleImageError(img.id)}
                     />
                   )}

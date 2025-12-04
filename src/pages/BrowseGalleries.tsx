@@ -49,7 +49,7 @@ export default function BrowseGalleries() {
       setLoading(true);
       let query = supabase
         .from('galleries')
-        .select('id, name, description, client_name, created_at, view_count, is_public, photographer_id');
+        .select('id, name, description, client_name, created_at, view_count, is_public, photographer_id, cover_image_id');
 
       if (showMyGalleries && user) {
         query = query.eq('photographer_id', user.id);
@@ -67,19 +67,34 @@ export default function BrowseGalleries() {
       // Fetch cover images for each gallery
       const galleryIds = galleriesData.map(g => g.id);
       if (galleryIds.length > 0) {
+        // Get all images for galleries
         const { data: images } = await supabase
           .from('images')
-          .select('gallery_id, thumbnail_path, full_path')
+          .select('id, gallery_id, thumbnail_path, full_path')
           .in('gallery_id', galleryIds)
           .order('upload_date', { ascending: true });
 
-        // Get first image for each gallery as cover
+        // Build cover map - use cover_image_id if set, otherwise first image
         const coverMap = new Map<string, string>();
+        const imageMap = new Map<string, { thumbnail_path: string | null; full_path: string }>();
+        
         (images || []).forEach(img => {
+          imageMap.set(img.id, { thumbnail_path: img.thumbnail_path, full_path: img.full_path });
+          // Set first image as default cover
           if (!coverMap.has(img.gallery_id)) {
             const path = img.thumbnail_path || img.full_path;
             const { data } = supabase.storage.from('gallery-images').getPublicUrl(path);
             coverMap.set(img.gallery_id, data.publicUrl);
+          }
+        });
+
+        // Override with explicit cover image if set (cover_image_id is in galleriesData now)
+        galleriesData.forEach((g: any) => {
+          if (g.cover_image_id && imageMap.has(g.cover_image_id)) {
+            const coverImg = imageMap.get(g.cover_image_id)!;
+            const path = coverImg.thumbnail_path || coverImg.full_path;
+            const { data } = supabase.storage.from('gallery-images').getPublicUrl(path);
+            coverMap.set(g.id, data.publicUrl);
           }
         });
 
@@ -323,7 +338,7 @@ export default function BrowseGalleries() {
                           src={gallery.coverUrl}
                           alt={gallery.name}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
+                          loading="eager"
                           onError={() => handleImageError(gallery.id)}
                         />
                       ) : (

@@ -221,6 +221,7 @@ export type Database = {
       galleries: {
         Row: {
           client_name: string
+          cover_image_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -233,6 +234,7 @@ export type Database = {
         }
         Insert: {
           client_name: string
+          cover_image_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -245,6 +247,7 @@ export type Database = {
         }
         Update: {
           client_name?: string
+          cover_image_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -255,7 +258,22 @@ export type Database = {
           updated_at?: string
           view_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "galleries_cover_image_id_fkey"
+            columns: ["cover_image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "galleries_cover_image_id_fkey"
+            columns: ["cover_image_id"]
+            isOneToOne: false
+            referencedRelation: "images_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gallery_access_sessions: {
         Row: {
