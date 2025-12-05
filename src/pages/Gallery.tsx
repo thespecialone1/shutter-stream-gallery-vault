@@ -637,7 +637,7 @@ const Gallery = () => {
               <FavoritesViewSkeleton />
             ) : (
               user ? (
-                <FavoritesManagement />
+                <FavoritesManagement galleryId={gallery!.id} />
               ) : (
                 <div className="text-center py-12">
                   <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
