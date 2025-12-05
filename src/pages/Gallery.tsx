@@ -100,33 +100,13 @@ const Gallery = () => {
 
   const loadGallery = async () => {
     try {
-      // First try to load from safe public view
-      let data = null;
-      let error = null;
-      
-      // Try public view first
-      const publicResult = await supabase
-        .from("galleries_safe_public")
+      const { data, error } = await supabase
+        .from("galleries")
         .select("id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id")
         .eq("id", id)
-        .maybeSingle();
-      
-      if (publicResult.data) {
-        data = publicResult.data;
-      } else if (user) {
-        // If not found in public view and user is logged in, try direct table (for owner access)
-        const ownerResult = await supabase
-          .from("galleries")
-          .select("id, name, description, client_name, created_at, updated_at, view_count, is_public, photographer_id")
-          .eq("id", id)
-          .maybeSingle();
-        data = ownerResult.data;
-        error = ownerResult.error;
-      } else {
-        error = publicResult.error;
-      }
+        .single();
 
-      if (error || !data) {
+      if (error) {
         console.error("Error loading gallery:", error);
         toast({
           title: "Error",
@@ -657,7 +637,7 @@ const Gallery = () => {
               <FavoritesViewSkeleton />
             ) : (
               user ? (
-                <FavoritesManagement galleryId={gallery!.id} />
+                <FavoritesManagement />
               ) : (
                 <div className="text-center py-12">
                   <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />

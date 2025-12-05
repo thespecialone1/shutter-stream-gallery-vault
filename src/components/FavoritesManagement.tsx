@@ -118,11 +118,7 @@ const FavoriteImageItem = ({
   );
 };
 
-interface FavoritesManagementProps {
-  galleryId?: string; // Optional: filter to show only favorites from this gallery
-}
-
-export const FavoritesManagement = ({ galleryId }: FavoritesManagementProps) => {
+export const FavoritesManagement = () => {
   const [favorites, setFavorites] = useState<FavoriteImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxImage, setLightboxImage] = useState<FavoriteImage | null>(null);
@@ -135,7 +131,7 @@ export const FavoritesManagement = ({ galleryId }: FavoritesManagementProps) => 
     if (user) {
       fetchFavorites();
     }
-  }, [user, galleryId]);
+  }, [user]);
 
   const fetchFavorites = async () => {
     try {
@@ -145,12 +141,7 @@ export const FavoritesManagement = ({ galleryId }: FavoritesManagementProps) => 
       
       if (error) throw error;
       
-      // Filter by galleryId if provided
-      const filteredData = galleryId 
-        ? (data || []).filter((f: FavoriteImage) => f.gallery_id === galleryId)
-        : data || [];
-      
-      setFavorites(filteredData);
+      setFavorites(data || []);
     } catch (error) {
       console.error('Error fetching favorites:', error);
       toast({
