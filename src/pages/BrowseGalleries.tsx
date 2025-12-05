@@ -47,19 +47,29 @@ export default function BrowseGalleries() {
   const loadGalleries = async () => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('galleries')
-        .select('id, name, description, client_name, created_at, view_count, is_public, photographer_id, cover_image_id');
+      let data: any[] = [];
+      let error: any = null;
 
       if (showMyGalleries && user) {
-        query = query.eq('photographer_id', user.id);
+        // Use direct table for owner's galleries (they have full access)
+        const result = await supabase
+          .from('galleries')
+          .select('id, name, description, client_name, created_at, view_count, is_public, photographer_id, cover_image_id')
+          .eq('photographer_id', user.id)
+          .order('view_count', { ascending: false })
+          .limit(50);
+        data = result.data || [];
+        error = result.error;
       } else {
-        query = query.eq('is_public', true);
+        // Use safe view for public galleries (excludes password_hash)
+        const result = await supabase
+          .from('galleries_safe_public')
+          .select('id, name, description, client_name, created_at, view_count, is_public, photographer_id, cover_image_id')
+          .order('view_count', { ascending: false })
+          .limit(50);
+        data = result.data || [];
+        error = result.error;
       }
-
-      query = query.order('view_count', { ascending: false }).limit(50);
-
-      const { data, error } = await query;
       if (error) throw error;
 
       const galleriesData = data || [];

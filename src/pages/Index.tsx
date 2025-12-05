@@ -26,10 +26,10 @@ const Index = () => {
     // Load featured images from public galleries
     (async () => {
       try {
+        // Use safe view for public galleries
         const { data: galleries } = await supabase
-          .from('galleries')
+          .from('galleries_safe_public')
           .select('id')
-          .eq('is_public', true)
           .limit(8);
         
         const ids = (galleries || []).map((g: any) => g.id);
