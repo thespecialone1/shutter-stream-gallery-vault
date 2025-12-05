@@ -278,12 +278,32 @@ export default function Feed() {
     }
   };
 
-  const trackedViews = useRef(new Set<string>());
+  // Use sessionStorage to persist viewed posts across component remounts and navigation
+  const trackedViews = useRef<Set<string>>(new Set<string>());
+  
+  // Initialize from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('feed_viewed_posts');
+      if (stored) {
+        trackedViews.current = new Set(JSON.parse(stored));
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, []);
 
   const incrementPostView = useCallback(async (postId: string) => {
-    // Prevent duplicate view tracking
+    // Prevent duplicate view tracking - check sessionStorage-backed set
     if (trackedViews.current.has(postId)) return;
     trackedViews.current.add(postId);
+    
+    // Persist to sessionStorage
+    try {
+      sessionStorage.setItem('feed_viewed_posts', JSON.stringify([...trackedViews.current]));
+    } catch (e) {
+      // Ignore storage errors
+    }
 
     try {
       const { error } = await supabase.rpc('increment_post_views', { post_id: postId });
