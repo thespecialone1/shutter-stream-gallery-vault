@@ -1,20 +1,57 @@
 import { Button } from "@/components/ui/button";
-import { Camera, Lock, Heart, Image, Users, Download, Shield, ArrowRight } from "lucide-react";
+import { Camera, Lock, Heart, Image, Users, Download, ArrowRight, Sparkles, Calendar, Send, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 
+const CATEGORIES = [
+  { name: "Wedding", image: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80" },
+  { name: "Portrait", image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80" },
+  { name: "Family", image: "https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600&q=80" },
+  { name: "Seniors", image: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=600&q=80" },
+  { name: "Events", image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80" },
+  { name: "Adventure", image: "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=600&q=80" },
+  { name: "Commercial", image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80" },
+  { name: "Sports", image: "https://images.unsplash.com/photo-1461896836934- voices-of-the-wild?w=600&q=80" },
+];
+
+const PLACEHOLDER_IMAGES = [
+  "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
+  "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&q=80",
+  "https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=800&q=80",
+  "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80",
+  "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=800&q=80",
+  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80",
+  "https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=800&q=80",
+  "https://images.unsplash.com/photo-1604017011826-d3b4c23f8914?w=800&q=80",
+];
+
+interface FeaturedImage {
+  id: string;
+  url: string;
+  alt: string;
+}
+
+interface FeedPost {
+  id: string;
+  image_url: string;
+  user_name: string;
+  user_avatar?: string;
+  caption?: string;
+}
+
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [featured, setFeatured] = useState<{ id: string; url: string; alt: string }[]>([]);
+  const [featured, setFeatured] = useState<FeaturedImage[]>([]);
+  const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    document.title = "Pixie - Professional Photo Sharing for Photographers";
-    const metaDesc = "Securely share wedding and event photos with your clients. Create beautiful, password-protected galleries.";
+    document.title = "Pixie - The Better Way to Share, Deliver & Sell Photos Online";
+    const metaDesc = "Professional photo galleries for modern photographers. Share, deliver, proof and sell photos online beautifully.";
     let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
     if (!meta) {
       meta = document.createElement('meta');
@@ -23,40 +60,96 @@ const Index = () => {
     }
     meta.content = metaDesc;
 
-    // Load featured images from public galleries
-    (async () => {
-      try {
-        const { data: galleries } = await supabase
-          .from('galleries')
-          .select('id')
-          .eq('is_public', true)
-          .limit(8);
-        
-        const ids = (galleries || []).map((g: any) => g.id);
-        if (ids.length === 0) return;
-
-        const { data: imgs } = await supabase
-          .from('images')
-          .select('id, thumbnail_path, full_path, original_filename, gallery_id')
-          .in('gallery_id', ids)
-          .order('upload_date', { ascending: false })
-          .limit(12);
-
-        const mapped = (imgs || []).map((img: any) => {
-          const path = img.thumbnail_path || img.full_path;
-          const { data } = supabase.storage.from('gallery-images').getPublicUrl(path);
-          return { id: img.id, url: data.publicUrl, alt: img.original_filename || 'Photo' };
-        });
-        setFeatured(mapped);
-      } catch (e) {
-        console.warn('Featured load failed', e);
-      }
-    })();
+    loadFeaturedImages();
+    loadFeedPosts();
   }, []);
+
+  const loadFeaturedImages = async () => {
+    try {
+      const { data: galleries } = await supabase
+        .from('galleries')
+        .select('id')
+        .eq('is_public', true)
+        .limit(8);
+      
+      const ids = (galleries || []).map((g: any) => g.id);
+      if (ids.length === 0) return;
+
+      const { data: imgs } = await supabase
+        .from('images')
+        .select('id, thumbnail_path, full_path, original_filename, gallery_id')
+        .in('gallery_id', ids)
+        .order('upload_date', { ascending: false })
+        .limit(12);
+
+      const mapped = (imgs || []).map((img: any) => {
+        const path = img.thumbnail_path || img.full_path;
+        const { data } = supabase.storage.from('gallery-images').getPublicUrl(path);
+        return { id: img.id, url: data.publicUrl, alt: img.original_filename || 'Photo' };
+      });
+      setFeatured(mapped);
+    } catch (e) {
+      console.warn('Featured load failed', e);
+    }
+  };
+
+  const loadFeedPosts = async () => {
+    try {
+      const { data: posts } = await supabase
+        .from('feed_posts')
+        .select('id, image_id, user_id, caption')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (!posts || posts.length === 0) return;
+
+      const imageIds = posts.map(p => p.image_id);
+      const userIds = [...new Set(posts.map(p => p.user_id))];
+
+      const [imagesResult, profilesResult] = await Promise.all([
+        supabase.from('images').select('id, full_path, thumbnail_path').in('id', imageIds),
+        Promise.all(userIds.map(uid => 
+          supabase.rpc('get_public_profile', { profile_user_id: uid })
+        ))
+      ]);
+
+      const imageMap = new Map((imagesResult.data || []).map(img => [img.id, img]));
+      const profileMap = new Map();
+      profilesResult.forEach(r => {
+        if (r.data?.[0]) profileMap.set(r.data[0].user_id, r.data[0]);
+      });
+
+      const enriched = posts.map(post => {
+        const image = imageMap.get(post.image_id);
+        const profile = profileMap.get(post.user_id);
+        const imagePath = image?.full_path || image?.thumbnail_path;
+        const imageUrl = imagePath 
+          ? supabase.storage.from('gallery-images').getPublicUrl(imagePath).data.publicUrl 
+          : '';
+
+        return {
+          id: post.id,
+          image_url: imageUrl,
+          user_name: profile?.display_name || profile?.full_name || 'Photographer',
+          user_avatar: profile?.avatar_url,
+          caption: post.caption
+        };
+      });
+
+      setFeedPosts(enriched);
+    } catch (e) {
+      console.warn('Feed posts load failed', e);
+    }
+  };
 
   const handleImageError = (id: string) => {
     setImageErrors(prev => new Set(prev).add(id));
   };
+
+  const displayImages = featured.length > 0 
+    ? featured.slice(0, 8) 
+    : PLACEHOLDER_IMAGES.map((url, i) => ({ id: `placeholder-${i}`, url, alt: 'Photography showcase' }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,9 +177,17 @@ const Index = () => {
                     <UserProfileDropdown />
                   </>
                 ) : (
-                  <Button asChild size="sm">
-                    <Link to="/auth">Log In</Link>
-                  </Button>
+                  <>
+                    <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+                      <Link to="/browse">Browse</Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+                      <Link to="/feed">Feed</Link>
+                    </Button>
+                    <Button asChild size="sm">
+                      <Link to="/auth">Log In</Link>
+                    </Button>
+                  </>
                 )
               )}
             </div>
@@ -95,178 +196,262 @@ const Index = () => {
       </header>
 
       <main className="pt-16">
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 py-12 sm:py-16">
-          <div className="max-w-3xl mx-auto text-center mb-10">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-medium mb-4 text-foreground leading-tight">
-              Securely Share Your <br className="hidden sm:block" />
-              <span className="text-primary">Wedding Photos</span>
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              The elegant way for photographers to deliver photos to their clients. 
-              Create private, password-protected galleries or share publicly.
-            </p>
+        {/* Hero Section - Full Width */}
+        <section className="relative overflow-hidden">
+          {/* Background Image Grid */}
+          <div className="absolute inset-0 grid grid-cols-4 gap-1 opacity-20">
+            {displayImages.slice(0, 4).map((img, i) => (
+              <div key={i} className="h-full">
+                <img src={img.url} alt="" className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
+          
+          <div className="relative container mx-auto px-4 py-20 sm:py-28 lg:py-36">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">Made for all photographers</span>
+              </div>
+              
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-serif font-medium mb-6 text-foreground leading-tight tracking-tight">
+                The better way to <br className="hidden sm:block" />
+                <span className="text-primary">share, deliver & sell</span><br className="hidden sm:block" />
+                photos online
+              </h1>
+              
+              <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+                From weddings to landscapes and everything in between, Pixie is built to elevate your business—and make your work look its best.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg" className="text-base px-8 h-12">
+                  <Link to={user ? "/admin" : "/auth"}>
+                    Start Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button variant="outline" size="lg" className="text-base px-8 h-12" asChild>
+                  <Link to="/browse">
+                    See Examples
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Categories Section */}
+        <section className="py-16 sm:py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-serif mb-4">Built for Every Style</h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Whether you shoot weddings, portraits, or commercial work—Pixie adapts to your needs.
+              </p>
+            </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {!loading && (
-                user ? (
-                  <Button asChild size="lg">
-                    <Link to="/admin">
-                      Create Gallery
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button asChild size="lg">
-                    <Link to="/auth">
-                      Get Started
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                )
-              )}
-              <Button variant="outline" size="lg" asChild>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+              {CATEGORIES.map((cat) => (
+                <Link
+                  key={cat.name}
+                  to={`/browse?category=${cat.name.toLowerCase()}`}
+                  className="group relative aspect-square rounded-2xl overflow-hidden bg-muted"
+                >
+                  <img 
+                    src={cat.image} 
+                    alt={cat.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <span className="text-white text-sm font-medium">{cat.name}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Galleries - Full Width Masonry */}
+        <section className="py-16 sm:py-20">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <h2 className="text-3xl sm:text-4xl font-serif mb-2">Featured Work</h2>
+                <p className="text-muted-foreground">Discover stunning photography from our community</p>
+              </div>
+              <Button variant="outline" asChild className="hidden sm:flex">
                 <Link to="/browse">
-                  <Camera className="mr-2 h-4 w-4" />
-                  Browse Galleries
+                  View All
+                  <ChevronRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
             </div>
-          </div>
-
-          {/* Featured Photos Grid */}
-          {featured.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 max-w-5xl mx-auto">
-              {featured.slice(0, 8).map((img, idx) => (
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {displayImages.map((img, idx) => (
                 <div 
                   key={img.id} 
-                  className={`relative overflow-hidden rounded-xl bg-muted aspect-square group cursor-pointer shadow-sm hover:shadow-lg transition-shadow ${
-                    idx === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
+                  className={`relative overflow-hidden rounded-xl bg-muted group cursor-pointer ${
+                    idx === 0 ? 'md:col-span-2 md:row-span-2' : ''
                   }`}
                   onClick={() => navigate('/browse')}
                 >
-                  {imageErrors.has(img.id) ? (
-                    <div className="w-full h-full flex items-center justify-center bg-muted">
-                      <Camera className="h-8 w-8 text-muted-foreground/50" />
-                    </div>
-                  ) : (
-                    <img
-                      src={img.url}
-                      alt={img.alt}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="eager"
-                      onError={() => handleImageError(img.id)}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                  <div className={`w-full ${idx === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
+                    {imageErrors.has(img.id) ? (
+                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                        <Camera className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                    ) : (
+                      <img
+                        src={img.url}
+                        alt={img.alt}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        loading={idx < 4 ? "eager" : "lazy"}
+                        onError={() => handleImageError(img.id)}
+                      />
+                    )}
+                  </div>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                 </div>
               ))}
             </div>
-          )}
-
-          {/* Empty state when no featured images */}
-          {featured.length === 0 && (
-            <div className="max-w-5xl mx-auto">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
-                {Array(8).fill(0).map((_, idx) => (
-                  <div 
-                    key={idx}
-                    className={`bg-muted/50 rounded-xl aspect-square flex items-center justify-center border border-border/50 ${
-                      idx === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
-                    }`}
-                  >
-                    <Camera className="h-8 w-8 text-muted-foreground/30" />
-                  </div>
-                ))}
-              </div>
-              <p className="text-center text-muted-foreground mt-6 text-sm">
-                Be the first photographer to share your work
-              </p>
-            </div>
-          )}
-        </section>
-
-        {/* Features Section */}
-        <section className="bg-muted/30 py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-serif text-center mb-10">Built for Professional Photographers</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-7 h-7 text-primary" />
-                </div>
-                <h3 className="font-medium mb-2">Password Protected</h3>
-                <p className="text-sm text-muted-foreground">Share private galleries securely with your clients only</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Image className="w-7 h-7 text-primary" />
-                </div>
-                <h3 className="font-medium mb-2">Beautiful Galleries</h3>
-                <p className="text-sm text-muted-foreground">Elegant layouts that showcase your photography</p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-7 h-7 text-primary" />
-                </div>
-                <h3 className="font-medium mb-2">Client Favorites</h3>
-                <p className="text-sm text-muted-foreground">Let clients mark their favorite shots for easy selection</p>
-              </div>
-
-              <div className="text-center">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Download className="w-7 h-7 text-primary" />
-                </div>
-                <h3 className="font-medium mb-2">Easy Downloads</h3>
-                <p className="text-sm text-muted-foreground">Clients can download full-quality images instantly</p>
-              </div>
+            
+            <div className="mt-8 text-center sm:hidden">
+              <Button variant="outline" asChild>
+                <Link to="/browse">View All Galleries</Link>
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Social Feed Teaser */}
-        <section className="container mx-auto px-4 py-16">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-primary/5 border border-primary/10">
-              <Users className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Community</span>
+        {/* Feed Section - Prominent */}
+        {feedPosts.length > 0 && (
+          <section className="py-16 sm:py-20 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center justify-between mb-10">
+                <div>
+                  <div className="inline-flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+                    <Users className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-medium text-primary uppercase tracking-wide">Community Feed</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-serif">What Photographers Are Sharing</h2>
+                </div>
+                <Button asChild className="hidden sm:flex">
+                  <Link to="/feed">
+                    Explore Feed
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                {feedPosts.map((post) => (
+                  <Link
+                    key={post.id}
+                    to="/feed"
+                    className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
+                  >
+                    <img
+                      src={post.image_url}
+                      alt={post.caption || 'Feed post'}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white text-sm font-medium truncate">{post.user_name}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              
+              <div className="mt-8 text-center sm:hidden">
+                <Button asChild>
+                  <Link to="/feed">Explore Feed</Link>
+                </Button>
+              </div>
             </div>
-            <h2 className="text-2xl font-serif mb-4">Discover Amazing Photography</h2>
-            <p className="text-muted-foreground mb-6">
-              Make your galleries public to join our community feed. Get discovered, receive feedback, and connect with other photographers.
-            </p>
-            <Button variant="outline" asChild>
-              <Link to="/feed">
-                Explore the Feed
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+          </section>
+        )}
+
+        {/* Features Section - Modern Cards */}
+        <section className="py-16 sm:py-20">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-serif mb-4">Everything You Need</h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Professional tools designed to make delivering photos a breeze.
+              </p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              {[
+                { icon: Lock, title: "Password Protected", desc: "Share private galleries securely with clients only" },
+                { icon: Image, title: "Beautiful Galleries", desc: "Elegant layouts that showcase your photography" },
+                { icon: Heart, title: "Client Favorites", desc: "Let clients mark their favorite shots for selection" },
+                { icon: Download, title: "Easy Downloads", desc: "Clients can download full-quality images instantly" },
+              ].map((feature) => (
+                <div 
+                  key={feature.title}
+                  className="group relative p-6 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <feature.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2 text-lg">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <section className="py-16 sm:py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl sm:text-4xl font-serif mb-4">Simple as 1-2-3</h2>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              {[
+                { step: "1", icon: Camera, title: "Upload", desc: "Drag and drop your photos into beautiful galleries" },
+                { step: "2", icon: Send, title: "Share", desc: "Send secure links to your clients instantly" },
+                { step: "3", icon: Calendar, title: "Deliver", desc: "Clients browse, favorite, and download with ease" },
+              ].map((item) => (
+                <div key={item.step} className="text-center">
+                  <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground text-2xl font-serif mb-4">
+                    {item.step}
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* CTA Section */}
-        <section className="bg-gradient-to-b from-background to-muted/30 py-16">
+        <section className="py-20 sm:py-28">
           <div className="container mx-auto px-4">
-            <div className="max-w-xl mx-auto text-center">
-              <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h2 className="text-2xl font-serif mb-4">Trusted by Photographers</h2>
-              <p className="text-muted-foreground mb-8">
-                Join photographers who trust Pixie to deliver their work professionally and securely.
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif mb-6">
+                Ready to elevate your photography business?
+              </h2>
+              <p className="text-lg text-muted-foreground mb-10">
+                Join photographers who trust Pixie to deliver their work professionally.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                {!loading && (
-                  user ? (
-                    <Button asChild size="lg">
-                      <Link to="/admin">Go to Dashboard</Link>
-                    </Button>
-                  ) : (
-                    <Button asChild size="lg">
-                      <Link to="/auth">Create Free Account</Link>
-                    </Button>
-                  )
-                )}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg" className="text-base px-8 h-12">
+                  <Link to={user ? "/admin" : "/auth"}>
+                    {user ? "Go to Dashboard" : "Create Free Account"}
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -274,15 +459,23 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8">
+      <footer className="border-t border-border py-8 bg-muted/20">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Camera className="h-5 w-5 text-foreground" />
               <span className="font-serif text-foreground">Pixie</span>
             </div>
+            <div className="flex gap-6">
+              <Link to="/browse" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Browse
+              </Link>
+              <Link to="/feed" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Feed
+              </Link>
+            </div>
             <p className="text-xs text-muted-foreground">
-              © 2024 Pixie. Secure photo sharing for professionals.
+              © {new Date().getFullYear()} Pixie. Professional photo sharing.
             </p>
           </div>
         </div>

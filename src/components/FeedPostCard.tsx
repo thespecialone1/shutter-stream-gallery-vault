@@ -23,9 +23,10 @@ interface FeedPostCardProps {
   };
   onCommentClick: () => void;
   onImageClick: () => void;
+  onPhotographerClick?: () => void;
 }
 
-export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCardProps) => {
+export const FeedPostCard = ({ post, onCommentClick, onImageClick, onPhotographerClick }: FeedPostCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
@@ -158,18 +159,21 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick }: FeedPostCar
     <div className="bg-background rounded-2xl overflow-hidden border border-border hover:shadow-lg transition-shadow">
       {/* User Header */}
       <div className="flex items-center gap-3 p-4">
-        <Link to={`/profile/${post.user_id}`}>
-          <Avatar className="h-10 w-10 cursor-pointer">
+        <button onClick={onPhotographerClick} className="focus:outline-none">
+          <Avatar className="h-12 w-12 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
             <AvatarImage src={post.user_avatar} alt={post.user_name} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
               {initials}
             </AvatarFallback>
           </Avatar>
-        </Link>
-        <div className="flex-1">
-          <Link to={`/profile/${post.user_id}`} className="font-medium hover:underline">
+        </button>
+        <div className="flex-1 min-w-0">
+          <button 
+            onClick={onPhotographerClick}
+            className="font-medium hover:text-primary transition-colors text-left block truncate"
+          >
             {post.user_name}
-          </Link>
+          </button>
           <p className="text-xs text-muted-foreground">
             {new Date(post.created_at).toLocaleDateString()}
           </p>
