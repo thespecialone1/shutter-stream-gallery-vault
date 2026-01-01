@@ -263,13 +263,15 @@ const publicUrl = (path: string) => `${supabase.storage.from('gallery-images').g
         )}
       </div>
 
-      {/* Premium Masonry Grid */}
-      <div className="masonry-grid px-2">
+      {/* Premium Grid Layout */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 px-2">
         {images.map((image, index) => (
           <div
             key={image.id}
             ref={(node) => imageContainerRef(node, image.id)}
-            className="masonry-item group relative overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-lg transition-all duration-500"
+            className={`group relative overflow-hidden rounded-xl bg-muted shadow-sm hover:shadow-xl transition-all duration-500 ${
+              index === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
+            }`}
           >
             {/* Selection Checkbox */}
             {isSelectionMode && (
@@ -284,30 +286,26 @@ const publicUrl = (path: string) => `${supabase.storage.from('gallery-images').g
               </div>
             )}
 
-            {/* Premium Image Container */}
+            {/* Image Container */}
             <div 
-              className="relative cursor-pointer image-hover-effect"
+              className="relative cursor-pointer overflow-hidden"
               onClick={() => openLightbox(image, index)}
             >
               {loadedImages.has(image.id) ? (
                 isSupportedFormat(image.filename) ? (
                   heicFallback.has(image.id) ? (
-                    <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px] fade-in">
-                      <FileImage className="w-16 h-16 text-muted-foreground mb-3" />
+                    <div className={`w-full bg-muted flex flex-col items-center justify-center p-6 fade-in ${index === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
+                      <FileImage className="w-12 h-12 text-muted-foreground mb-3" />
                       <Badge variant="secondary" className="mb-2">HEIC</Badge>
-                      <p className="text-sm text-muted-foreground text-center truncate max-w-full">
+                      <p className="text-xs text-muted-foreground text-center truncate max-w-full">
                         {image.original_filename}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-2">Preview not available</p>
                     </div>
                   ) : (
                     <img
                       src={getThumbUrl(image)}
                       alt={image.original_filename}
-                      className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105 fade-in"
-                      style={{ 
-                        aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : 'auto',
-                      }}
+                      className={`w-full object-cover transition-transform duration-700 group-hover:scale-105 fade-in ${index === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}
                       onError={() => {
                         if (image.filename.toLowerCase().endsWith('.heic')) {
                           setHeicFallback(prev => new Set(prev).add(image.id));
@@ -316,29 +314,19 @@ const publicUrl = (path: string) => `${supabase.storage.from('gallery-images').g
                     />
                   )
                 ) : (
-                  <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center p-6 min-h-[200px] fade-in">
-                    <FileImage className="w-16 h-16 text-muted-foreground mb-3" />
+                  <div className={`w-full bg-muted flex flex-col items-center justify-center p-6 fade-in ${index === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
+                    <FileImage className="w-12 h-12 text-muted-foreground mb-3" />
                     <Badge variant="secondary" className="mb-2">
                       {getFormatName(image.filename)}
                     </Badge>
-                    <p className="text-sm text-muted-foreground text-center truncate max-w-full">
+                    <p className="text-xs text-muted-foreground text-center truncate max-w-full">
                       {image.original_filename}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Preview not available
                     </p>
                   </div>
                 )
               ) : (
-                // Skeleton/placeholder while loading
-                <div 
-                  className="w-full loading-skeleton flex items-center justify-center"
-                  style={{ 
-                    aspectRatio: image.width && image.height ? `${image.width}/${image.height}` : '1',
-                    minHeight: '200px'
-                  }}
-                >
-                  <div className="w-12 h-12 rounded-full bg-muted-foreground/30" />
+                <div className={`w-full loading-skeleton flex items-center justify-center ${index === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
+                  <div className="w-10 h-10 rounded-full bg-muted-foreground/20 animate-pulse" />
                 </div>
               )}
               

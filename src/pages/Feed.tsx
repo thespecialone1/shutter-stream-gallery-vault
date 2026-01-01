@@ -9,6 +9,7 @@ import { CommentDrawer } from "@/components/CommentDrawer";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { useFeedCache } from "@/hooks/useFeedCache";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PhotographerSidePanel, SideArrowButton } from "@/components/PhotographerSidePanel";
 
 // Intersection Observer hook for view tracking
 const useInView = (postId: string, callback: () => void) => {
@@ -51,13 +52,14 @@ interface FeedPost {
 }
 
 // Component to track views with intersection observer
-const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView, postRefs }: { 
+const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView, postRefs, onPhotographerClick }: { 
   post: FeedPost; 
   index: number;
   onCommentClick: (id: string) => void;
   onImageClick: (index: number) => void;
   incrementPostView: (postId: string) => void;
   postRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
+  onPhotographerClick: (post: FeedPost) => void;
 }) => {
   const viewCallback = useCallback(() => incrementPostView(post.id), [post.id, incrementPostView]);
   const postRef = useInView(post.id, viewCallback);
@@ -73,11 +75,12 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
   }, [post.id, postRef, postRefs]);
 
   return (
-    <div ref={postRef}>
+    <div ref={postRef} className="relative">
       <FeedPostCard
         post={post}
         onCommentClick={() => onCommentClick(post.id)}
         onImageClick={() => onImageClick(index)}
+        onPhotographerClick={() => onPhotographerClick(post)}
       />
     </div>
   );
@@ -90,9 +93,14 @@ export default function Feed() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showHeader, setShowHeader] = useState(true);
+  const [selectedPhotographer, setSelectedPhotographer] = useState<FeedPost | null>(null);
+  const [showPhotographerPanel, setShowPhotographerPanel] = useState(false);
   const lastScrollY = useRef(0);
   const { cachedData, setCache } = useFeedCache<FeedPost[]>('feed-posts');
   const postRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Get current post for side arrows
+  const [currentVisiblePost, setCurrentVisiblePost] = useState<FeedPost | null>(null);
 
   // Load cached data immediately
   useEffect(() => {
@@ -107,34 +115,19 @@ export default function Feed() {
     loadFeed();
   }, []);
 
-  // Subscribe to real-time updates for new posts and profile changes
+  // Subscribe to real-time updates
   useEffect(() => {
     const channel = supabase
       .channel('feed-updates')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'feed_posts'
-        },
-        () => {
-          console.log('Feed posts changed, reloading...');
-          loadFeed();
-        }
+        { event: '*', schema: 'public', table: 'feed_posts' },
+        () => loadFeed()
       )
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles'
-        },
-        (payload) => {
-          console.log('Profile updated:', payload);
-          // Reload feed to get updated profile info
-          loadFeed();
-        }
+        { event: 'UPDATE', schema: 'public', table: 'profiles' },
+        () => loadFeed()
       )
       .subscribe();
 
@@ -143,12 +136,11 @@ export default function Feed() {
     };
   }, []);
 
-  // Track scroll for header hide/show, scroll-to-top button, and auto-close comments
+  // Track scroll and current visible post
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Hide header on scroll down, show on scroll up
       if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
         setShowHeader(false);
       } else {
@@ -168,28 +160,37 @@ export default function Feed() {
           }
         }
       }
+
+      // Find currently visible post for side arrows
+      const viewportCenter = window.innerHeight / 2;
+      let closestPost: FeedPost | null = null;
+      let closestDistance = Infinity;
+
+      postRefs.current.forEach((element, postId) => {
+        const rect = element.getBoundingClientRect();
+        const postCenter = rect.top + rect.height / 2;
+        const distance = Math.abs(postCenter - viewportCenter);
+        
+        if (distance < closestDistance && rect.top < window.innerHeight && rect.bottom > 0) {
+          closestDistance = distance;
+          closestPost = posts.find(p => p.id === postId) || null;
+        }
+      });
+
+      if (closestPost) {
+        setCurrentVisiblePost(closestPost);
+      }
     };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [selectedPostId]);
+  }, [selectedPostId, posts]);
 
   const loadFeed = async () => {
     try {
-      // Get feed posts with all data
       const { data: feedPosts, error: postsError } = await supabase
         .from('feed_posts')
-        .select(`
-          id,
-          image_id,
-          gallery_id,
-          user_id,
-          caption,
-          like_count,
-          comment_count,
-          view_count,
-          created_at,
-          is_active
-        `)
+        .select(`id, image_id, gallery_id, user_id, caption, like_count, comment_count, view_count, created_at, is_active`)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -202,55 +203,33 @@ export default function Feed() {
         return;
       }
 
-      // Get image data
       const imageIds = feedPosts.map(p => p.image_id);
-      const { data: images, error: imagesError } = await supabase
+      const { data: images } = await supabase
         .from('images')
         .select('id, full_path, thumbnail_path')
         .in('id', imageIds);
-      
-      if (imagesError) {
-        console.error('Error fetching images:', imagesError);
-      }
-      
-      console.log('Loaded images:', images);
 
-      // Get user profiles using secure RPC function
       const userIds = [...new Set(feedPosts.map(p => p.user_id))];
       const profileResults = await Promise.all(
         userIds.map(async (userId) => {
-          const { data, error } = await supabase.rpc('get_public_profile', { 
-            profile_user_id: userId 
-          });
-          if (error) {
-            console.error('Error fetching profile for', userId, ':', error);
-            return null;
-          }
+          const { data } = await supabase.rpc('get_public_profile', { profile_user_id: userId });
           return data?.[0] || null;
         })
       );
 
-      const profiles = profileResults.filter(Boolean);
-      console.log('Loaded profiles:', profiles);
-
-      // Create lookup maps
       const imageMap = new Map(images?.map(img => [img.id, img]) || []);
-      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
+      const profileMap = new Map(profileResults.filter(Boolean).map((p: any) => [p.user_id, p]));
 
-      // Enrich posts with image URLs and user data
       const enrichedPosts: FeedPost[] = feedPosts.map(post => {
         const image = imageMap.get(post.image_id);
         const profile = profileMap.get(post.user_id);
         const imagePath = image?.full_path || image?.thumbnail_path;
         
-        // Get public URL - bucket is public so this should work
         let imageUrl = '';
         if (imagePath) {
           const { data } = supabase.storage.from('gallery-images').getPublicUrl(imagePath);
           imageUrl = data.publicUrl;
         }
-        
-        console.log('Post:', post.id, 'Image:', imagePath, 'URL:', imageUrl);
         
         return {
           id: post.id,
@@ -262,15 +241,18 @@ export default function Feed() {
           view_count: post.view_count,
           user_id: post.user_id,
           user_name: profile?.display_name || profile?.full_name || 'User',
-          user_avatar: profile?.avatar_url
-            ? supabase.storage.from('gallery-images').getPublicUrl(profile.avatar_url).data.publicUrl
-            : undefined,
+          user_avatar: profile?.avatar_url,
           created_at: post.created_at
         };
       });
 
       setPosts(enrichedPosts);
-      setCache(enrichedPosts); // Cache for offline viewing
+      setCache(enrichedPosts);
+      
+      // Set initial visible post
+      if (enrichedPosts.length > 0 && !currentVisiblePost) {
+        setCurrentVisiblePost(enrichedPosts[0]);
+      }
     } catch (error) {
       console.error('Error loading feed:', error);
     } finally {
@@ -281,15 +263,11 @@ export default function Feed() {
   const trackedViews = useRef(new Set<string>());
 
   const incrementPostView = useCallback(async (postId: string) => {
-    // Prevent duplicate view tracking
     if (trackedViews.current.has(postId)) return;
     trackedViews.current.add(postId);
 
     try {
-      const { error } = await supabase.rpc('increment_post_views', { post_id: postId });
-      if (error) {
-        console.error('Error incrementing view:', error);
-      }
+      await supabase.rpc('increment_post_views', { post_id: postId });
     } catch (error) {
       console.error('Error incrementing view:', error);
     }
@@ -320,9 +298,21 @@ export default function Feed() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handlePhotographerClick = (post: FeedPost) => {
+    setSelectedPhotographer(post);
+    setShowPhotographerPanel(true);
+  };
+
+  const handleSideArrowClick = () => {
+    if (currentVisiblePost) {
+      setSelectedPhotographer(currentVisiblePost);
+      setShowPhotographerPanel(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header - hides on scroll down */}
+      {/* Header */}
       <header className={`nav-premium fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${showHeader ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="container mx-auto px-4 sm:px-6 py-3">
           <nav className="flex items-center justify-between">
@@ -331,14 +321,11 @@ export default function Feed() {
               <span className="text-lg font-serif font-medium text-foreground">Pixie</span>
             </Link>
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.location.href = '/'}
-                className="text-sm"
-              >
-                <Camera className="h-4 w-4 mr-1" />
-                Galleries
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/browse">
+                  <Camera className="h-4 w-4 mr-1" />
+                  Galleries
+                </Link>
               </Button>
               <UserProfileDropdown />
             </div>
@@ -346,29 +333,48 @@ export default function Feed() {
         </div>
       </header>
 
-      {/* Feed Content */}
-      <main className="container mx-auto px-4 pt-16 pb-6 max-w-lg">
-        <div className="space-y-4">
+      {/* Side Arrow Buttons - Only show when there are posts */}
+      {posts.length > 0 && currentVisiblePost && (
+        <>
+          <SideArrowButton 
+            side="left" 
+            onClick={handleSideArrowClick}
+            isActive={showPhotographerPanel}
+          />
+          <SideArrowButton 
+            side="right" 
+            onClick={handleSideArrowClick}
+            isActive={showPhotographerPanel}
+          />
+        </>
+      )}
+
+      {/* Feed Content - Wider layout */}
+      <main className="container mx-auto px-4 pt-20 pb-6 max-w-2xl">
+        <div className="space-y-6">
           {loading ? (
             Array(3).fill(0).map((_, i) => (
               <div key={i} className="bg-background rounded-2xl border p-4">
                 <div className="flex items-center gap-3 mb-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <Skeleton className="h-12 w-12 rounded-full" />
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-3 w-20" />
                   </div>
                 </div>
-                <Skeleton className="w-full h-96 rounded-xl" />
+                <Skeleton className="w-full aspect-[4/5] rounded-xl" />
               </div>
             ))
           ) : posts.length === 0 ? (
             <div className="text-center py-20">
               <Camera className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
               <h2 className="text-2xl font-serif mb-2">No posts yet</h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-6">
                 Be the first to share your photos on the feed!
               </p>
+              <Button asChild>
+                <Link to="/admin">Create a Gallery</Link>
+              </Button>
             </div>
           ) : (
             posts.map((post, index) => (
@@ -380,6 +386,7 @@ export default function Feed() {
                 onImageClick={handleImageClick}
                 incrementPostView={incrementPostView}
                 postRefs={postRefs}
+                onPhotographerClick={handlePhotographerClick}
               />
             ))
           )}
@@ -395,6 +402,18 @@ export default function Feed() {
         >
           <ArrowUp className="h-5 w-5" />
         </Button>
+      )}
+
+      {/* Photographer Side Panel */}
+      {selectedPhotographer && (
+        <PhotographerSidePanel
+          userId={selectedPhotographer.user_id}
+          userName={selectedPhotographer.user_name}
+          userAvatar={selectedPhotographer.user_avatar}
+          side="right"
+          isVisible={showPhotographerPanel}
+          onClose={() => setShowPhotographerPanel(false)}
+        />
       )}
 
       {/* Comment Drawer */}
