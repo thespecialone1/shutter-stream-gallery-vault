@@ -7,14 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 
 const CATEGORIES = [
-  { name: "Wedding", image: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80" },
-  { name: "Portrait", image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80" },
-  { name: "Family", image: "https://images.unsplash.com/photo-1609220136736-443140cffec6?w=600&q=80" },
-  { name: "Seniors", image: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=600&q=80" },
-  { name: "Events", image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80" },
-  { name: "Adventure", image: "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=600&q=80" },
-  { name: "Commercial", image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80" },
-  { name: "Sports", image: "https://images.unsplash.com/photo-1461896836934- voices-of-the-wild?w=600&q=80" },
+  { name: "Wedding", image: "/homePagePhotos/wedding.jpg" },
+  { name: "Portrait", image: "/homePagePhotos/portrait.webp" },
+  { name: "Family", image: "/homePagePhotos/family.jpg" },
+  { name: "Seniors", image: "/homePagePhotos/seniors.jpeg" },
+  { name: "Events", image: "/homePagePhotos/events.jpg" },
+  { name: "Adventure", image: "/homePagePhotos/adventure.webp" },
+  { name: "Commercial", image: "/homePagePhotos/commercial.jpg" },
+  { name: "Sports", image: "/homePagePhotos/sports.jpg" },
 ];
 
 const PLACEHOLDER_IMAGES = [

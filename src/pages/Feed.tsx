@@ -9,7 +9,8 @@ import { CommentDrawer } from "@/components/CommentDrawer";
 import { ImageLightbox } from "@/components/ImageLightbox";
 import { useFeedCache } from "@/hooks/useFeedCache";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PhotographerSidePanel, SideArrowButton } from "@/components/PhotographerSidePanel";
+import { FloatingBubbleMenu } from "@/components/FloatingBubbleMenu";
+import { useAuth } from "@/hooks/useAuth";
 
 // Intersection Observer hook for view tracking
 const useInView = (postId: string, callback: () => void) => {
@@ -87,14 +88,13 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
 };
 
 export default function Feed() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showHeader, setShowHeader] = useState(true);
-  const [selectedPhotographer, setSelectedPhotographer] = useState<FeedPost | null>(null);
-  const [showPhotographerPanel, setShowPhotographerPanel] = useState(false);
   const lastScrollY = useRef(0);
   const { cachedData, setCache } = useFeedCache<FeedPost[]>('feed-posts');
   const postRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -298,17 +298,7 @@ export default function Feed() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePhotographerClick = (post: FeedPost) => {
-    setSelectedPhotographer(post);
-    setShowPhotographerPanel(true);
-  };
-
-  const handleSideArrowClick = () => {
-    if (currentVisiblePost) {
-      setSelectedPhotographer(currentVisiblePost);
-      setShowPhotographerPanel(true);
-    }
-  };
+  // These handlers are no longer needed with FloatingBubbleMenu
 
   return (
     <div className="min-h-screen bg-background">
@@ -333,18 +323,20 @@ export default function Feed() {
         </div>
       </header>
 
-      {/* Side Arrow Buttons - Only show when there are posts */}
-      {posts.length > 0 && currentVisiblePost && (
+      {/* Floating Bubble Menus - Only show when there are posts and not viewing own post */}
+      {posts.length > 0 && currentVisiblePost && currentVisiblePost.user_id !== user?.id && (
         <>
-          <SideArrowButton 
-            side="left" 
-            onClick={handleSideArrowClick}
-            isActive={showPhotographerPanel}
+          <FloatingBubbleMenu 
+            side="left"
+            userId={currentVisiblePost.user_id}
+            userName={currentVisiblePost.user_name}
+            isOwnPost={currentVisiblePost.user_id === user?.id}
           />
-          <SideArrowButton 
-            side="right" 
-            onClick={handleSideArrowClick}
-            isActive={showPhotographerPanel}
+          <FloatingBubbleMenu 
+            side="right"
+            userId={currentVisiblePost.user_id}
+            userName={currentVisiblePost.user_name}
+            isOwnPost={currentVisiblePost.user_id === user?.id}
           />
         </>
       )}
@@ -386,7 +378,7 @@ export default function Feed() {
                 onImageClick={handleImageClick}
                 incrementPostView={incrementPostView}
                 postRefs={postRefs}
-                onPhotographerClick={handlePhotographerClick}
+                onPhotographerClick={() => {}}
               />
             ))
           )}
@@ -402,18 +394,6 @@ export default function Feed() {
         >
           <ArrowUp className="h-5 w-5" />
         </Button>
-      )}
-
-      {/* Photographer Side Panel */}
-      {selectedPhotographer && (
-        <PhotographerSidePanel
-          userId={selectedPhotographer.user_id}
-          userName={selectedPhotographer.user_name}
-          userAvatar={selectedPhotographer.user_avatar}
-          side="right"
-          isVisible={showPhotographerPanel}
-          onClose={() => setShowPhotographerPanel(false)}
-        />
       )}
 
       {/* Comment Drawer */}

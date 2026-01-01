@@ -24,14 +24,22 @@ interface FeedPostCardProps {
   onCommentClick: () => void;
   onImageClick: () => void;
   onPhotographerClick?: () => void;
+  isOwnPost?: boolean;
 }
 
-export const FeedPostCard = ({ post, onCommentClick, onImageClick, onPhotographerClick }: FeedPostCardProps) => {
+export const FeedPostCard = ({ post, onCommentClick, onImageClick, onPhotographerClick, isOwnPost = false }: FeedPostCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.like_count);
   const [isLiking, setIsLiking] = useState(false);
+
+  // Convert avatar path to URL if needed
+  const avatarUrl = post.user_avatar
+    ? (post.user_avatar.startsWith('http')
+        ? post.user_avatar
+        : supabase.storage.from('gallery-images').getPublicUrl(post.user_avatar).data.publicUrl)
+    : undefined;
 
   // Load user's current like status
   useEffect(() => {
@@ -159,9 +167,9 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick, onPhotographe
     <div className="bg-background rounded-2xl overflow-hidden border border-border hover:shadow-lg transition-shadow">
       {/* User Header */}
       <div className="flex items-center gap-3 p-4">
-        <button onClick={onPhotographerClick} className="focus:outline-none">
+      <button onClick={onPhotographerClick} className="focus:outline-none">
           <Avatar className="h-12 w-12 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
-            <AvatarImage src={post.user_avatar} alt={post.user_name} />
+            <AvatarImage src={avatarUrl} alt={post.user_name} />
             <AvatarFallback className="bg-primary text-primary-foreground text-sm">
               {initials}
             </AvatarFallback>
