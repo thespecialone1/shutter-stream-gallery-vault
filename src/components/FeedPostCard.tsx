@@ -163,32 +163,49 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick, onPhotographe
 
   const initials = post.user_name.substring(0, 2).toUpperCase();
 
+  // Check if user is anonymous (not logged in)
+  const isAnonymous = !user;
+
   return (
-    <div className="bg-background rounded-2xl overflow-hidden border border-border hover:shadow-lg transition-shadow">
+    <div className="bg-background rounded-xl overflow-hidden border border-border hover:shadow-lg transition-shadow">
       {/* User Header */}
-      <div className="flex items-center gap-3 p-4">
-      <button onClick={onPhotographerClick} className="focus:outline-none">
-          <Avatar className="h-12 w-12 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
+      <div className="flex items-center gap-3 p-3">
+        {isAnonymous ? (
+          // Anonymous users can't click profile
+          <Avatar className="h-10 w-10">
             <AvatarImage src={avatarUrl} alt={post.user_name} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
               {initials}
             </AvatarFallback>
           </Avatar>
-        </button>
-        <div className="flex-1 min-w-0">
-          <button 
-            onClick={onPhotographerClick}
-            className="font-medium hover:text-primary transition-colors text-left block truncate"
-          >
-            {post.user_name}
+        ) : (
+          <button onClick={onPhotographerClick} className="focus:outline-none">
+            <Avatar className="h-10 w-10 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
+              <AvatarImage src={avatarUrl} alt={post.user_name} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
           </button>
+        )}
+        <div className="flex-1 min-w-0">
+          {isAnonymous ? (
+            <span className="font-medium text-sm">{post.user_name}</span>
+          ) : (
+            <button 
+              onClick={onPhotographerClick}
+              className="font-medium text-sm hover:text-primary transition-colors text-left block truncate"
+            >
+              {post.user_name}
+            </button>
+          )}
           <p className="text-xs text-muted-foreground">
             {new Date(post.created_at).toLocaleDateString()}
           </p>
         </div>
       </div>
 
-      {/* Image - Instagram-style sizing */}
+      {/* Image - 4:5 aspect ratio like Instagram */}
       <div 
         className="relative w-full cursor-pointer bg-muted/30"
         onClick={onImageClick}
@@ -196,42 +213,54 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick, onPhotographe
         <img 
           src={post.image_url} 
           alt={post.caption || 'Feed post'}
-          className="w-full aspect-square object-cover"
+          className="w-full aspect-[4/5] object-cover"
           loading="eager"
         />
       </div>
 
       {/* Actions */}
-      <div className="p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          {/* Like Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLike}
-            disabled={isLiking}
-            className="gap-1.5 px-2 h-8 hover:text-destructive"
-          >
-            <Heart 
-              className={`h-5 w-5 transition-all ${
-                isLiked ? 'fill-destructive text-destructive' : ''
-              }`} 
-            />
-            <span className="text-sm font-medium">{likeCount}</span>
-          </Button>
+      <div className="p-3 space-y-2">
+        <div className="flex items-center gap-1">
+          {/* Like Button - only show count for anonymous */}
+          {isAnonymous ? (
+            <div className="flex items-center gap-1.5 px-2 h-8 text-muted-foreground">
+              <Heart className="h-4 w-4" />
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLike}
+              disabled={isLiking}
+              className="gap-1.5 px-2 h-8 hover:text-destructive"
+            >
+              <Heart 
+                className={`h-4 w-4 transition-all ${
+                  isLiked ? 'fill-destructive text-destructive' : ''
+                }`} 
+              />
+              <span className="text-sm font-medium">{likeCount}</span>
+            </Button>
+          )}
           
-          {/* Comments */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCommentClick}
-            className="gap-1.5 px-2 h-8"
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-sm">{post.comment_count}</span>
-          </Button>
+          {/* Comments - hide count for anonymous */}
+          {isAnonymous ? (
+            <div className="flex items-center gap-1.5 px-2 h-8 text-muted-foreground">
+              <MessageCircle className="h-4 w-4" />
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCommentClick}
+              className="gap-1.5 px-2 h-8"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span className="text-sm">{post.comment_count}</span>
+            </Button>
+          )}
 
-          {/* Views */}
+          {/* Views - visible to everyone */}
           <div className="flex items-center gap-1 ml-auto text-muted-foreground">
             <Eye className="h-4 w-4" />
             <span className="text-xs">{post.view_count}</span>
@@ -241,9 +270,13 @@ export const FeedPostCard = ({ post, onCommentClick, onImageClick, onPhotographe
         {/* Caption */}
         {post.caption && (
           <p className="text-sm">
-            <Link to={`/profile/${post.user_id}`} className="font-medium hover:underline mr-2">
-              {post.user_name}
-            </Link>
+            {isAnonymous ? (
+              <span className="font-medium mr-2">{post.user_name}</span>
+            ) : (
+              <Link to={`/profile/${post.user_id}`} className="font-medium hover:underline mr-2">
+                {post.user_name}
+              </Link>
+            )}
             {post.caption}
           </p>
         )}
