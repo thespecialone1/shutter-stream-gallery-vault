@@ -6,6 +6,18 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 
+// Fallback images from Unsplash for each category
+const CATEGORY_FALLBACKS: Record<string, string> = {
+  "Wedding": "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80",
+  "Portrait": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80",
+  "Family": "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&q=80",
+  "Seniors": "https://images.unsplash.com/photo-1523301343968-6a6ebf63c672?w=600&q=80",
+  "Events": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
+  "Adventure": "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=600&q=80",
+  "Commercial": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&q=80",
+  "Sports": "https://images.unsplash.com/photo-1461896836934- voices-3c7?w=600&q=80",
+};
+
 const CATEGORIES = [
   { name: "Wedding", image: "/homePagePhotos/wedding.jpg" },
   { name: "Portrait", image: "/homePagePhotos/portrait.webp" },
@@ -48,6 +60,7 @@ const Index = () => {
   const [featured, setFeatured] = useState<FeaturedImage[]>([]);
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const [categoryErrors, setCategoryErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     document.title = "Pixie - The Better Way to Share, Deliver & Sell Photos Online";
@@ -147,9 +160,24 @@ const Index = () => {
     setImageErrors(prev => new Set(prev).add(id));
   };
 
-  const displayImages = featured.length > 0 
-    ? featured.slice(0, 8) 
-    : PLACEHOLDER_IMAGES.map((url, i) => ({ id: `placeholder-${i}`, url, alt: 'Photography showcase' }));
+  const handleCategoryError = (name: string) => {
+    setCategoryErrors(prev => new Set(prev).add(name));
+  };
+
+  // Repeat featured images if not enough to fill 8 slots
+  const getDisplayImages = () => {
+    if (featured.length === 0) {
+      return PLACEHOLDER_IMAGES.map((url, i) => ({ id: `placeholder-${i}`, url, alt: 'Photography showcase' }));
+    }
+    
+    const result: FeaturedImage[] = [];
+    for (let i = 0; i < 8; i++) {
+      result.push(featured[i % featured.length]);
+    }
+    return result;
+  };
+
+  const displayImages = getDisplayImages();
 
   return (
     <div className="min-h-screen bg-background">
@@ -260,10 +288,11 @@ const Index = () => {
                   className="group relative aspect-square rounded-2xl overflow-hidden bg-muted"
                 >
                   <img 
-                    src={cat.image} 
+                    src={categoryErrors.has(cat.name) ? CATEGORY_FALLBACKS[cat.name] : cat.image} 
                     alt={cat.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
+                    onError={() => handleCategoryError(cat.name)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3">

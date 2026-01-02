@@ -10,6 +10,8 @@ import { ImageLightbox } from "@/components/ImageLightbox";
 import { useFeedCache } from "@/hooks/useFeedCache";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingBubbleMenu } from "@/components/FloatingBubbleMenu";
+import { NotificationPanel } from "@/components/NotificationPanel";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 
 // Intersection Observer hook for view tracking
@@ -53,14 +55,14 @@ interface FeedPost {
 }
 
 // Component to track views with intersection observer
-const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView, postRefs, onPhotographerClick }: { 
+const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView, postRefs, currentUserId }: { 
   post: FeedPost; 
   index: number;
   onCommentClick: (id: string) => void;
   onImageClick: (index: number) => void;
   incrementPostView: (postId: string) => void;
   postRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
-  onPhotographerClick: (post: FeedPost) => void;
+  currentUserId?: string;
 }) => {
   const viewCallback = useCallback(() => incrementPostView(post.id), [post.id, incrementPostView]);
   const postRef = useInView(post.id, viewCallback);
@@ -75,13 +77,16 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
     }
   }, [post.id, postRef, postRefs]);
 
+  const isOwnPost = currentUserId === post.user_id;
+
   return (
     <div ref={postRef} className="relative">
       <FeedPostCard
         post={post}
         onCommentClick={() => onCommentClick(post.id)}
         onImageClick={() => onImageClick(index)}
-        onPhotographerClick={() => onPhotographerClick(post)}
+        onPhotographerClick={() => {}}
+        isOwnPost={isOwnPost}
       />
     </div>
   );
@@ -298,8 +303,6 @@ export default function Feed() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // These handlers are no longer needed with FloatingBubbleMenu
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -310,61 +313,57 @@ export default function Feed() {
               <Camera className="h-6 w-6 text-foreground" />
               <span className="text-lg font-serif font-medium text-foreground">Pixie</span>
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/browse">
                   <Camera className="h-4 w-4 mr-1" />
                   Galleries
                 </Link>
               </Button>
+              {user && <NotificationBell />}
               <UserProfileDropdown />
             </div>
           </nav>
         </div>
       </header>
 
-      {/* Floating Bubble Menus - Only show when there are posts and not viewing own post */}
-      {posts.length > 0 && currentVisiblePost && currentVisiblePost.user_id !== user?.id && (
-        <>
-          <FloatingBubbleMenu 
-            side="left"
-            userId={currentVisiblePost.user_id}
-            userName={currentVisiblePost.user_name}
-            isOwnPost={currentVisiblePost.user_id === user?.id}
-          />
-          <FloatingBubbleMenu 
-            side="right"
-            userId={currentVisiblePost.user_id}
-            userName={currentVisiblePost.user_name}
-            isOwnPost={currentVisiblePost.user_id === user?.id}
-          />
-        </>
+      {/* Notification Panel - Left side, only for logged in users */}
+      {user && <NotificationPanel />}
+
+      {/* Floating Bubble Menu - Right side only, for other users' posts */}
+      {posts.length > 0 && currentVisiblePost && user && currentVisiblePost.user_id !== user.id && (
+        <FloatingBubbleMenu 
+          side="right"
+          userId={currentVisiblePost.user_id}
+          userName={currentVisiblePost.user_name}
+          isOwnPost={currentVisiblePost.user_id === user.id}
+        />
       )}
 
-      {/* Feed Content - Wider layout */}
-      <main className="container mx-auto px-4 pt-20 pb-6 max-w-2xl">
-        <div className="space-y-6">
+      {/* Feed Content - Narrower, shifted right to account for notification panel */}
+      <main className="pt-20 pb-6 lg:pl-80">
+        <div className="max-w-md mx-auto px-4 space-y-4">
           {loading ? (
             Array(3).fill(0).map((_, i) => (
-              <div key={i} className="bg-background rounded-2xl border p-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-20" />
+              <div key={i} className="bg-background rounded-xl border p-3">
+                <div className="flex items-center gap-3 mb-3">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-2 w-16" />
                   </div>
                 </div>
-                <Skeleton className="w-full aspect-[4/5] rounded-xl" />
+                <Skeleton className="w-full aspect-[4/5] rounded-lg" />
               </div>
             ))
           ) : posts.length === 0 ? (
             <div className="text-center py-20">
-              <Camera className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-2xl font-serif mb-2">No posts yet</h2>
-              <p className="text-muted-foreground mb-6">
-                Be the first to share your photos on the feed!
+              <Camera className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h2 className="text-xl font-serif mb-2">No posts yet</h2>
+              <p className="text-muted-foreground text-sm mb-6">
+                Be the first to share your photos!
               </p>
-              <Button asChild>
+              <Button asChild size="sm">
                 <Link to="/admin">Create a Gallery</Link>
               </Button>
             </div>
@@ -378,7 +377,7 @@ export default function Feed() {
                 onImageClick={handleImageClick}
                 incrementPostView={incrementPostView}
                 postRefs={postRefs}
-                onPhotographerClick={() => {}}
+                currentUserId={user?.id}
               />
             ))
           )}

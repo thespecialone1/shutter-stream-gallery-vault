@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { User, Calendar, MessageCircle, Grid, ChevronRight, ChevronLeft } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { User, Calendar, MessageCircle, Grid, ChevronRight } from "lucide-react";
 
 interface FloatingBubbleMenuProps {
   side: 'left' | 'right';
@@ -22,8 +21,8 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost }: Floati
   const [isPinned, setIsPinned] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Don't show for own posts
-  if (isOwnPost) return null;
+  // Only show on right side, not on own posts
+  if (isOwnPost || side === 'left') return null;
 
   const isOpen = isHovered || isPinned;
 
@@ -48,89 +47,72 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost }: Floati
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isPinned]);
 
-  const ArrowIcon = side === 'left' ? ChevronLeft : ChevronRight;
-
-  // Calculate bubble positions in an arc
-  const getBubbleStyle = (index: number, total: number) => {
-    const baseAngle = side === 'left' ? -60 : 240; // Start angle
-    const angleSpread = 120; // Total spread
-    const angle = baseAngle + (index / (total - 1)) * angleSpread;
-    const radians = (angle * Math.PI) / 180;
-    const distance = 70; // Distance from center
-    
-    const x = Math.cos(radians) * distance;
-    const y = Math.sin(radians) * distance;
+  // Vertical stacked bubbles - positioned closer to center
+  const getBubbleStyle = (index: number) => {
+    const yOffset = (index + 1) * 52; // Stack vertically with spacing
     
     return {
       transform: isOpen 
-        ? `translate(${side === 'left' ? x : -x}px, ${y}px) scale(1)` 
-        : 'translate(0, 0) scale(0)',
+        ? `translateY(${yOffset}px) scale(1)` 
+        : 'translateY(0) scale(0)',
       opacity: isOpen ? 1 : 0,
-      transitionDelay: isOpen ? `${index * 50}ms` : `${(total - index - 1) * 30}ms`,
+      transitionDelay: isOpen ? `${index * 60}ms` : `${(bubbleActions.length - index - 1) * 40}ms`,
     };
   };
 
   return (
     <div
       ref={containerRef}
-      className={`fixed ${side === 'left' ? 'left-3 sm:left-6' : 'right-3 sm:right-6'} top-1/2 -translate-y-1/2 z-30`}
+      className="fixed right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Main Arrow Button */}
+      {/* Main Arrow Button - subtle, close to edge */}
       <button
         onClick={() => setIsPinned(!isPinned)}
-        className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center
+        className={`relative w-10 h-10 rounded-full flex items-center justify-center
           transition-all duration-300 ease-out
           ${isOpen
-            ? 'bg-primary text-primary-foreground shadow-xl scale-110' 
-            : 'bg-muted/40 text-muted-foreground/60 hover:bg-muted/70 hover:text-muted-foreground'
+            ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
+            : 'bg-background/60 text-muted-foreground/50 hover:bg-background/80 hover:text-muted-foreground'
           }
-          backdrop-blur-md border border-border/30
+          backdrop-blur-md border border-border/20
         `}
-        aria-label={`Photographer options`}
+        aria-label="Photographer options"
       >
-        <ArrowIcon 
-          className={`h-5 w-5 sm:h-6 sm:w-6 transition-all duration-300 ${
-            isOpen ? 'opacity-0 scale-50' : 'opacity-100 scale-100'
+        <ChevronRight 
+          className={`h-5 w-5 transition-all duration-300 ${
+            isOpen ? 'rotate-90 opacity-80' : 'opacity-60'
           }`} 
         />
-        
-        {/* X icon when open */}
-        <span 
-          className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-            isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
-          }`}
-        >
-          ✕
-        </span>
       </button>
 
-      {/* Floating Bubbles */}
+      {/* Floating Bubbles - vertical stack */}
       {bubbleActions.map((action, index) => {
         const Icon = action.icon;
-        const style = getBubbleStyle(index, bubbleActions.length);
+        const style = getBubbleStyle(index);
         
         const bubbleContent = (
           <div
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-              w-12 h-12 sm:w-14 sm:h-14 rounded-full
-              bg-card/95 backdrop-blur-lg border border-border shadow-lg
-              flex flex-col items-center justify-center gap-0.5
+            className="absolute top-0 left-1/2 -translate-x-1/2
+              w-11 h-11 rounded-full
+              bg-card/90 backdrop-blur-xl border border-border/40 shadow-lg
+              flex items-center justify-center
               transition-all duration-300 ease-out
               hover:bg-primary hover:text-primary-foreground hover:scale-110 hover:shadow-xl
               cursor-pointer group
-            `}
+            "
             style={style}
           >
-            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Icon className="h-4 w-4" />
             
-            {/* Tooltip */}
+            {/* Tooltip on left */}
             <div 
-              className={`absolute ${side === 'left' ? 'left-full ml-2' : 'right-full mr-2'} 
-                whitespace-nowrap px-2 py-1 bg-foreground text-background text-xs rounded
+              className="absolute right-full mr-3 whitespace-nowrap px-2.5 py-1.5 
+                bg-foreground/90 text-background text-xs font-medium rounded-lg
                 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none
-              `}
+                shadow-lg
+              "
             >
               {action.label}
             </div>
@@ -147,18 +129,6 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost }: Floati
           </div>
         );
       })}
-
-      {/* Photographer name badge - shows when hovering */}
-      <div 
-        className={`absolute ${side === 'left' ? 'left-14' : 'right-14'} top-1/2 -translate-y-1/2
-          whitespace-nowrap px-3 py-1.5 bg-card/95 backdrop-blur-lg rounded-full
-          border border-border shadow-lg text-sm font-medium
-          transition-all duration-300 ease-out
-          ${isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 ' + (side === 'left' ? '-translate-x-2' : 'translate-x-2')}
-        `}
-      >
-        {userName}
-      </div>
     </div>
   );
 };

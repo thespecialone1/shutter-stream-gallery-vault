@@ -705,6 +705,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string | null
+          recipient_id: string
+          reference_id: string | null
+          reference_type: string | null
+          sender_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          recipient_id: string
+          reference_id?: string | null
+          reference_type?: string | null
+          sender_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          recipient_id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          sender_id?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           comment_text: string

@@ -81,77 +81,66 @@ const Galleries = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Premium Header */}
-      <header className="nav-premium">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Camera className="h-7 w-7 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif font-medium text-foreground">Pixie Studio</h1>
-                <p className="text-sm text-muted-foreground -mt-1">Browse Galleries</p>
-              </div>
+      {/* Simple Header - matches homepage */}
+      <header className="nav-premium fixed top-0 left-0 right-0 z-50">
+        <div className="container mx-auto px-4 py-3">
+          <nav className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Camera className="h-6 w-6 text-foreground" />
+              <span className="text-xl font-serif font-medium text-foreground">Pixie</span>
             </Link>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" asChild>
                 <Link to="/feed">Feed</Link>
               </Button>
-              <Button variant="outline" asChild className="btn-premium-outline">
-                <Link to="/admin">Admin Panel</Link>
-              </Button>
+              {user && (
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/admin">Dashboard</Link>
+                </Button>
+              )}
             </div>
-          </div>
+          </nav>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-accent/10 to-background">
-        <div className="container mx-auto px-6 text-center">
-          <div className="max-w-3xl mx-auto fade-in-up">
-            <div className="inline-flex items-center gap-2 mb-6 px-6 py-3 rounded-full bg-primary/5 border border-primary/10">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Discover Beautiful Memories</span>
-            </div>
+      {/* Hero Section - Compact */}
+      <section className="pt-20 pb-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-3xl sm:text-4xl font-serif mb-3">
+              {showMyGalleries ? "My Galleries" : "Browse Galleries"}
+            </h1>
             
-            <h2 className="heading-hero mb-6">
-              {showMyGalleries ? "My Galleries" : "Available Galleries"}
-            </h2>
-            
-            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            <p className="text-muted-foreground mb-6">
               {showMyGalleries 
-                ? "Manage and share your beautiful photography collections"
-                : "Browse and access your photo galleries. Each collection tells a unique story, beautifully preserved and ready to view."
+                ? "Manage your photography collections"
+                : "Discover beautiful photo galleries from our community"
               }
             </p>
 
-            {/* Toggle Switch */}
-            {user && (
-              <div className="flex items-center justify-center gap-3 mb-8">
-                <Label htmlFor="gallery-toggle" className="text-sm font-medium">
-                  Public Galleries
-                </Label>
-                <Switch
-                  id="gallery-toggle"
-                  checked={showMyGalleries}
-                  onCheckedChange={setShowMyGalleries}
-                />
-                <Label htmlFor="gallery-toggle" className="text-sm font-medium">
-                  My Galleries
-                </Label>
-              </div>
-            )}
+            {/* Toggle + Search Row */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              {user && (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50">
+                  <Label htmlFor="gallery-toggle" className="text-sm">Public</Label>
+                  <Switch
+                    id="gallery-toggle"
+                    checked={showMyGalleries}
+                    onCheckedChange={setShowMyGalleries}
+                  />
+                  <Label htmlFor="gallery-toggle" className="text-sm">Mine</Label>
+                </div>
+              )}
 
-            {/* Premium Search */}
-            <div className="relative max-w-md mx-auto">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search galleries or clients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 h-12 rounded-full border-border/50 focus:border-primary bg-background/80 backdrop-blur-sm"
-              />
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 h-10 rounded-full"
+                />
+              </div>
             </div>
           </div>
         </div>
