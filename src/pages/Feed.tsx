@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Camera, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,7 +55,7 @@ interface FeedPost {
 }
 
 // Component to track views with intersection observer
-const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView, postRefs, currentUserId }: { 
+const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView, postRefs, currentUserId, isHighlighted }: { 
   post: FeedPost; 
   index: number;
   onCommentClick: (id: string) => void;
@@ -63,6 +63,7 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
   incrementPostView: (postId: string) => void;
   postRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
   currentUserId?: string;
+  isHighlighted?: boolean;
 }) => {
   const viewCallback = useCallback(() => incrementPostView(post.id), [post.id, incrementPostView]);
   const postRef = useInView(post.id, viewCallback);
@@ -80,7 +81,11 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
   const isOwnPost = currentUserId === post.user_id;
 
   return (
-    <div ref={postRef} className="relative">
+    <div 
+      ref={postRef} 
+      data-post-id={post.id}
+      className={`relative transition-all duration-500 ${isHighlighted ? 'ring-2 ring-primary ring-offset-2 rounded-xl' : ''}`}
+    >
       <FeedPostCard
         post={post}
         onCommentClick={() => onCommentClick(post.id)}
@@ -103,18 +108,67 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
 
 export default function Feed() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showHeader, setShowHeader] = useState(true);
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
   const lastScrollY = useRef(0);
   const { cachedData, setCache } = useFeedCache<FeedPost[]>('feed-posts');
   const postRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const hasHandledDeepLink = useRef(false);
 
   // Get current post for side arrows
   const [currentVisiblePost, setCurrentVisiblePost] = useState<FeedPost | null>(null);
+
+  // Handle deep linking from notifications
+  useEffect(() => {
+    if (hasHandledDeepLink.current || loading || posts.length === 0) return;
+    
+    const targetPostId = searchParams.get('post');
+    const openComments = searchParams.get('comments') === '1';
+    
+    if (targetPostId) {
+      hasHandledDeepLink.current = true;
+      
+      // Wait a bit for refs to be set up
+      setTimeout(() => {
+        const postElement = postRefs.current.get(targetPostId);
+        
+        if (postElement) {
+          // Scroll to the post
+          postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Highlight the post briefly
+          setHighlightedPostId(targetPostId);
+          setTimeout(() => setHighlightedPostId(null), 2000);
+          
+          // Open comments if requested
+          if (openComments) {
+            setTimeout(() => setSelectedPostId(targetPostId), 500);
+          }
+        } else {
+          // Try using querySelector as fallback
+          const fallbackElement = document.querySelector(`[data-post-id="${targetPostId}"]`);
+          if (fallbackElement) {
+            fallbackElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setHighlightedPostId(targetPostId);
+            setTimeout(() => setHighlightedPostId(null), 2000);
+            
+            if (openComments) {
+              setTimeout(() => setSelectedPostId(targetPostId), 500);
+            }
+          }
+        }
+        
+        // Clear URL params after handling
+        setSearchParams({}, { replace: true });
+      }, 300);
+    }
+  }, [loading, posts, searchParams, setSearchParams]);
 
   // Load cached data immediately
   useEffect(() => {
@@ -379,6 +433,7 @@ export default function Feed() {
                 incrementPostView={incrementPostView}
                 postRefs={postRefs}
                 currentUserId={user?.id}
+                isHighlighted={highlightedPostId === post.id}
               />
             ))
           )}

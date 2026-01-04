@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, Heart, MessageCircle, Calendar, User, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,10 +16,13 @@ interface Notification {
   created_at: string;
   sender_name?: string;
   sender_avatar?: string;
+  reference_id?: string | null;
+  reference_type?: string | null;
 }
 
 export const NotificationPanel = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -105,6 +109,20 @@ export const NotificationPanel = () => {
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
   };
 
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read first
+    await markAsRead(notification.id);
+    
+    // Navigate to the post if it's a feed_post reference
+    if (notification.reference_type === 'feed_post' && notification.reference_id) {
+      const isComment = notification.type === 'comment';
+      const url = isComment 
+        ? `/feed?post=${notification.reference_id}&comments=1`
+        : `/feed?post=${notification.reference_id}`;
+      navigate(url);
+    }
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case 'like': return Heart;
@@ -184,16 +202,18 @@ export const NotificationPanel = () => {
                       ? notification.sender_avatar
                       : supabase.storage.from('gallery-images').getPublicUrl(notification.sender_avatar).data.publicUrl)
                   : undefined;
+                
+                const isClickable = notification.reference_type === 'feed_post' && notification.reference_id;
 
                 return (
                   <div
                     key={notification.id}
-                    onClick={() => markAsRead(notification.id)}
+                    onClick={() => handleNotificationClick(notification)}
                     className={`p-3 rounded-xl cursor-pointer transition-colors ${
                       notification.is_read 
                         ? 'hover:bg-muted/50' 
                         : 'bg-primary/5 hover:bg-primary/10'
-                    }`}
+                    } ${isClickable ? 'hover:scale-[1.01] active:scale-[0.99]' : ''}`}
                   >
                     <div className="flex gap-3">
                       <div className="relative">

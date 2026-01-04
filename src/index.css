@@ -525,11 +525,5 @@
     image-rendering: crisp-edges;
   }
 
-  img[loading="lazy"] {
-    @apply opacity-0;
-  }
-
-  img[loading="lazy"].loaded {
-    @apply opacity-100;
-  }
+  /* Removed opacity:0 rule for lazy images - it was hiding all images */
 }
