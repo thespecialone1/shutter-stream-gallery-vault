@@ -88,6 +88,15 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
         onPhotographerClick={() => {}}
         isOwnPost={isOwnPost}
       />
+      {/* Bubble menu positioned relative to this post */}
+      {!isOwnPost && currentUserId && (
+        <FloatingBubbleMenu 
+          side="right"
+          userId={post.user_id}
+          userName={post.user_name}
+          isOwnPost={isOwnPost}
+        />
+      )}
     </div>
   );
 };
@@ -330,15 +339,7 @@ export default function Feed() {
       {/* Notification Panel - Left side, only for logged in users */}
       {user && <NotificationPanel />}
 
-      {/* Floating Bubble Menu - Right side only, for other users' posts */}
-      {posts.length > 0 && currentVisiblePost && user && currentVisiblePost.user_id !== user.id && (
-        <FloatingBubbleMenu 
-          side="right"
-          userId={currentVisiblePost.user_id}
-          userName={currentVisiblePost.user_name}
-          isOwnPost={currentVisiblePost.user_id === user.id}
-        />
-      )}
+      {/* Floating Bubble Menu is now rendered per-post in PostItem */}
 
       {/* Feed Content - Narrower, shifted right to account for notification panel */}
       <main className="pt-20 pb-6 lg:pl-80">

@@ -6,16 +6,16 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
 
-// Fallback images from Unsplash for each category
+// Fallback images using local homePagePhotos (same as categories)
 const CATEGORY_FALLBACKS: Record<string, string> = {
-  "Wedding": "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80",
-  "Portrait": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80",
-  "Family": "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&q=80",
-  "Seniors": "https://images.unsplash.com/photo-1523301343968-6a6ebf63c672?w=600&q=80",
-  "Events": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
-  "Adventure": "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=600&q=80",
-  "Commercial": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&q=80",
-  "Sports": "https://images.unsplash.com/photo-1461896836934- voices-3c7?w=600&q=80",
+  "Wedding": "/homePagePhotos/wedding.jpg",
+  "Portrait": "/homePagePhotos/portrait.webp",
+  "Family": "/homePagePhotos/family.jpg",
+  "Seniors": "/homePagePhotos/seniors.jpeg",
+  "Events": "/homePagePhotos/events.jpg",
+  "Adventure": "/homePagePhotos/adventure.webp",
+  "Commercial": "/homePagePhotos/commercial.jpg",
+  "Sports": "/homePagePhotos/sports.jpg",
 };
 
 const CATEGORIES = [
@@ -29,15 +29,16 @@ const CATEGORIES = [
   { name: "Sports", image: "/homePagePhotos/sports.jpg" },
 ];
 
+// Use local homePagePhotos as placeholders for Featured Work (no Unsplash)
 const PLACEHOLDER_IMAGES = [
-  "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
-  "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&q=80",
-  "https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=800&q=80",
-  "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80",
-  "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=800&q=80",
-  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80",
-  "https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=800&q=80",
-  "https://images.unsplash.com/photo-1604017011826-d3b4c23f8914?w=800&q=80",
+  "/homePagePhotos/wedding.jpg",
+  "/homePagePhotos/portrait.webp",
+  "/homePagePhotos/family.jpg",
+  "/homePagePhotos/seniors.jpeg",
+  "/homePagePhotos/events.jpg",
+  "/homePagePhotos/adventure.webp",
+  "/homePagePhotos/commercial.jpg",
+  "/homePagePhotos/sports.jpg",
 ];
 
 interface FeaturedImage {

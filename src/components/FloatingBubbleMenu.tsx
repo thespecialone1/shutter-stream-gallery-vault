@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { User, Calendar, MessageCircle, Grid, ChevronRight } from "lucide-react";
+import { User, Calendar, MessageCircle, Grid, ChevronLeft } from "lucide-react";
 
 interface FloatingBubbleMenuProps {
   side: 'left' | 'right';
   userId: string;
   userName: string;
   isOwnPost: boolean;
+  postElement?: HTMLDivElement | null;
 }
 
 interface BubbleAction {
@@ -16,7 +17,7 @@ interface BubbleAction {
   onClick?: () => void;
 }
 
-export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost }: FloatingBubbleMenuProps) => {
+export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost, postElement }: FloatingBubbleMenuProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,56 +48,66 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost }: Floati
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isPinned]);
 
-  // Vertical stacked bubbles - positioned closer to center
+  // Curved arc animation - bubbles fan out in a curve
   const getBubbleStyle = (index: number) => {
-    const yOffset = (index + 1) * 52; // Stack vertically with spacing
+    const totalBubbles = bubbleActions.length;
+    // Arc from top-left to bottom-left (quarter circle)
+    const startAngle = -60; // Start angle in degrees (top-left)
+    const endAngle = 60; // End angle in degrees (bottom-left)
+    const angleRange = endAngle - startAngle;
+    const angle = startAngle + (angleRange / (totalBubbles - 1)) * index;
+    const angleRad = (angle * Math.PI) / 180;
+    
+    const radius = 65; // Distance from center
+    const xOffset = -Math.cos(angleRad) * radius; // Negative for left side
+    const yOffset = Math.sin(angleRad) * radius;
     
     return {
       transform: isOpen 
-        ? `translateY(${yOffset}px) scale(1)` 
-        : 'translateY(0) scale(0)',
+        ? `translate(${xOffset}px, ${yOffset}px) scale(1)` 
+        : 'translate(0, 0) scale(0)',
       opacity: isOpen ? 1 : 0,
-      transitionDelay: isOpen ? `${index * 60}ms` : `${(bubbleActions.length - index - 1) * 40}ms`,
+      transitionDelay: isOpen ? `${index * 50}ms` : `${(totalBubbles - index - 1) * 30}ms`,
     };
   };
 
   return (
     <div
       ref={containerRef}
-      className="fixed right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30"
+      className="absolute -right-2 top-1/2 -translate-y-1/2 z-30"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Main Arrow Button - subtle, close to edge */}
+      {/* Main Arrow Button - positioned right at image edge */}
       <button
         onClick={() => setIsPinned(!isPinned)}
-        className={`relative w-10 h-10 rounded-full flex items-center justify-center
+        className={`relative w-9 h-9 rounded-full flex items-center justify-center
           transition-all duration-300 ease-out
           ${isOpen
-            ? 'bg-primary text-primary-foreground shadow-lg scale-105' 
-            : 'bg-background/60 text-muted-foreground/50 hover:bg-background/80 hover:text-muted-foreground'
+            ? 'bg-primary text-primary-foreground shadow-lg scale-110' 
+            : 'bg-background/80 text-muted-foreground hover:bg-background hover:text-foreground'
           }
-          backdrop-blur-md border border-border/20
+          backdrop-blur-md border border-border/30 shadow-md
         `}
         aria-label="Photographer options"
       >
-        <ChevronRight 
-          className={`h-5 w-5 transition-all duration-300 ${
-            isOpen ? 'rotate-90 opacity-80' : 'opacity-60'
+        <ChevronLeft 
+          className={`h-4 w-4 transition-all duration-300 ${
+            isOpen ? 'rotate-180' : ''
           }`} 
         />
       </button>
 
-      {/* Floating Bubbles - vertical stack */}
+      {/* Floating Bubbles - curved arc */}
       {bubbleActions.map((action, index) => {
         const Icon = action.icon;
         const style = getBubbleStyle(index);
         
         const bubbleContent = (
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2
-              w-11 h-11 rounded-full
-              bg-card/90 backdrop-blur-xl border border-border/40 shadow-lg
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+              w-10 h-10 rounded-full
+              bg-card/95 backdrop-blur-xl border border-border/40 shadow-lg
               flex items-center justify-center
               transition-all duration-300 ease-out
               hover:bg-primary hover:text-primary-foreground hover:scale-110 hover:shadow-xl
@@ -106,10 +117,10 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost }: Floati
           >
             <Icon className="h-4 w-4" />
             
-            {/* Tooltip on left */}
+            {/* Tooltip on right */}
             <div 
-              className="absolute right-full mr-3 whitespace-nowrap px-2.5 py-1.5 
-                bg-foreground/90 text-background text-xs font-medium rounded-lg
+              className="absolute left-full ml-2 whitespace-nowrap px-2 py-1 
+                bg-foreground/90 text-background text-xs font-medium rounded-md
                 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none
                 shadow-lg
               "
