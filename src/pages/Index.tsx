@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfileDropdown } from "@/components/UserProfileDropdown";
+import { NotificationBell } from "@/components/NotificationBell";
 
 // Fallback images using local homePagePhotos (same as categories)
 const CATEGORY_FALLBACKS: Record<string, string> = {
@@ -80,10 +81,12 @@ const Index = () => {
 
   const loadFeaturedImages = async () => {
     try {
+      // Only load from truly public galleries (no password protection)
       const { data: galleries } = await supabase
         .from('galleries')
         .select('id')
         .eq('is_public', true)
+        .is('password_hash', null)
         .limit(8);
       
       const ids = (galleries || []).map((g: any) => g.id);
@@ -203,6 +206,7 @@ const Index = () => {
                     <Button variant="ghost" size="sm" asChild>
                       <Link to="/admin">Dashboard</Link>
                     </Button>
+                    <NotificationBell />
                     <UserProfileDropdown />
                   </>
                 ) : (

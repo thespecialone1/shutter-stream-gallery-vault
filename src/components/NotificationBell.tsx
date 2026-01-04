@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Bell, Heart, MessageCircle, Calendar, User, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,13 @@ interface Notification {
   created_at: string;
   sender_name?: string;
   sender_avatar?: string;
+  reference_id?: string | null;
+  reference_type?: string | null;
 }
 
 export const NotificationBell = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -103,6 +106,37 @@ export const NotificationBell = () => {
     }
   };
 
+  const markAsRead = async (notificationId: string) => {
+    await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId);
+    
+    setNotifications(prev => 
+      prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
+    
+    // Close dropdown
+    setIsOpen(false);
+    
+    // Navigate to the post if it's a feed_post reference
+    if (notification.reference_type === 'feed_post' && notification.reference_id) {
+      const isComment = notification.type === 'comment';
+      const url = isComment 
+        ? `/feed?post=${notification.reference_id}&comments=1`
+        : `/feed?post=${notification.reference_id}`;
+      navigate(url);
+    }
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case 'like': return Heart;
@@ -167,13 +201,16 @@ export const NotificationBell = () => {
                       ? notification.sender_avatar
                       : supabase.storage.from('gallery-images').getPublicUrl(notification.sender_avatar).data.publicUrl)
                   : undefined;
+                
+                const isClickable = notification.reference_type === 'feed_post' && notification.reference_id;
 
                 return (
                   <div
                     key={notification.id}
-                    className={`p-3 hover:bg-muted/50 transition-colors flex gap-3 ${
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`p-3 hover:bg-muted/50 transition-colors flex gap-3 cursor-pointer ${
                       !notification.is_read ? 'bg-primary/5' : ''
-                    }`}
+                    } ${isClickable ? 'hover:scale-[1.01] active:scale-[0.99]' : ''}`}
                   >
                     <div className="relative flex-shrink-0">
                       <Avatar className="h-9 w-9">
