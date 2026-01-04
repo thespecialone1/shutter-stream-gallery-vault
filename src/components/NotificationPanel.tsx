@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { Bell, Heart, MessageCircle, Calendar, User, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -135,10 +134,11 @@ export const NotificationPanel = () => {
   if (!user) return null;
 
   return (
-    <div className="fixed left-4 top-20 bottom-6 w-72 z-20 hidden lg:block">
-      <div className="h-full bg-card/80 backdrop-blur-xl border border-border/40 rounded-2xl shadow-xl overflow-hidden flex flex-col">
+    <div className="fixed left-0 top-16 bottom-0 w-80 z-20 hidden lg:flex flex-col">
+      {/* Seamless panel - no border, blends with page */}
+      <div className="h-full bg-background/60 backdrop-blur-sm flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-border/40 flex items-center justify-between">
+        <div className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-primary" />
             <span className="font-semibold">Notifications</span>
@@ -156,9 +156,9 @@ export const NotificationPanel = () => {
           )}
         </div>
 
-        {/* Notifications List */}
-        <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
+        {/* Notifications List - scrolls independently */}
+        <ScrollArea className="flex-1 px-2">
+          <div className="space-y-1 pb-6">
             {loading ? (
               Array(5).fill(0).map((_, i) => (
                 <div key={i} className="p-3 animate-pulse">

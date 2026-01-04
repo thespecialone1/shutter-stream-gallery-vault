@@ -90,24 +90,27 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
     }
   };
 
-  const convertDngToJpeg = async (file: File): Promise<File> => {
+  const convertDngToJpeg = async (file: File): Promise<{ file: File; previewBlob?: Blob }> => {
     try {
-      console.log('Converting DNG file:', file.name);
+      console.log('Attempting DNG preview generation:', file.name);
       const { blob, filename } = await dngConverter.convertDNGToJPEG(file);
       
-      return new File([blob], filename, {
-        type: 'image/jpeg'
-      });
+      // Successfully extracted preview - return original file + preview blob
+      console.log('DNG preview generated, keeping original DNG for download');
+      return {
+        file: file, // Keep original DNG
+        previewBlob: blob // JPEG preview for display
+      };
     } catch (error) {
-      console.error('DNG conversion failed:', error);
+      console.warn('DNG preview failed, uploading original:', error);
       toast({
-        title: "Conversion Warning",
-        description: `${file.name} could not be converted. Uploading as-is.`,
+        title: "DNG File",
+        description: `${file.name} will be uploaded as original DNG. Preview may not be available.`,
         variant: "default"
       });
       
-      // Return original file if conversion fails
-      return file;
+      // Return original DNG file without preview
+      return { file };
     }
   };
 
@@ -190,7 +193,8 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
           }
         }
 
-        // Convert DNG files to JPEG
+        // Handle DNG files - keep original, generate preview if possible
+        let thumbnailPath: string | null = null;
         if (file.name.toLowerCase().endsWith('.dng')) {
           setUploads(prev => prev.map((upload, index) => 
             index === uploadIndex 
@@ -198,17 +202,22 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
               : upload
           ));
           
-          try {
-            processedFile = await convertDngToJpeg(file);
-            isConverted = true;
-          } catch (conversionError) {
-            // Skip this file if conversion fails
-            setUploads(prev => prev.map((upload, index) => 
-              index === uploadIndex 
-                ? { ...upload, status: 'error', error: 'Conversion failed' }
-                : upload
-            ));
-            continue;
+          const dngResult = await convertDngToJpeg(file);
+          processedFile = dngResult.file; // Use original DNG
+          
+          // If we got a preview, upload it as thumbnail
+          if (dngResult.previewBlob) {
+            const previewFileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-preview.jpg`;
+            const previewPath = `${galleryId}/${previewFileName}`;
+            
+            const { error: previewError } = await supabase.storage
+              .from('gallery-images')
+              .upload(previewPath, dngResult.previewBlob);
+            
+            if (!previewError) {
+              thumbnailPath = previewPath;
+              console.log('DNG preview uploaded:', previewPath);
+            }
           }
         }
 
@@ -246,7 +255,8 @@ export function ImageUpload({ galleryId, sectionId, onUploadComplete }: ImageUpl
             original_filename: isConverted ? file.name : processedFile.name,
             file_size: processedFile.size,
             mime_type: processedFile.type,
-            full_path: filePath
+            full_path: filePath,
+            thumbnail_path: thumbnailPath // DNG preview path if available
           })
           .select()
           .single();
