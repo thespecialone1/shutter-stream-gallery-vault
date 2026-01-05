@@ -117,7 +117,7 @@ const Index = () => {
         .select('id, image_id, user_id, caption')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(6);
+        .limit(12);
 
       if (!posts || posts.length === 0) return;
 
@@ -125,7 +125,7 @@ const Index = () => {
       const userIds = [...new Set(posts.map(p => p.user_id))];
 
       const [imagesResult, profilesResult] = await Promise.all([
-        supabase.from('images').select('id, full_path, thumbnail_path').in('id', imageIds),
+        supabase.from('images').select('id, full_path, thumbnail_path, original_filename').in('id', imageIds),
         Promise.all(userIds.map(uid => 
           supabase.rpc('get_public_profile', { profile_user_id: uid })
         ))
@@ -137,24 +137,36 @@ const Index = () => {
         if (r.data?.[0]) profileMap.set(r.data[0].user_id, r.data[0]);
       });
 
-      const enriched = posts.map(post => {
-        const image = imageMap.get(post.image_id);
-        const profile = profileMap.get(post.user_id);
-        const imagePath = image?.full_path || image?.thumbnail_path;
-        const imageUrl = imagePath 
-          ? supabase.storage.from('gallery-images').getPublicUrl(imagePath).data.publicUrl 
-          : '';
+      const enriched = posts
+        .map(post => {
+          const image = imageMap.get(post.image_id);
+          const profile = profileMap.get(post.user_id);
+          
+          // Skip DNG files that don't have a thumbnail
+          const originalFilename = image?.original_filename?.toLowerCase() || '';
+          if (originalFilename.endsWith('.dng') && !image?.thumbnail_path) {
+            return null;
+          }
+          
+          const imagePath = image?.thumbnail_path || image?.full_path;
+          const imageUrl = imagePath 
+            ? supabase.storage.from('gallery-images').getPublicUrl(imagePath).data.publicUrl 
+            : '';
 
-        return {
-          id: post.id,
-          image_url: imageUrl,
-          user_name: profile?.display_name || profile?.full_name || 'Photographer',
-          user_avatar: profile?.avatar_url,
-          caption: post.caption
-        };
-      });
+          if (!imageUrl) return null;
 
-      setFeedPosts(enriched);
+          return {
+            id: post.id,
+            image_url: imageUrl,
+            user_name: profile?.display_name || profile?.full_name || 'Photographer',
+            user_avatar: profile?.avatar_url,
+            caption: post.caption
+          };
+        })
+        .filter(Boolean)
+        .slice(0, 6);
+
+      setFeedPosts(enriched as FeedPost[]);
     } catch (e) {
       console.warn('Feed posts load failed', e);
     }
@@ -305,59 +317,6 @@ const Index = () => {
                   </div>
                 </Link>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Featured Galleries - Full Width Masonry */}
-        <section className="py-16 sm:py-20">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-10">
-              <div>
-                <h2 className="text-3xl sm:text-4xl font-serif mb-2">Featured Work</h2>
-                <p className="text-muted-foreground">Discover stunning photography from our community</p>
-              </div>
-              <Button variant="outline" asChild className="hidden sm:flex">
-                <Link to="/browse">
-                  View All
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {displayImages.map((img, idx) => (
-                <div 
-                  key={img.id} 
-                  className={`relative overflow-hidden rounded-xl bg-muted group cursor-pointer ${
-                    idx === 0 ? 'md:col-span-2 md:row-span-2' : ''
-                  }`}
-                  onClick={() => navigate('/browse')}
-                >
-                  <div className={`w-full ${idx === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
-                    {imageErrors.has(img.id) ? (
-                      <div className="w-full h-full flex items-center justify-center bg-muted">
-                        <Camera className="h-8 w-8 text-muted-foreground/50" />
-                      </div>
-                    ) : (
-                      <img
-                        src={img.url}
-                        alt={img.alt}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        loading={idx < 4 ? "eager" : "lazy"}
-                        onError={() => handleImageError(img.id)}
-                      />
-                    )}
-                  </div>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-8 text-center sm:hidden">
-              <Button variant="outline" asChild>
-                <Link to="/browse">View All Galleries</Link>
-              </Button>
             </div>
           </div>
         </section>

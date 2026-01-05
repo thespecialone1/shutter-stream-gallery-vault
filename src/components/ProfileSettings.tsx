@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, Check, X, AtSign } from "lucide-react";
 
 interface ProfileSettingsProps {
   open: boolean;
@@ -21,6 +21,10 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [originalUsername, setOriginalUsername] = useState<string | null>(null);
   const [profile, setProfile] = useState({
     full_name: '',
     display_name: '',
@@ -28,7 +32,8 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
     bio: '',
     email: '',
     phone: '',
-    avatar_url: ''
+    avatar_url: '',
+    username: ''
   });
 
   useEffect(() => {
@@ -36,6 +41,60 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
       loadProfile();
     }
   }, [open, user]);
+
+  // Check username availability with debounce
+  useEffect(() => {
+    const username = profile.username;
+    
+    // If unchanged from original, mark as available
+    if (username === originalUsername) {
+      setUsernameAvailable(true);
+      setUsernameError(null);
+      return;
+    }
+
+    if (!username || username.length < 3) {
+      setUsernameAvailable(null);
+      setUsernameError(null);
+      return;
+    }
+
+    // Validate alphanumeric
+    if (!/^[a-zA-Z0-9]+$/.test(username)) {
+      setUsernameAvailable(false);
+      setUsernameError('Only letters (a-z) and numbers (0-9) allowed');
+      return;
+    }
+
+    if (username.length > 30) {
+      setUsernameAvailable(false);
+      setUsernameError('Username must be 30 characters or less');
+      return;
+    }
+
+    setUsernameError(null);
+    const timer = setTimeout(async () => {
+      setUsernameChecking(true);
+      try {
+        const { data, error } = await supabase.rpc('is_username_available', { 
+          check_username: username 
+        });
+        
+        if (error) throw error;
+        setUsernameAvailable(data);
+        if (!data) {
+          setUsernameError('Username is already taken');
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setUsernameAvailable(null);
+      } finally {
+        setUsernameChecking(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [profile.username, originalUsername]);
 
   const loadProfile = async () => {
     if (!user) return;
@@ -54,14 +113,17 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
         bio: data.bio || '',
         email: data.email || user.email || '',
         phone: data.phone || '',
-        avatar_url: data.avatar_url || ''
+        avatar_url: data.avatar_url || '',
+        username: (data as any).username || ''
       });
+      setOriginalUsername((data as any).username || null);
     } else if (!data && user.email) {
       // If profile doesn't exist yet, use user data
       setProfile(prev => ({
         ...prev,
         email: user.email || ''
       }));
+      setOriginalUsername(null);
     }
   };
 
@@ -143,9 +205,21 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
       return;
     }
 
+    // Username validation
+    if (profile.username && profile.username !== originalUsername) {
+      if (!usernameAvailable) {
+        toast({
+          title: "Username unavailable",
+          description: usernameError || "Please choose a different username",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     try {
-      const updateData = {
+      const updateData: Record<string, any> = {
         full_name: profile.full_name.trim(),
         display_name: profile.display_name.trim() || null,
         business_name: profile.business_name.trim() || null,
@@ -154,6 +228,11 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
         avatar_url: profile.avatar_url || null,
         updated_at: new Date().toISOString()
       };
+
+      // Only include username if it's changed and valid
+      if (profile.username && profile.username !== originalUsername && usernameAvailable) {
+        updateData.username = profile.username.toLowerCase();
+      }
       
       console.log('Attempting to update profile for user:', user.id);
       console.log('Update data:', updateData);
@@ -174,13 +253,21 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
       if (!existingProfile) {
         // Profile doesn't exist, insert it
         console.log('Profile does not exist, creating new profile');
+        const insertData = {
+          user_id: user.id,
+          email: user.email || '',
+          full_name: updateData.full_name,
+          display_name: updateData.display_name,
+          business_name: updateData.business_name,
+          bio: updateData.bio,
+          phone: updateData.phone,
+          avatar_url: updateData.avatar_url,
+          updated_at: updateData.updated_at,
+          ...(updateData.username ? { username: updateData.username } : {})
+        };
         result = await supabase
           .from('profiles')
-          .insert({
-            user_id: user.id,
-            email: user.email || '',
-            ...updateData
-          })
+          .insert(insertData)
           .select();
       } else {
         // Profile exists, update it
@@ -275,6 +362,39 @@ export const ProfileSettings = ({ open, onOpenChange, onProfileUpdated }: Profil
                 JPG, PNG or GIF (max 5MB)
               </p>
             </div>
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <Label htmlFor="username" className="flex items-center gap-2">
+              <AtSign className="h-4 w-4" />
+              Username
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+              <Input
+                id="username"
+                value={profile.username}
+                onChange={(e) => setProfile(prev => ({ ...prev, username: e.target.value.replace(/[^a-zA-Z0-9]/g, '') }))}
+                placeholder="yourname"
+                className="pl-8 pr-10"
+                maxLength={30}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {usernameChecking && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                {!usernameChecking && usernameAvailable === true && profile.username && <Check className="h-4 w-4 text-green-500" />}
+                {!usernameChecking && usernameAvailable === false && <X className="h-4 w-4 text-red-500" />}
+              </div>
+            </div>
+            {usernameError && (
+              <p className="text-sm text-destructive">{usernameError}</p>
+            )}
+            {usernameAvailable && !usernameError && profile.username && profile.username !== originalUsername && (
+              <p className="text-sm text-green-600">Username is available!</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              3-30 characters, letters and numbers only. Others can find and message you with this.
+            </p>
           </div>
 
           {/* Full Name */}

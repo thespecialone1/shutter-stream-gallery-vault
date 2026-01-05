@@ -55,7 +55,7 @@ interface FeedPost {
 }
 
 // Component to track views with intersection observer
-const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView, postRefs, currentUserId, isHighlighted }: { 
+const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView, postRefs, currentUserId, isHighlighted, onMessageClick }: { 
   post: FeedPost; 
   index: number;
   onCommentClick: (id: string) => void;
@@ -64,6 +64,7 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
   postRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
   currentUserId?: string;
   isHighlighted?: boolean;
+  onMessageClick?: (userId: string, userName: string) => void;
 }) => {
   const viewCallback = useCallback(() => incrementPostView(post.id), [post.id, incrementPostView]);
   const postRef = useInView(post.id, viewCallback);
@@ -100,6 +101,7 @@ const PostItem = ({ post, index, onCommentClick, onImageClick, incrementPostView
           userId={post.user_id}
           userName={post.user_name}
           isOwnPost={isOwnPost}
+          onMessageClick={onMessageClick}
         />
       )}
     </div>
@@ -384,6 +386,18 @@ export default function Feed() {
                 </Link>
               </Button>
               {user && <NotificationBell />}
+              {user && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => (window as any).openChat?.()}
+                  className="relative"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                </Button>
+              )}
               <UserProfileDropdown />
             </div>
           </nav>
@@ -434,6 +448,7 @@ export default function Feed() {
                 postRefs={postRefs}
                 currentUserId={user?.id}
                 isHighlighted={highlightedPostId === post.id}
+                onMessageClick={(userId, userName) => (window as any).openChat?.(userId, userName)}
               />
             ))
           )}
