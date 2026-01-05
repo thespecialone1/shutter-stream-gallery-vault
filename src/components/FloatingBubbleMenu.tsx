@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { User, Calendar, MessageCircle, Grid, ChevronLeft } from "lucide-react";
+import { User, Calendar, MessageCircle, Grid, ChevronRight } from "lucide-react";
 
 interface FloatingBubbleMenuProps {
   side: 'left' | 'right';
@@ -8,6 +8,7 @@ interface FloatingBubbleMenuProps {
   userName: string;
   isOwnPost: boolean;
   postElement?: HTMLDivElement | null;
+  onMessageClick?: (userId: string, userName: string) => void;
 }
 
 interface BubbleAction {
@@ -17,7 +18,7 @@ interface BubbleAction {
   onClick?: () => void;
 }
 
-export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost, postElement }: FloatingBubbleMenuProps) => {
+export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost, postElement, onMessageClick }: FloatingBubbleMenuProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,7 +31,7 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost, postElem
   const bubbleActions: BubbleAction[] = [
     { icon: User, label: "View Profile", href: `/profile/${userId}` },
     { icon: Calendar, label: "Book Session", onClick: () => console.log('Book session') },
-    { icon: MessageCircle, label: "Message", onClick: () => console.log('Send message') },
+    { icon: MessageCircle, label: "Message", onClick: () => onMessageClick?.(userId, userName) },
     { icon: Grid, label: "Galleries", href: `/profile/${userId}` },
   ];
 
@@ -48,18 +49,18 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost, postElem
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isPinned]);
 
-  // Curved arc animation - bubbles fan out in a curve
+  // Curved arc animation - bubbles fan out to the RIGHT (outside the image)
   const getBubbleStyle = (index: number) => {
     const totalBubbles = bubbleActions.length;
-    // Arc from top-left to bottom-left (quarter circle)
-    const startAngle = -60; // Start angle in degrees (top-left)
-    const endAngle = 60; // End angle in degrees (bottom-left)
+    // Arc from top-right to bottom-right (quarter circle fanning outward)
+    const startAngle = -60; // Start angle in degrees (top)
+    const endAngle = 60; // End angle in degrees (bottom)
     const angleRange = endAngle - startAngle;
     const angle = startAngle + (angleRange / (totalBubbles - 1)) * index;
     const angleRad = (angle * Math.PI) / 180;
     
     const radius = 65; // Distance from center
-    const xOffset = -Math.cos(angleRad) * radius; // Negative for left side
+    const xOffset = Math.cos(angleRad) * radius; // Positive for right side (outward)
     const yOffset = Math.sin(angleRad) * radius;
     
     return {
@@ -74,11 +75,11 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost, postElem
   return (
     <div
       ref={containerRef}
-      className="absolute -right-2 top-1/2 -translate-y-1/2 z-30"
+      className="absolute -right-12 top-1/2 -translate-y-1/2 z-30"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Main Arrow Button - positioned right at image edge */}
+      {/* Main Arrow Button - positioned outside the image */}
       <button
         onClick={() => setIsPinned(!isPinned)}
         className={`relative w-9 h-9 rounded-full flex items-center justify-center
@@ -91,14 +92,14 @@ export const FloatingBubbleMenu = ({ side, userId, userName, isOwnPost, postElem
         `}
         aria-label="Photographer options"
       >
-        <ChevronLeft 
+        <ChevronRight 
           className={`h-4 w-4 transition-all duration-300 ${
             isOpen ? 'rotate-180' : ''
           }`} 
         />
       </button>
 
-      {/* Floating Bubbles - curved arc */}
+      {/* Floating Bubbles - curved arc fanning outward to the right */}
       {bubbleActions.map((action, index) => {
         const Icon = action.icon;
         const style = getBubbleStyle(index);

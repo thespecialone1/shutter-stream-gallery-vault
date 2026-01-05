@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useProgressiveImage } from '@/hooks/useProgressiveImage';
 import { useKeyboardNavigation } from '@/hooks/useKeyboardNavigation';
 import { DownloadOptionsDialog } from './DownloadOptionsDialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface EnhancedImageLightboxProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export const EnhancedImageLightbox: React.FC<EnhancedImageLightboxProps> = ({
   hasPrevious = false,
 }) => {
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const isMobile = useIsMobile();
   const { src, isLoading, isFullQuality, enhanceQuality } = useProgressiveImage({
     thumbnailUrl,
     fullUrl,
@@ -56,20 +58,20 @@ export const EnhancedImageLightbox: React.FC<EnhancedImageLightboxProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none">
+        <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 bg-black/95 border-none">
           {/* Header */}
           <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-white font-medium truncate max-w-md">{filename}</span>
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <span className="text-white font-medium truncate max-w-[200px] sm:max-w-md text-sm sm:text-base">{filename}</span>
                 {!isFullQuality && (
-                  <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-200 border-yellow-500/30">
+                  <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-200 border-yellow-500/30 hidden sm:flex">
                     <Sparkles className="w-3 h-3 mr-1" />
                     Compressed
                   </Badge>
                 )}
                 {isFullQuality && (
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-200 border-green-500/30">
+                  <Badge variant="secondary" className="bg-green-500/20 text-green-200 border-green-500/30 hidden sm:flex">
                     Full Quality
                   </Badge>
                 )}
@@ -91,9 +93,9 @@ export const EnhancedImageLightbox: React.FC<EnhancedImageLightboxProps> = ({
               variant="ghost"
               size="sm"
               onClick={onPrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-0"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-0"
             >
-              <ArrowLeft className="w-6 h-6" />
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
           )}
           
@@ -102,21 +104,22 @@ export const EnhancedImageLightbox: React.FC<EnhancedImageLightboxProps> = ({
               variant="ghost"
               size="sm"
               onClick={onNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-0"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-0"
             >
-              <ArrowRight className="w-6 h-6" />
+              <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
           )}
 
-          {/* Main Image */}
-          <div className="flex items-center justify-center min-h-[80vh] p-16">
-            <div className="relative">
+          {/* Main Image - Proper sizing for mobile */}
+          <div className="flex items-center justify-center w-full h-full p-4 sm:p-16">
+            <div className="relative w-full h-full flex items-center justify-center">
               <img
                 src={src}
                 alt={alt}
-                className={`max-w-[85vw] max-h-[75vh] w-auto h-auto object-contain rounded-lg transition-all duration-500 ${
+                className={`max-w-full max-h-full w-auto h-auto object-contain rounded-lg transition-all duration-500 ${
                   isLoading ? 'blur-sm' : 'blur-0'
                 }`}
+                style={{ maxHeight: 'calc(100vh - 160px)' }}
               />
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -127,10 +130,10 @@ export const EnhancedImageLightbox: React.FC<EnhancedImageLightboxProps> = ({
           </div>
 
           {/* Bottom Controls */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-            <div className="flex items-center gap-3 bg-black/60 backdrop-blur-md rounded-full px-6 py-3 border border-white/10">
+          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20">
+            <div className="flex items-center gap-2 sm:gap-3 bg-black/60 backdrop-blur-md rounded-full px-4 sm:px-6 py-2 sm:py-3 border border-white/10">
               {/* Enhance Quality Button */}
-              {!isFullQuality && (
+              {!isFullQuality && !isMobile && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -139,7 +142,7 @@ export const EnhancedImageLightbox: React.FC<EnhancedImageLightboxProps> = ({
                   className="text-white hover:bg-white/20 gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Enhance (E)
+                  <span className="hidden sm:inline">Enhance (E)</span>
                 </Button>
               )}
               
@@ -167,10 +170,12 @@ export const EnhancedImageLightbox: React.FC<EnhancedImageLightboxProps> = ({
             </div>
           </div>
 
-          {/* Keyboard Shortcuts Hint */}
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/60 text-xs text-center">
-            <p>Arrow keys to navigate • E to enhance • Esc to close</p>
-          </div>
+          {/* Keyboard Shortcuts Hint - Hidden on mobile */}
+          {!isMobile && (
+            <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 text-white/60 text-xs text-center hidden md:block">
+              <p>Arrow keys to navigate • E to enhance • Esc to close</p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

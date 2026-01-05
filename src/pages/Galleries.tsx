@@ -19,6 +19,7 @@ type Gallery = {
   created_at: string;
   is_public: boolean;
   photographer_id?: string;
+  coverUrl?: string;
 };
 
 const Galleries = () => {
@@ -28,6 +29,7 @@ const Galleries = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showMyGalleries, setShowMyGalleries] = useState(false);
   const [selectedGalleryForAnalytics, setSelectedGalleryForAnalytics] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadGalleries();
@@ -38,7 +40,7 @@ const Galleries = () => {
       setLoading(true);
       let query = supabase
         .from('galleries')
-        .select('id, name, description, client_name, created_at, is_public, photographer_id');
+        .select('id, name, description, client_name, created_at, is_public, photographer_id, cover_image_id');
 
       if (showMyGalleries && user) {
         // Show user's own galleries
@@ -57,12 +59,59 @@ const Galleries = () => {
         return;
       }
 
-      setGalleries(data || []);
+      const galleriesData = data || [];
+      
+      // Fetch cover images for each gallery
+      const galleryIds = galleriesData.map(g => g.id);
+      if (galleryIds.length > 0) {
+        const { data: images } = await supabase
+          .from('images')
+          .select('id, gallery_id, thumbnail_path, full_path')
+          .in('gallery_id', galleryIds)
+          .order('upload_date', { ascending: true });
+
+        // Build cover map
+        const coverMap = new Map<string, string>();
+        const imageMap = new Map<string, { thumbnail_path: string | null; full_path: string }>();
+        
+        (images || []).forEach(img => {
+          imageMap.set(img.id, { thumbnail_path: img.thumbnail_path, full_path: img.full_path });
+          // Set first image as default cover
+          if (!coverMap.has(img.gallery_id)) {
+            const path = img.thumbnail_path || img.full_path;
+            const { data } = supabase.storage.from('gallery-images').getPublicUrl(path);
+            coverMap.set(img.gallery_id, data.publicUrl);
+          }
+        });
+
+        // Override with explicit cover image if set
+        galleriesData.forEach((g: any) => {
+          if (g.cover_image_id && imageMap.has(g.cover_image_id)) {
+            const coverImg = imageMap.get(g.cover_image_id)!;
+            const path = coverImg.thumbnail_path || coverImg.full_path;
+            const { data } = supabase.storage.from('gallery-images').getPublicUrl(path);
+            coverMap.set(g.id, data.publicUrl);
+          }
+        });
+
+        const galleriesWithCovers = galleriesData.map(g => ({
+          ...g,
+          coverUrl: coverMap.get(g.id)
+        }));
+        
+        setGalleries(galleriesWithCovers);
+      } else {
+        setGalleries([]);
+      }
     } catch (error) {
       console.error('Error fetching galleries:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageError = (id: string) => {
+    setImageErrors(prev => new Set(prev).add(id));
   };
 
   const filteredGalleries = galleries.filter(
@@ -151,21 +200,11 @@ const Galleries = () => {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="card-premium p-6 animate-pulse">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-muted rounded-full"></div>
-                  <div className="flex-1">
-                    <div className="h-5 bg-muted rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-muted rounded w-1/2"></div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-muted rounded w-full"></div>
-                  <div className="h-4 bg-muted rounded w-2/3"></div>
-                </div>
-                <div className="flex items-center justify-between mt-6">
-                  <div className="h-4 bg-muted rounded w-20"></div>
-                  <div className="h-8 bg-muted rounded w-24"></div>
+              <div key={i} className="card-premium overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] bg-muted" />
+                <div className="p-4 space-y-2">
+                  <div className="h-5 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
                 </div>
               </div>
             ))}
@@ -221,50 +260,58 @@ const Galleries = () => {
                 </TabsList>
                 
                 <TabsContent value="galleries" className="space-y-8">
-                  {/* Gallery Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {/* Gallery Grid with Covers */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredGalleries.map((gallery, index) => (
-                      <Card key={gallery.id} className="card-premium group hover:scale-[1.02] transition-all duration-300" style={{ animationDelay: `${index * 100}ms` }}>
-                        <CardHeader className="pb-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Camera className="h-6 w-6 text-primary" />
-                            </div>
+                      <Card key={gallery.id} className="overflow-hidden group hover:shadow-lg transition-all duration-300" style={{ animationDelay: `${index * 100}ms` }}>
+                        {/* Cover Image */}
+                        <Link to={`/gallery/${gallery.id}`} className="block">
+                          <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+                            {gallery.coverUrl && !imageErrors.has(gallery.id) ? (
+                              <img
+                                src={gallery.coverUrl}
+                                alt={gallery.name}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                onError={() => handleImageError(gallery.id)}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                                <Camera className="h-12 w-12 text-muted-foreground/30" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </Link>
+                        
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <CardTitle className="text-lg font-serif truncate group-hover:text-primary transition-colors">
-                                {gallery.name}
-                              </CardTitle>
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                              <Link to={`/gallery/${gallery.id}`}>
+                                <h3 className="font-medium truncate group-hover:text-primary transition-colors">
+                                  {gallery.name}
+                                </h3>
+                              </Link>
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
                                 <User className="h-3 w-3" />
                                 <span className="truncate">{gallery.client_name}</span>
                               </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {formatDate(gallery.created_at)}
+                              </p>
                             </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
-                            {gallery.description || "A beautiful collection of moments captured in time."}
-                          </p>
-                          
-                          <div className="flex items-center justify-between pt-2">
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              <span>{formatDate(gallery.created_at)}</span>
-                            </div>
-                            <div className="flex gap-2">
+                            
+                            <div className="flex gap-2 shrink-0">
                               <Button 
                                 variant="outline" 
-                                size="sm"
+                                size="icon"
+                                className="h-8 w-8"
                                 onClick={() => setSelectedGalleryForAnalytics(gallery.id)}
-                                className="btn-premium-outline"
                               >
                                 <BarChart3 className="h-4 w-4" />
                               </Button>
-                              <Button asChild size="sm" className="btn-premium group/btn">
-                                <Link to={`/gallery/${gallery.id}`} className="flex items-center gap-2">
+                              <Button asChild size="icon" className="h-8 w-8">
+                                <Link to={`/gallery/${gallery.id}`}>
                                   <Eye className="h-4 w-4" />
-                                  <span>View</span>
-                                  <ArrowRight className="h-3 w-3 group-hover/btn:translate-x-0.5 transition-transform" />
                                 </Link>
                               </Button>
                             </div>
@@ -285,52 +332,60 @@ const Galleries = () => {
                           <BarChart3 className="w-5 h-5" />
                           Favorites Analytics
                         </CardTitle>
-                        <CardContent>
-                          <p className="text-muted-foreground text-center py-8">
-                            Select a gallery from the "My Galleries" tab to view favorites analytics.
-                          </p>
-                        </CardContent>
                       </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground text-center py-8">
+                          Select a gallery from the "My Galleries" tab to view favorites analytics.
+                        </p>
+                      </CardContent>
                     </Card>
                   )}
                 </TabsContent>
               </Tabs>
             ) : (
-              /* Public Gallery Grid */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              /* Public Gallery Grid with Covers */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredGalleries.map((gallery, index) => (
-                  <Card key={gallery.id} className="card-premium group hover:scale-[1.02] transition-all duration-300" style={{ animationDelay: `${index * 100}ms` }}>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Camera className="h-6 w-6 text-primary" />
-                        </div>
+                  <Card key={gallery.id} className="overflow-hidden group hover:shadow-lg transition-all duration-300" style={{ animationDelay: `${index * 100}ms` }}>
+                    {/* Cover Image */}
+                    <Link to={`/gallery/${gallery.id}`} className="block">
+                      <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+                        {gallery.coverUrl && !imageErrors.has(gallery.id) ? (
+                          <img
+                            src={gallery.coverUrl}
+                            alt={gallery.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            onError={() => handleImageError(gallery.id)}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                            <Camera className="h-12 w-12 text-muted-foreground/30" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </Link>
+                    
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg font-serif truncate group-hover:text-primary transition-colors">
-                            {gallery.name}
-                          </CardTitle>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                          <Link to={`/gallery/${gallery.id}`}>
+                            <h3 className="font-medium truncate group-hover:text-primary transition-colors">
+                              {gallery.name}
+                            </h3>
+                          </Link>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
                             <User className="h-3 w-3" />
                             <span className="truncate">{gallery.client_name}</span>
                           </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDate(gallery.created_at)}
+                          </p>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">
-                        {gallery.description || "A beautiful collection of moments captured in time."}
-                      </p>
-                      
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          <span>{formatDate(gallery.created_at)}</span>
-                        </div>
-                        <Button asChild size="sm" className="btn-premium group/btn">
-                          <Link to={`/gallery/${gallery.id}`} className="flex items-center gap-2">
-                            <Eye className="h-4 w-4" />
-                            <span>View</span>
-                            <ArrowRight className="h-3 w-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                        
+                        <Button asChild size="icon" className="h-8 w-8 shrink-0">
+                          <Link to={`/gallery/${gallery.id}`}>
+                            <ArrowRight className="h-4 w-4" />
                           </Link>
                         </Button>
                       </div>
