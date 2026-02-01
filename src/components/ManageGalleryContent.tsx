@@ -48,6 +48,7 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [editForm, setEditForm] = useState({
     name: gallery.name,
     description: gallery.description || '',
@@ -336,14 +337,20 @@ export function ManageGalleryContent({ gallery, onGalleryDeleted, onGalleryUpdat
                       className="aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer relative"
                       onClick={() => openLightbox(image)}
                     >
-                      <img
-                        src={imageUrl}
-                        alt={image.filename}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        onError={(e) => {
-                          e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Image unavailable</div>';
-                        }}
-                      />
+                      {imageErrors.has(image.id) ? (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                          Image unavailable
+                        </div>
+                      ) : (
+                        <img
+                          src={imageUrl}
+                          alt={image.filename}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          onError={() => {
+                            setImageErrors(prev => new Set(prev).add(image.id));
+                          }}
+                        />
+                      )}
                     </div>
                 
                     {/* Fixed positioned overlay with actions */}
