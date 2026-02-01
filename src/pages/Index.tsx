@@ -287,32 +287,40 @@ const Index = () => {
         </section>
 
         {/* Categories Section */}
-        <section className="py-16 sm:py-20 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-serif mb-4">Built for Every Style</h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
+        <section className="py-20 sm:py-28 bg-muted/40">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16 sm:mb-20">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif mb-6 leading-tight tracking-tight">
+                Built for Every Style
+              </h2>
+              <p className="text-base sm:text-lg text-muted-foreground/80 max-w-2xl mx-auto leading-relaxed">
                 Whether you shoot weddings, portraits, or commercial work—Pixie adapts to your needs.
               </p>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-              {CATEGORIES.map((cat) => (
+            {/* Bento-style grid with varied sizing */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto">
+              {CATEGORIES.map((cat, index) => (
                 <Link
                   key={cat.name}
                   to={`/browse?category=${cat.name.toLowerCase()}`}
-                  className="group relative aspect-square rounded-2xl overflow-hidden bg-muted"
+                  className={`group relative overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out ${
+                    index === 0 ? 'sm:col-span-2 sm:row-span-2 aspect-square' : 'aspect-[4/5]'
+                  }`}
                 >
                   <img 
                     src={categoryErrors.has(cat.name) ? CATEGORY_FALLBACKS[cat.name] : cat.image} 
                     alt={cat.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                     loading="lazy"
                     onError={() => handleCategoryError(cat.name)}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <span className="text-white text-sm font-medium">{cat.name}</span>
+                  {/* Subtle overlay for text legibility */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                    <span className="text-white text-sm sm:text-base font-medium tracking-wide drop-shadow-sm">
+                      {cat.name}
+                    </span>
                   </div>
                 </Link>
               ))}
