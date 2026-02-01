@@ -38,28 +38,37 @@ const Galleries = () => {
   const loadGalleries = async () => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('galleries')
-        .select('id, name, description, client_name, created_at, is_public, photographer_id, cover_image_id');
-
+      
+      let galleriesData: any[] = [];
+      
       if (showMyGalleries && user) {
-        // Show user's own galleries
-        query = query.eq('photographer_id', user.id);
+        // Owner can access full galleries table for their own galleries
+        const { data, error } = await supabase
+          .from('galleries')
+          .select('id, name, description, client_name, created_at, is_public, photographer_id, cover_image_id')
+          .eq('photographer_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+          
+        if (error) {
+          console.error('Error fetching galleries:', error);
+          return;
+        }
+        galleriesData = data || [];
       } else {
-        // Show public galleries
-        query = query.eq('is_public', true);
+        // Use secure view for public galleries (excludes password_hash)
+        const { data, error } = await supabase
+          .from('galleries_public_secure')
+          .select('id, name, description, client_name, created_at, is_public, photographer_id, cover_image_id')
+          .order('created_at', { ascending: false })
+          .limit(50);
+          
+        if (error) {
+          console.error('Error fetching galleries:', error);
+          return;
+        }
+        galleriesData = data || [];
       }
-
-      query = query.order('created_at', { ascending: false }).limit(50);
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching galleries:', error);
-        return;
-      }
-
-      const galleriesData = data || [];
       
       // Fetch cover images for each gallery
       const galleryIds = galleriesData.map(g => g.id);

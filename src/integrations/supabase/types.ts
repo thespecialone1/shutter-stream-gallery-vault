@@ -161,6 +161,13 @@ export type Database = {
             foreignKeyName: "favorites_gallery_id_fkey"
             columns: ["gallery_id"]
             isOneToOne: false
+            referencedRelation: "galleries_public_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
             referencedRelation: "galleries_public_view"
             referencedColumns: ["id"]
           },
@@ -240,6 +247,13 @@ export type Database = {
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_posts_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries_public_secure"
             referencedColumns: ["id"]
           },
           {
@@ -379,6 +393,13 @@ export type Database = {
             foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
             columns: ["gallery_id"]
             isOneToOne: false
+            referencedRelation: "galleries_public_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
             referencedRelation: "galleries_public_view"
             referencedColumns: ["id"]
           },
@@ -435,6 +456,13 @@ export type Database = {
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_analytics_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries_public_secure"
             referencedColumns: ["id"]
           },
           {
@@ -544,6 +572,13 @@ export type Database = {
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_invites_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries_public_secure"
             referencedColumns: ["id"]
           },
           {
@@ -720,6 +755,13 @@ export type Database = {
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "images_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries_public_secure"
             referencedColumns: ["id"]
           },
           {
@@ -979,6 +1021,13 @@ export type Database = {
             foreignKeyName: "sections_gallery_id_fkey"
             columns: ["gallery_id"]
             isOneToOne: false
+            referencedRelation: "galleries_public_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sections_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
             referencedRelation: "galleries_public_view"
             referencedColumns: ["id"]
           },
@@ -1044,6 +1093,13 @@ export type Database = {
             foreignKeyName: "security_audit_gallery_id_fkey"
             columns: ["gallery_id"]
             isOneToOne: false
+            referencedRelation: "galleries_public_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_audit_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
             referencedRelation: "galleries_public_view"
             referencedColumns: ["id"]
           },
@@ -1086,6 +1142,63 @@ export type Database = {
       }
     }
     Views: {
+      galleries_public_secure: {
+        Row: {
+          client_name: string | null
+          cover_image_id: string | null
+          created_at: string | null
+          description: string | null
+          has_password: boolean | null
+          id: string | null
+          is_public: boolean | null
+          name: string | null
+          photographer_id: string | null
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          client_name?: string | null
+          cover_image_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          has_password?: never
+          id?: string | null
+          is_public?: boolean | null
+          name?: string | null
+          photographer_id?: string | null
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          client_name?: string | null
+          cover_image_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          has_password?: never
+          id?: string | null
+          is_public?: boolean | null
+          name?: string | null
+          photographer_id?: string | null
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "galleries_cover_image_id_fkey"
+            columns: ["cover_image_id"]
+            isOneToOne: false
+            referencedRelation: "images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "galleries_cover_image_id_fkey"
+            columns: ["cover_image_id"]
+            isOneToOne: false
+            referencedRelation: "images_public_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       galleries_public_view: {
         Row: {
           client_name: string | null
@@ -1243,6 +1356,13 @@ export type Database = {
             foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
             columns: ["gallery_id"]
             isOneToOne: false
+            referencedRelation: "galleries_public_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_access_sessions_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
             referencedRelation: "galleries_public_view"
             referencedColumns: ["id"]
           },
@@ -1280,6 +1400,13 @@ export type Database = {
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "images_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries_public_secure"
             referencedColumns: ["id"]
           },
           {
@@ -1409,6 +1536,7 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_gallery_public_info: { Args: { gallery_uuid: string }; Returns: Json }
       get_gallery_safe_info: { Args: { gallery_uuid: string }; Returns: Json }
       get_my_gallery_info: { Args: { gallery_uuid: string }; Returns: Json }
       get_my_profile: {
