@@ -21,13 +21,9 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
 
 const CATEGORIES = [
   { name: "Wedding", image: "/homePagePhotos/wedding.jpg" },
-  { name: "Portrait", image: "/homePagePhotos/portrait.webp" },
-  { name: "Family", image: "/homePagePhotos/family.jpg" },
-  { name: "Seniors", image: "/homePagePhotos/seniors.jpeg" },
+  { name: "Ceremony", image: "/homePagePhotos/portrait.webp" },
+  { name: "Reception", image: "/homePagePhotos/family.jpg" },
   { name: "Events", image: "/homePagePhotos/events.jpg" },
-  { name: "Adventure", image: "/homePagePhotos/adventure.webp" },
-  { name: "Commercial", image: "/homePagePhotos/commercial.jpg" },
-  { name: "Sports", image: "/homePagePhotos/sports.jpg" },
 ];
 
 // Use local homePagePhotos as placeholders for Featured Work (no Unsplash)
