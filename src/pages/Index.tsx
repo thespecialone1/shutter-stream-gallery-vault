@@ -81,12 +81,11 @@ const Index = () => {
 
   const loadFeaturedImages = async () => {
     try {
-      // Only load from truly public galleries (no password protection)
+      // Use secure view for public galleries (excludes password_hash, only shows public galleries without passwords)
       const { data: galleries } = await supabase
-        .from('galleries')
-        .select('id')
-        .eq('is_public', true)
-        .is('password_hash', null)
+        .from('galleries_public_secure')
+        .select('id, has_password')
+        .eq('has_password', false)
         .limit(8);
       
       const ids = (galleries || []).map((g: any) => g.id);
